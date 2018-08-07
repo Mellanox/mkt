@@ -50,9 +50,13 @@ def load_all_commands(name,top_module):
         yield (k,fn,argsfn);
 
 def main(cmd_modules,top_module):
-    parser = argparse.ArgumentParser(description='x-tools helper commands')
-    subparsers = parser.add_subparsers(title="These are common commands " +
-                                "used in various situations", dest="command");
+    parser = argparse.ArgumentParser(
+        description="""Mellanox Kernel Toolset
+
+Various utilities for working with the Linux kernel at Mellanox""");
+    subparsers = parser.add_subparsers(
+        title="Sub commands",
+        dest="command");
     subparsers.required = True;
 
     commands = []

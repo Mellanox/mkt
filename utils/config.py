@@ -6,7 +6,7 @@ import configparser
 import pwd
 import grp
 
-config_f = os.path.expanduser('~') + '/.x-tools/' + socket.gethostname() + '.xt';
+config_f = os.path.expanduser('~') + '/.config/mellanox/mkt/' + socket.gethostname() + '.mkt';
 config = configparser.ConfigParser(allow_no_value=True);
 
 username = pwd.getpwuid( os.getuid() )[ 0 ];
@@ -21,7 +21,8 @@ def load():
     try:
         return config["defaults"];
     except KeyError:
-        exit(socket.gethostname() + ' machine doesn\'t exist in ~/.x-tools/.\nPlease run setup before. Exiting ...');
+        exit(("%r machine doesn\'t exist in %r.\nPlease run setup before. Exiting ...")%
+             (socket.gethostname(), config_f));
 
 def init():
     config.read(config_f);
