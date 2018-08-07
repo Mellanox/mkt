@@ -57,33 +57,23 @@ def cmd_images(args):
             args.os = "fc28";
 
     with in_directory(os.path.join(os.path.dirname(__file__), "../docker/", args.os)):
-        cmd = ["build"] + get_proxy_arg();
+        cmd = ["build"] + get_proxy_arg() + (["--pull"] if args.pull else ["--pull=false"])
 
-        docker_call(cmd +
-                    (["--pull"] if args.pull else ["--pull=false"]) + [
-                    "-t","lab/base:"+args.os,
+        docker_call(cmd + [
+                    "-t",make_image_name("lab/base",args.os),
                     "-f","base.Dockerfile",
                     "."
                     ]);
 
-        docker_call(cmd +
-                    (["--pull"] if args.pull else ["--pull=false"]) + [
-                    "-t","lab/simx:"+args.os,
+        docker_call(cmd + [
+                    "-t",make_image_name("lab/simx",args.os),
                     "-f","simx.Dockerfile",
                     "."
                     ]);
 
-        if os.path.exists("Dockerfile"):
-            docker_call(cmd +
-                        (["--pull"] if args.pull else ["--pull=false"]) + [
-                        "-t","lab/native:"+args.os,
-                        "-f","Dockerfile",
-                        "."
-                        ]);
-
         docker_call(cmd +
                     (["--pull"] if args.pull else ["--pull=false"]) + [
-                    "-t","lab/kvm:"+args.os,
+                    "-t",make_image_name("lab/kvm",args.os),
                     "-f","kvm.Dockerfile",
                     "."
                    ]);

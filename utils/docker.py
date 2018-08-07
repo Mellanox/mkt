@@ -2,6 +2,9 @@ import subprocess
 import os
 from utils.git import in_directory
 
+def make_image_name(thing,version):
+    return "harbor.mellanox.com/mkt/%s:%s"%(thing,version);
+
 def docker_call(args):
     """Run docker and display the output to the terminal"""
     return subprocess.check_call(['sudo','docker',] + args);
