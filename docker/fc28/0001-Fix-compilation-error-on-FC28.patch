@@ -1,0 +1,41 @@
+From 196b418d09db072e76a1c2c7928b2ac076ad39e3 Mon Sep 17 00:00:00 2001
+From: Leon Romanovsky <leonro@mellanox.com>
+Date: Thu, 2 Aug 2018 20:43:53 +0300
+Subject: [PATCH] Fix compilation error on FC28
+
+util/memfd.c:40:12: error: static declaration of 'memfd_create' follows
+non-static declaration
+ static int memfd_create(const char *name, unsigned int flags)
+            ^~~~~~~~~~~~
+In file included from /usr/include/bits/mman-linux.h:115,
+                 from /usr/include/bits/mman.h:45,
+                 from /usr/include/sys/mman.h:41,
+                 from /opt/src/simx/include/sysemu/os-posix.h:29,
+                 from /opt/src/simx/include/qemu/osdep.h:104,
+                 from util/memfd.c:28:
+/usr/include/bits/mman-shared.h:46:5: note: previous declaration of
+'memfd_create' was here
+ int memfd_create (const char *__name, unsigned int __flags) __THROW;
+     ^~~~~~~~~~~~
+make: *** [/opt/src/simx/rules.mak:60: util/memfd.o] Error 1
+
+Signed-off-by: Leon Romanovsky <leonro@mellanox.com>
+---
+ configure | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/configure b/configure
+index 087a82ac..3f48c289 100755
+--- a/configure
++++ b/configure
+@@ -3921,6 +3921,7 @@ fi
+ memfd=no
+ cat > $TMPC << EOF
+ #include <sys/mman.h>
++#include <bits/mman-shared.h>
+ 
+ int main(void)
+ {
+-- 
+2.14.4
+
