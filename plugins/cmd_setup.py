@@ -58,9 +58,9 @@ def cmd_setup(args):
           "docker-engine"]);
     call(["sudo", "dnf", "config-manager", "--add-repo",
           "https://download.docker.com/linux/fedora/docker-ce.repo"]);
-    call(["sudo", "install", "-y", "docker-ce"]);
-    call(["sudo", "systemctl", "start", "docker"]);
+    call(["sudo", "install", "-y", "docker-ce", "python3-argcomplete"]);
     call(["sudo", "systemctl", "enable","docker"]);
+    call(["sudo", "systemctl", "start", "docker"]);
     call(["sudo", "dnf", "-y", "update"]);
 
     call(["sudo", "cp",
