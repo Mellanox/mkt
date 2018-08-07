@@ -191,22 +191,6 @@ def cmd_vfio_enable(args):
         switch_to_vfio(I, modalias)
 
 
-def native_run(args):
-    cont = docker_get_containers(name=args.os)
-    if cont:
-        try:
-            docker_call(["kill", *cont])
-        except subprocess.CalledProcessError:
-            pass
-        docker_call(["rm", *cont])
-
-    docker_exec([
-        "run", "--rm", "--net=host", "--privileged",
-        "--name=%s" % (args.os), "--tty", "--interactive",
-        "lab/native:%s" % (args.os)
-    ])
-
-
 def get_mac():
     mac = None
     try:
@@ -253,18 +237,23 @@ def get_pickle(args):
 
     return base64.b64encode(pickle.dumps(p)).decode()
 
+from . import cmd_images
 
 def args_run(parser):
+    section = load()
     parser.add_argument(
-        "--os", nargs=1, choices=sorted([
-            "fc28",
-        ]), help="The OS to run")
+        "os",
+        nargs=1,
+        help="The OS image name to run",
+        choices=sorted(cmd_images.supported_os),
+        default=section.get('os', 'fc28'))
     parser.add_argument(
         "image",
         nargs='?',
         choices=sorted(get_images()),
-        help="The image to run")
-    parser.add_argument('--kernel', help="Path to the kernel tree to boot")
+        help="The IB card configuration to use")
+    parser.add_argument('--kernel', help="Path to the kernel tree to boot",
+                        default=section.get('linux',None))
     parser.add_argument(
         '--dir', action="append", help="Other paths to map", default=[])
     parser.add_argument(
@@ -286,26 +275,14 @@ def args_run(parser):
         default=[],
         choices=sorted(get_pci_rdma_devices().keys()),
         help="Pass a given PCI bus/device/function to the guest")
-    parser.add_argument(
-        '--native',
-        action="store_true",
-        default=False,
-        help="Run a native container, without kvm inside")
 
 
 def cmd_run(args):
     """Run a system image container inside KVM"""
     check_not_root()
     section = load()
+    args.os = args.os[0];
 
-    if not args.os:
-        args.os = section['os']
-        if not args.os:
-            args.os = "fc28"
-
-    if args.native:
-        native_run(args)
-        exit()
     """
     We have three possible options to execute:
     1. "x run" without request to specific image. We will try to find default one
@@ -318,10 +295,10 @@ def cmd_run(args):
     s = set()
     if not args.pci and not args.simx:
         if not args.image:
-            args.image = section['image']
+            args.image = section.get('image', None)
 
     if args.image:
-        pci = get_images(args.image)['pci']
+        pci = get_imagesq(args.image)['pci']
         s = pci.split()
 
     union = set(get_simx_rdma_devices()).union(
@@ -337,7 +314,7 @@ def cmd_run(args):
     args.simx += set(s).intersection(set(get_simx_rdma_devices()))
 
     if not args.kernel:
-        args.kernel = section['linux']
+        exit("Must specify a linux kernel with --kernel, or a config file default")
 
     # Invoke ourself as root to manipulate sysfs
     if args.pci:
@@ -380,5 +357,5 @@ def cmd_run(args):
         "%s:/plugins:ro" % (src_dir), "--rm", "--net=host", "--privileged",
         "--name=%s" % (args.os), "--tty", "-e",
         "KVM_PICKLE=%s" % (get_pickle(args)), "--interactive",
-        "lab/kvm:%s" % (args.os)
+        make_image_name("kvm", args.os)
     ] + do_kvm_args)

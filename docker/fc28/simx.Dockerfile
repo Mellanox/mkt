@@ -1,4 +1,4 @@
-FROM lab/base:fc28
+FROM local_mkt/kvm_base:fc28
 
 RUN dnf install -y \
     python \

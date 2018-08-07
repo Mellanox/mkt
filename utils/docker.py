@@ -7,6 +7,10 @@ def make_image_name(thing, version):
     return "harbor.mellanox.com/mkt/%s:%s" % (thing, version)
 
 
+def make_local_image_name(thing, version):
+    return "local_mkt/%s:%s" % (thing, version)
+
+
 def docker_call(args):
     """Run docker and display the output to the terminal"""
     return subprocess.check_call([
