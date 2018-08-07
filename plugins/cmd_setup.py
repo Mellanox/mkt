@@ -8,17 +8,23 @@ from subprocess import call, Popen
 import shutil
 from utils.cmdline import *
 
+
 def args_setup(parser):
-    parser.add_argument("-y", "--assumeyes",
-                        dest="yes",
-                        action="store_true",
-                        help="Automatically answer yes for all questions",
-                        default=False);
-    parser.add_argument("-f", "--force",
-                        dest="force",
-                        action="store_true",
-                        help="Remove existing directories",
-                        default=False);
+    parser.add_argument(
+        "-y",
+        "--assumeyes",
+        dest="yes",
+        action="store_true",
+        help="Automatically answer yes for all questions",
+        default=False)
+    parser.add_argument(
+        "-f",
+        "--force",
+        dest="force",
+        action="store_true",
+        help="Remove existing directories",
+        default=False)
+
 
 def cmd_setup(args):
     """Setup environment."""
@@ -35,68 +41,84 @@ def cmd_setup(args):
     # 5. Setup docker
     # 6. Send an email with howtos and help
 
-    check_not_root();
+    check_not_root()
 
     print(""" This setup script will update your hypervisor to latest
  distribution packages and install docker. Please restart
- the hypervisor to complete the installation. """);
-    if args.yes is False and query_yes_no("Do you want to proceed?", 'no') is False:
-        exit("Exiting ...");
+ the hypervisor to complete the installation. """)
+    if args.yes is False and query_yes_no("Do you want to proceed?",
+                                          'no') is False:
+        exit("Exiting ...")
 
-    distname, version, id = platform.dist();
+    distname, version, id = platform.dist()
     if distname != "fedora":
-        exit("This script works on Fedora only. Exiting ...");
+        exit("This script works on Fedora only. Exiting ...")
 
     if int(version) < 27:
-        exit("Please install latest Fedora. Exiting ...");
+        exit("Please install latest Fedora. Exiting ...")
 
-    call(["sudo", "dnf", "-y", "install", "git", "dnf-plugins-core"]);
-    call(["sudo", "dnf", "remove", "-y",
-          "docker", "docker-client", "docker-client-latest",
-          "docker-common", "docker-latest", "docker-latest-logrotate",
-          "docker-logrotate", "docker-selinux", "docker-engine-selinux",
-          "docker-engine"]);
-    call(["sudo", "dnf", "config-manager", "--add-repo",
-          "https://download.docker.com/linux/fedora/docker-ce.repo"]);
-    call(["sudo", "install", "-y", "docker-ce", "python3-argcomplete"]);
-    call(["sudo", "systemctl", "enable","docker"]);
-    call(["sudo", "systemctl", "start", "docker"]);
-    call(["sudo", "dnf", "-y", "update"]);
+    call(["sudo", "dnf", "-y", "install", "git", "dnf-plugins-core"])
+    call([
+        "sudo", "dnf", "remove", "-y", "docker", "docker-client",
+        "docker-client-latest", "docker-common", "docker-latest",
+        "docker-latest-logrotate", "docker-logrotate", "docker-selinux",
+        "docker-engine-selinux", "docker-engine"
+    ])
+    call([
+        "sudo", "dnf", "config-manager", "--add-repo",
+        "https://download.docker.com/linux/fedora/docker-ce.repo"
+    ])
+    call(["sudo", "install", "-y", "docker-ce", "python3-argcomplete"])
+    call(["sudo", "systemctl", "enable", "docker"])
+    call(["sudo", "systemctl", "start", "docker"])
+    call(["sudo", "dnf", "-y", "update"])
 
-    call(["sudo", "cp",
-          os.path.join(os.path.dirname(__file__), "../scripts/connectx_port_config"),
-          "/usr/sbin/connectx_port_config"]);
+    call([
+        "sudo", "cp",
+        os.path.join(
+            os.path.dirname(__file__), "../scripts/connectx_port_config"),
+        "/usr/sbin/connectx_port_config"
+    ])
 
-    init();
-    section = load();
+    init()
+    section = load()
 
     for key, value in section.items():
         if args.force:
-            call(["sudo", "rm", "-rf", value]);
+            call(["sudo", "rm", "-rf", value])
         if os.path.exists(value):
-            exit("Please remove " + value + " Exiting ...");
+            exit("Please remove " + value + " Exiting ...")
 
-        print("Prepare " + key);
-        call(["sudo", "mkdir", "-p", value]);
-        call(["sudo", "chown", "-R", username + ":" + group, value]);
+        print("Prepare " + key)
+        call(["sudo", "mkdir", "-p", value])
+        call(["sudo", "chown", "-R", username + ":" + group, value])
 
         if key == "src" or key == "logs" or key == "ccache":
             continue
 
-        p = Popen(["git", "clone",
-            "ssh://" + username + "@l-gerrit.mtl.labs.mlnx:29418/upstream/" + key, "."],
-            cwd=value);
-        p.wait();
+        p = Popen(
+            [
+                "git", "clone", "ssh://" + username +
+                "@l-gerrit.mtl.labs.mlnx:29418/upstream/" + key, "."
+            ],
+            cwd=value)
+        p.wait()
 
-        p = Popen(["scp", "-p", "-P", "29418",
-            username + "@l-gerrit.mtl.labs.mlnx:hooks/commit-msg", ".git/hooks/"],
-            cwd=value);
-        p.wait();
+        p = Popen(
+            [
+                "scp", "-p", "-P", "29418",
+                username + "@l-gerrit.mtl.labs.mlnx:hooks/commit-msg",
+                ".git/hooks/"
+            ],
+            cwd=value)
+        p.wait()
 
         if key == "kernel":
-            shutil.copy(section['linux'] + "/.config",
-                    os.path.join(os.path.dirname(__file__), "../configs/kconfig-kvm-ib"));
-            p = Popen(["make", "olddefconfig"], cwd=value);
-            p.wait();
+            shutil.copy(
+                section['linux'] + "/.config",
+                os.path.join(
+                    os.path.dirname(__file__), "../configs/kconfig-kvm-ib"))
+            p = Popen(["make", "olddefconfig"], cwd=value)
+            p.wait()
 
-    print("Completed, PLEASE RESTART server");
+    print("Completed, PLEASE RESTART server")

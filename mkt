@@ -7,16 +7,16 @@ import os
 import sys
 
 # Load our support module
-sys.path.append(os.path.dirname(__file__));
-import utils.cmdline;
-import plugins;
+sys.path.append(os.path.dirname(__file__))
+import utils.cmdline
+import plugins
 
 cmd_modules = {
     "cmd_setup",
     "cmd_images",
     "cmd_run",
     "cmd_make",
-    };
+}
 
 if __name__ == "__main__":
-    utils.cmdline.main(cmd_modules,plugins);
+    utils.cmdline.main(cmd_modules, plugins)
