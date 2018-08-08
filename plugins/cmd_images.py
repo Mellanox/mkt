@@ -1,11 +1,10 @@
 """Build docker images for different architectures and OS
 """
 import os
-import utils.config
+import utils
 from utils.git import *
 from utils.docker import *
 from subprocess import call, Popen
-from utils.cmdline import *
 
 supported_os = {
     "fc28",
@@ -72,10 +71,9 @@ def do_pull(dockerfn):
 
 def cmd_images(args):
     """Build docker image for different architectures and OS."""
-    check_not_root()
+    utils.check_not_root()
 
-    with in_directory(
-            os.path.join(os.path.dirname(__file__), "../docker/", args.os)):
+    with in_directory(utils.get_internal_fn(os.path.join("docker", args.os))):
 
         # Host network is needed because docker has a hard time in some cases
         # finding the right DNS server for Mellanox's private DNS. (eg over
