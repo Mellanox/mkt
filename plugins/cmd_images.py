@@ -11,7 +11,6 @@ supported_os = {
     "fc28",
 }
 
-
 def args_images(parser):
     parser.add_argument(
         "--no-pull",

@@ -242,12 +242,6 @@ from . import cmd_images
 def args_run(parser):
     section = load()
     parser.add_argument(
-        "os",
-        nargs=1,
-        help="The OS image name to run",
-        choices=sorted(cmd_images.supported_os),
-        default=section.get('os', 'fc28'))
-    parser.add_argument(
         "image",
         nargs='?',
         choices=sorted(get_images()),
@@ -276,12 +270,11 @@ def args_run(parser):
         choices=sorted(get_pci_rdma_devices().keys()),
         help="Pass a given PCI bus/device/function to the guest")
 
-
 def cmd_run(args):
     """Run a system image container inside KVM"""
     check_not_root()
     section = load()
-    args.os = args.os[0];
+    docker_os = section.get('os', 'fc28');
 
     """
     We have three possible options to execute:
@@ -321,7 +314,7 @@ def cmd_run(args):
         subprocess.check_call(["sudo", sys.argv[0], "vfio-enable"] +
                               ["--pci=%s" % (I) for I in args.pci])
 
-    cont = docker_get_containers(name=args.os)
+    cont = docker_get_containers(name=docker_os)
     if cont:
         try:
             docker_call(["kill", *cont])
@@ -355,7 +348,7 @@ def cmd_run(args):
     docker_exec(["run"] + mapdirs.as_docker_bind() + [
         "-v",
         "%s:/plugins:ro" % (src_dir), "--rm", "--net=host", "--privileged",
-        "--name=%s" % (args.os), "--tty", "-e",
+        "--name=%s" % (docker_os), "--tty", "-e",
         "KVM_PICKLE=%s" % (get_pickle(args)), "--interactive",
-        make_image_name("kvm", args.os)
+        make_image_name("kvm", docker_os)
     ] + do_kvm_args)
