@@ -285,10 +285,10 @@ def cmd_run(args):
 
     """
     We have three possible options to execute:
-    1. "x run" without request to specific image. We will try to find default one
-    2. "x run --pci ..." or "x run --simx ...". We won't use default image but add supplied
+    1. "mkt run" without request to specific image. We will try to find default one
+    2. "mkt run --pci ..." or "mkt run --simx ...". We won't use default image but add supplied
        PCIs and SimX devices.
-    3. "x run image_nam --pci ..." or "x run image_nam --simx ...". We will add those PCIs
+    3. "mkt run image_name --pci ..." or "mkt run image_name --simx ...". We will add those PCIs
        and SimX devices to the container.
     """
 
