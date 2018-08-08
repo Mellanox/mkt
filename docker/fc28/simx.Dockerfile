@@ -1,33 +1,32 @@
-FROM local_mkt/kvm_base:fc28
+FROM fedora:28
 
 RUN dnf install -y \
-    python \
     findutils \
     gcc \
     git-core \
+    glib2-devel \
     libaio-devel \
     libattr-devel \
     libcap-devel \
     libfdt-devel \
-    libnl3-devel \
     libnl3-cli \
-    pixman-devel \
+    libnl3-devel \
     libseccomp-devel \
-    spice-protocol \
-    spice-server-devel \
     libusb-devel \
     make \
+    pixman-devel \
     pkg-config \
     pulseaudio \
+    python \
+    spice-protocol \
+    spice-server-devel \
     systemtap-sdt-devel \
+    usbredir-devel \
     uuid-devel \
     zlib-devel \
-    glib2-devel \
-    usbredir-devel && \
-    dnf clean all
+    && dnf clean all
 
-ADD do-simx.sh /root/
-ADD 00*.patch /root/
+ADD do-simx.sh 00*.patch /root/
 
 RUN mkdir -p /opt/src/ && \
     cd /opt/src/ && \
