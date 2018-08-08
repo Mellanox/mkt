@@ -8,7 +8,7 @@ sed --in-place -e 's/^\(v.*\)$/\#\1/g' /usr/lib/tmpfiles.d/var.conf
 rm /usr/lib/tmpfiles.d/home.conf
 
 # usual lab password
-sed --in-place -e 's|root:\*:|root:$6$lOjqY.VA$8OzIMtQVdOihGRFijBt46UyaCRJ63tO3uKVe6ENB/sXB.erC3zSBHk8RAqpGGh5nxBw7xCzjgKyztXLWtqQ0R.:|g' /etc/shadow
+sed --in-place -e 's|root:.*$|root:$6$JAo7JDUgBkI7XOOT$VEdT3RUDM9m1kKNxmc/jBby0Rv9cgYq7rfi6b5bKsecZAKNTQl0PZLEx2Z7v0XwxwXtuqgtufG4XYrBLiz59g/:17751:0:99999:7:::|g' /etc/shadow
 
 # Some random stable host key
 echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCodLhpgsAw7KHHYuSnUrXtUBJxqdIjncQjcA/X3P4qAEZjq34x5CSKfcVxTJ2FoZrUsNZHhkjJmbJLp2We7nApFUN1t83EmuxpRS4mhNRU1mRKH0pvrzFVmACXzbdVuKIUdQ+Tht60ndEpg/B6+Ei7rWeAT3eoVSdir098w6E1J+PcpPnOIJ617XjDmvKtVV4KhQgFSRfnALlhAywjSpSk8s3YEnLuAGUl33HjAqcS0/Tb9Bbv/WMyauhluKUh5vsrVmpUBWm5FX+36SCv+AW+dEKHEF7cddT73ntgf1G0b3EbSmeky+Zmc+ikeUIrXXGLbuMJ75AgU3SjtzFMErf/ root@cbe2d0e5f74d' > /etc/ssh/ssh_host_rsa_key.pub
