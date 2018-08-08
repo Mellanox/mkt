@@ -199,11 +199,22 @@ def set_kernel(tree):
     })
 
 
-def set_loop_network(args):
-    """Simple network that forwards our localhost port 4444 to the kvm's ssh port"""
-
+def set_bridge_network(args):
+    """If a 'br0' is present then we can setup normal bridge networking"""
     qemu_args["-netdev"].add("bridge,br=br0,id=net0")
     qemu_args["-device"].append("virtio-net,netdev=net0,mac=" + args.mac)
+
+
+def set_loop_network(args):
+    """Simple network that forwards our localhost port 4444 to the kvm's ssh
+    port"""
+    print(
+        "No br0 bridge found, using NAT networking, connected to port localhost:4444 for ssh"
+    )
+    qemu_args["-net"].extend([
+        "nic,model=virtio,macaddr=%s" % (args.mac),
+        "user,hostfwd=tcp:127.0.0.1:4444-:22"
+    ])
 
 
 def set_simx_network():
@@ -279,7 +290,12 @@ set_console()
 setup_fs(paths=[args.kernel])
 set_kernel(args.kernel)
 
-set_loop_network(args)
+try:
+    subprocess.check_output(
+        ["ip", "link", "show", "dev", "br0"], stderr=subprocess.STDOUT)
+    set_bridge_network(args)
+except subprocess.CalledProcessError:
+    set_loop_network(args)
 
 set_vfio(args)
 
