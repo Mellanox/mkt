@@ -12,7 +12,6 @@ from utils.docker import *
 from utils.cmdline import *
 from utils.config import *
 
-
 class DirList(object):
     def __init__(self):
         self.list = set()
@@ -129,67 +128,6 @@ def get_pci_rdma_devices():
                 }
                 devices[I] = modalias
     return devices
-
-
-# -------------------------------------------------------------------------
-
-
-def switch_to_vfio(bdf, modalias):
-    """Switch the kernel driver for a PCI device to vfio-pci so it can be used
-    with VFIO passthrough."""
-    cur_driver = os.path.join("/sys/bus/pci/devices", bdf, "driver")
-    if os.path.exists(cur_driver):
-        if os.readlink(cur_driver).endswith("vfio-pci"):
-            return
-
-    if not os.path.exists("/sys/bus/pci/drivers/vfio-pci"):
-        subprocess.check_call(["modprobe", "vfio-pci"])
-
-    # There kernel does not de-dup this list and provides no wy for us to
-    # see, it so, remove then add.
-    with open(
-            "/sys/bus/pci/drivers/vfio-pci/remove_id", "wb", buffering=0) as F:
-        val = "%s %s\n" % (modalias['v'], modalias['d'])
-        try:
-            F.write(val.encode())
-            F.flush()
-        except IOError:
-            # can get enodev if there is no ID in the list
-            pass
-    with open("/sys/bus/pci/drivers/vfio-pci/new_id", "w") as F:
-        F.write("%s %s\n" % (modalias['v'], modalias['d']))
-
-    if os.path.exists(cur_driver):
-        with open(os.path.join(cur_driver, "unbind"), "w") as F:
-            F.write(bdf + "\n")
-    with open("/sys/bus/pci/drivers/vfio-pci/bind", "w") as F:
-        F.write(bdf + "\n")
-
-    assert os.readlink(cur_driver).endswith("vfio-pci")
-
-
-def args_vfio_enable(parser):
-    parser.add_argument(
-        '--pci',
-        metavar="PCI_BDF",
-        action="append",
-        default=[],
-        help="PCI BDF to move to vfio")
-
-
-def cmd_vfio_enable(args):
-    """Move the given PCI BDF to the vfio driver. This is an internal command used
-    automatically by kvm-run"""
-    sd = "/sys/bus/pci/devices/"
-    for I in args.pci:
-        with open(os.path.join(sd, I, "modalias")) as F:
-            modalias = F.read().strip()
-        modalias = {
-            a: b
-            for a, b in re.findall(r"([a-z]+)([0-9A-F]+)", modalias)
-        }
-        switch_to_vfio(I, modalias)
-
 
 def get_mac():
     mac = None
@@ -322,8 +260,9 @@ def cmd_run(args):
 
     # Invoke ourself as root to manipulate sysfs
     if args.pci:
-        subprocess.check_call(["sudo", sys.argv[0], "vfio-enable"] +
-                              ["--pci=%s" % (I) for I in args.pci])
+        subprocess.check_call(["sudo", sys.executable,
+                               os.path.join(os.path.dirname(__file__), "../utils/vfio.py")] +
+                               ["--pci=%s" % (I) for I in args.pci])
 
     cont = docker_get_containers(name=docker_os)
     if cont:
