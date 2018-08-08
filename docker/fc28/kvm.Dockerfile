@@ -43,7 +43,7 @@ RUN \
     infiniband-diags \
     iproute \
     rdma-core \
-    && dnf clean all
+    && dnf clean dbcache packages
 
 # Get the built simx from the simx builder container
 COPY --from=local_mkt/kvm_simx:fc28 /opt/simx /opt/simx
