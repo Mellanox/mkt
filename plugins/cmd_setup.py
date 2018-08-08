@@ -12,7 +12,8 @@ def install_packages(distname):
                                 "git",
                                 "dnf-plugins-core",
                                 "docker-ce",
-                                "python3-argcomplete"
+                                "python3-argcomplete",
+                                "pandoc",
                               )
                   }
 
