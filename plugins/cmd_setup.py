@@ -24,6 +24,36 @@ def args_setup(parser):
         action="store_true",
         help="Remove existing directories",
         default=False)
+    parser.add_argument(
+        "--no-dirs",
+        dest="dirs",
+        action="store_false",
+        help="Do not clone and create ANY directory (kernel, rdma-core and iproutes)",
+        default=True)
+    parser.add_argument(
+        "--no-kernel",
+        dest="kernel",
+        action="store_false",
+        help="Do not clone and create kernel directory",
+        default=True)
+    parser.add_argument(
+        "--no-rdma-core",
+        dest="rdma_core",
+        action="store_false",
+        help="Do not clone and create rdma-core directory",
+        default=True)
+    parser.add_argument(
+        "--no-iproute",
+        dest="iproute",
+        action="store_false",
+        help="Do not clone and create iproute2 directory",
+        default=True)
+    parser.add_argument(
+        "--no-distupdate",
+        dest="distupdate",
+        action="store_false",
+        help="Skip hypervisor distro packages update",
+        default=True)
 
 
 def cmd_setup(args):
@@ -42,6 +72,11 @@ def cmd_setup(args):
     # 6. Send an email with howtos and help
 
     check_not_root()
+
+    if not args.dirs:
+        args.kernel = False
+        args.rdma_core = False
+        args.iproute = False
 
     print(""" This setup script will update your hypervisor to latest
  distribution packages and install docker. Please restart
@@ -71,7 +106,8 @@ def cmd_setup(args):
     call(["sudo", "install", "-y", "docker-ce", "python3-argcomplete"])
     call(["sudo", "systemctl", "enable", "docker"])
     call(["sudo", "systemctl", "start", "docker"])
-    call(["sudo", "dnf", "-y", "update"])
+    if args.distupdate:
+        call(["sudo", "dnf", "-y", "update"])
 
     call([
         "sudo", "cp",
@@ -83,42 +119,50 @@ def cmd_setup(args):
     init()
     section = load()
 
-    for key, value in section.items():
-        if args.force:
-            call(["sudo", "rm", "-rf", value])
-        if os.path.exists(value):
-            exit("Please remove " + value + " Exiting ...")
+    if args.dirs:
+        for key, value in section.items():
+            if args.force:
+                call(["sudo", "rm", "-rf", value])
+            if os.path.exists(value):
+                exit("Please remove " + value + " Exiting ...")
 
-        print("Prepare " + key)
-        call(["sudo", "mkdir", "-p", value])
-        call(["sudo", "chown", "-R", username + ":" + group, value])
+            if key == "kernel" and not args.kernel:
+                continue
+            if key == "rdma-core" and not args.rdma_core:
+                continue
+            if key == "iproute2" and not args.iproute:
+                continue
 
-        if key == "src" or key == "logs" or key == "ccache":
-            continue
+            print("Prepare " + key)
+            call(["sudo", "mkdir", "-p", value])
+            call(["sudo", "chown", "-R", username + ":" + group, value])
 
-        p = Popen(
-            [
-                "git", "clone", "ssh://" + username +
-                "@l-gerrit.mtl.labs.mlnx:29418/upstream/" + key, "."
-            ],
-            cwd=value)
-        p.wait()
+            if key == "src" or key == "logs" or key == "ccache":
+                continue
 
-        p = Popen(
-            [
-                "scp", "-p", "-P", "29418",
-                username + "@l-gerrit.mtl.labs.mlnx:hooks/commit-msg",
-                ".git/hooks/"
-            ],
-            cwd=value)
-        p.wait()
-
-        if key == "kernel":
-            shutil.copy(
-                section['linux'] + "/.config",
-                os.path.join(
-                    os.path.dirname(__file__), "../configs/kconfig-kvm-ib"))
-            p = Popen(["make", "olddefconfig"], cwd=value)
+            p = Popen(
+                [
+                    "git", "clone", "ssh://" + username +
+                    "@l-gerrit.mtl.labs.mlnx:29418/upstream/" + key, "."
+                ],
+                cwd=value)
             p.wait()
+
+            p = Popen(
+                [
+                    "scp", "-p", "-P", "29418",
+                    username + "@l-gerrit.mtl.labs.mlnx:hooks/commit-msg",
+                    ".git/hooks/"
+                ],
+                cwd=value)
+            p.wait()
+
+            if key == "kernel":
+                shutil.copy(
+                    section['linux'] + "/.config",
+                    os.path.join(
+                        os.path.dirname(__file__), "../configs/kconfig-kvm-ib"))
+                p = Popen(["make", "olddefconfig"], cwd=value)
+                p.wait()
 
     print("Completed, PLEASE RESTART server")
