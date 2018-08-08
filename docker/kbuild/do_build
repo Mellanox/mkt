@@ -7,157 +7,191 @@ import copy
 import subprocess
 import shutil
 
-DATA_DIR = os.path.abspath(os.path.dirname(sys.argv[0]));
+DATA_DIR = os.path.abspath(os.path.dirname(sys.argv[0]))
+
 
 def create_src(args):
     """Checkout the linux source tree into the build directory so that everything
     about the build is pristine and isolated within the container."""
-    head = subprocess.check_output(["git", "rev-parse", args.rev],
-                                   cwd=args.git).strip();
-    obj_dir = subprocess.check_output(["git", "rev-parse",
-                                       "--git-path", "objects"],
-                                   cwd=args.git).strip();
-    obj_dir = os.path.join(args.git, obj_dir.decode());
+    head = subprocess.check_output(
+        ["git", "rev-parse", args.rev], cwd=args.git).strip()
+    obj_dir = subprocess.check_output(
+        ["git", "rev-parse", "--git-path", "objects"], cwd=args.git).strip()
+    obj_dir = os.path.join(args.git, obj_dir.decode())
 
     # Create an empty git repository. Native clone is too slow because the
     # typical gerrit source repo has a huge number of refs and git has to
     # inspect all of them. This approach lets us ignore all of that to only
     # use the rev we were asked to build.
-    os.mkdir("/build/linux");
-    os.chdir("/build/linux");
-    subprocess.check_call(["git", "init"]);
+    os.mkdir("/build/linux")
+    os.chdir("/build/linux")
+    subprocess.check_call(["git", "init"])
 
     # Setup alternates so we can see all the objects in the source repo
     with open(".git/objects/info/alternates", "w") as F:
-        F.write(obj_dir);
-        F.write("\n");
+        F.write(obj_dir)
+        F.write("\n")
 
     # Create a branch using the only remote HEAD we care about
-    subprocess.check_call(["git", "checkout", "-b", "build", "--no-progress", head]);
+    subprocess.check_call(
+        ["git", "checkout", "-b", "build", "--no-progress", head])
 
     # apply tar patche, TODO: more then 1 patch
     #patch_file = os.path.join(DATA_DIR, "tar.patch");
     #rc = subprocess.call(["patch", "-p1", "-f", "-i", patch_file]);
     # TODO: check rc and do somthing
 
-    print("Building Linux kernel from commit:");
-    subprocess.check_call(["git", "log", "--abbrev=12", "-1", "--format='%h %s'"]);
+    print("Building Linux kernel from commit:")
+    subprocess.check_call(
+        ["git", "log", "--abbrev=12", "-1", "--format='%h %s'"])
+
 
 def configure_kernel(args):
     """Create a kernel configuration using a 'mini config'.  Mini configs can be
     stripped down and rely on the configuration logic to follow the dependency
     chains and enable functions"""
-    shutil.copy("/configs/.config", "/build/linux/.config");
-    subprocess.check_call(["make", "-s", "olddefconfig"]);
+    shutil.copy("/configs/.config", "/build/linux/.config")
+    subprocess.check_call(["make", "-s", "olddefconfig"])
 
     # Log the config file that was produced
-    config_blob = subprocess.check_output(["git", "hash-object", ".config"]);
-    config_blob = config_blob.strip().decode();
-    print("Using full config with git hash %s." % (config_blob));
+    config_blob = subprocess.check_output(["git", "hash-object", ".config"])
+    config_blob = config_blob.strip().decode()
+    print("Using full config with git hash %s." % (config_blob))
 
     # FIXME: Parse the kconfig and make sure all mellanox config settings are
     # enabled as people add new settings in patches, want to build everything
     # Mellanox or the CI is not working right.
 
+
 def run_smatch(args):
     if not args.smatch:
         return
 
-    print("Running smatch");
+    print("Running smatch")
     # FIXME: precompile while creating docker image
-    os.chdir("/kbuild/smatch");
-    num_cpus = multiprocessing.cpu_count() * 2;
-    subprocess.check_call(["make", "-j", str(num_cpus)],
-                          stdout=subprocess.DEVNULL,
-                          stderr=subprocess.DEVNULL);
-    os.chdir("/build/linux");
-    subprocess.check_call(["make", "clean"],
-                          stdout=subprocess.DEVNULL,
-                          stderr=subprocess.DEVNULL);
-    subprocess.check_call(["make", "allyesconfig"],
-                          stdout=subprocess.DEVNULL,
-                          stderr=subprocess.DEVNULL);
-    subprocess.check_call(["make", "-s", "-j", str(num_cpus),
-                           "CHECK=/kbuild/smatch/smatch -p=kernel",
-                           "C=1", "drivers/infiniband/",
-                           "drivers/net/ethernet/mellanox/"]);
+    os.chdir("/kbuild/smatch")
+    num_cpus = multiprocessing.cpu_count() * 2
+    subprocess.check_call(
+        ["make", "-j", str(num_cpus)],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL)
+    os.chdir("/build/linux")
+    subprocess.check_call(
+        ["make", "clean"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL)
+    subprocess.check_call(
+        ["make", "allyesconfig"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL)
+    subprocess.check_call([
+        "make", "-s", "-j",
+        str(num_cpus), "CHECK=/kbuild/smatch/smatch -p=kernel", "C=1",
+        "drivers/infiniband/", "drivers/net/ethernet/mellanox/"
+    ])
+
 
 def run_sparse(args):
     if not args.sparse:
         return
 
-    print("Running sparse");
+    print("Running sparse")
     # FIXME: precompile while creating docker image
-    os.chdir("/kbuild/sparse");
-    num_cpus = multiprocessing.cpu_count() * 2;
-    subprocess.check_call(["make", "-j", str(num_cpus)],
-                          stdout=subprocess.DEVNULL,
-                          stderr=subprocess.DEVNULL);
-    os.chdir("/build/linux");
-    subprocess.check_call(["make", "clean"],
-                          stdout=subprocess.DEVNULL,
-                          stderr=subprocess.DEVNULL);
-    subprocess.check_call(["make", "allyesconfig"],
-                          stdout=subprocess.DEVNULL,
-                          stderr=subprocess.DEVNULL);
-    subprocess.check_call(["make", "-s", "-j", str(num_cpus),
-                           "CHECK=/kbuild/sparse/sparse",
-                           "C=2", "drivers/infiniband/",
-                           "drivers/net/ethernet/mellanox/"]);
+    os.chdir("/kbuild/sparse")
+    num_cpus = multiprocessing.cpu_count() * 2
+    subprocess.check_call(
+        ["make", "-j", str(num_cpus)],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL)
+    os.chdir("/build/linux")
+    subprocess.check_call(
+        ["make", "clean"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL)
+    subprocess.check_call(
+        ["make", "allyesconfig"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL)
+    subprocess.check_call([
+        "make", "-s", "-j",
+        str(num_cpus), "CHECK=/kbuild/sparse/sparse", "C=2",
+        "drivers/infiniband/", "drivers/net/ethernet/mellanox/"
+    ])
+
 
 def run_build(args):
-    num_cpus = multiprocessing.cpu_count() * 2;
+    num_cpus = multiprocessing.cpu_count() * 2
 
     print("Running build")
     if args.build:
-        subprocess.check_call(["make", "-s", "-j", str(num_cpus)]);
+        subprocess.check_call(["make", "-s", "-j", str(num_cpus)])
     else:
-        subprocess.check_call(["make", "-s", "-j",
-                               str(num_cpus),
-                               "drivers/net/ethernet/mellanox/",
-                               "drivers/infiniband/"]);
+        subprocess.check_call([
+            "make", "-s", "-j",
+            str(num_cpus), "drivers/net/ethernet/mellanox/",
+            "drivers/infiniband/"
+        ])
+
 
 def build_src(args):
     """This builds the kenrel using the 0-day cross-tool chain"""
-    env = copy.deepcopy(os.environ);
+    env = copy.deepcopy(os.environ)
     if args.gcc:
-        env["GCC_VERSION"] = args.gcc;
-        subprocess.check_call(["/kbuild/make.cross", "ARCH=" + args.arch], env=env);
+        env["GCC_VERSION"] = args.gcc
+        subprocess.check_call(
+            ["/kbuild/make.cross", "ARCH=" + args.arch], env=env)
     else:
-        run_build(args);
-        run_smatch(args);
-        run_sparse(args);
+        run_build(args)
+        run_smatch(args)
+        run_sparse(args)
 
-parser = argparse.ArgumentParser(description='Build a kernel RPM inside docker')
-parser.add_argument("--git", action="store", required=True,
-                    help="Git directory for the kernel to build");
-parser.add_argument("--rev", action="store", default="HEAD",
-                    help="Git rev to checkout and build");
 
-parser.add_argument("--gcc", action="store",
-                    help="GCC version to use");
-parser.add_argument("--arch", action="store", default="x86_64",
-                    help="Architecture to build");
+parser = argparse.ArgumentParser(
+    description='Build a kernel RPM inside docker')
+parser.add_argument(
+    "--git",
+    action="store",
+    required=True,
+    help="Git directory for the kernel to build")
+parser.add_argument(
+    "--rev",
+    action="store",
+    default="HEAD",
+    help="Git rev to checkout and build")
 
-parser.add_argument("--smatch", dest="smatch",
-                    action="store_true", default=False,
-                    help="Run smatch checker");
-parser.add_argument("--sparse", dest="sparse",
-                    action="store_true", default=False,
-                    help="Run sparse checker");
-parser.add_argument("--no-build", dest="build",
-                    action="store_false", default=True,
-                    help="Avoid kernel build");
-parser.add_argument("--depth",
-                    dest="static_depth",
-                    default=0,
-                    help="Depth of comparison for static checkers. " +
-                         "0 means that all warnings will be treated as new");
+parser.add_argument("--gcc", action="store", help="GCC version to use")
+parser.add_argument(
+    "--arch", action="store", default="x86_64", help="Architecture to build")
 
-args = parser.parse_args();
+parser.add_argument(
+    "--smatch",
+    dest="smatch",
+    action="store_true",
+    default=False,
+    help="Run smatch checker")
+parser.add_argument(
+    "--sparse",
+    dest="sparse",
+    action="store_true",
+    default=False,
+    help="Run sparse checker")
+parser.add_argument(
+    "--no-build",
+    dest="build",
+    action="store_false",
+    default=True,
+    help="Avoid kernel build")
+parser.add_argument(
+    "--depth",
+    dest="static_depth",
+    default=0,
+    help="Depth of comparison for static checkers. " +
+    "0 means that all warnings will be treated as new")
 
-os.chdir(args.git);
+args = parser.parse_args()
 
-create_src(args);
-configure_kernel(args);
-build_src(args);
+os.chdir(args.git)
+
+create_src(args)
+configure_kernel(args)
+build_src(args)

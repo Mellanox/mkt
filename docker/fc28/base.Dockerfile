@@ -47,4 +47,4 @@ RUN \
 
 ADD sshd_config ssh_host_rsa_key /etc/ssh/
 
-ADD basic-setup.sh container-setup.sh kvm-setup.sh do-init.sh /root/
+ADD basic-setup.sh kvm-setup.sh /root/
