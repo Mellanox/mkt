@@ -81,5 +81,5 @@ Local preferences can be configured in the
 **mkt** uses docker images from the Mellanox private docker container registry
 (harbor.mellanox.com). By default **mkt** will download required images automatically.
 
-Images can be generated locally by running the **mkt images** command. This
-may be faster if the user has a slow network to the harbor server.
+Images can be generated locally by running the **mkt images --no-pull** command.
+This may be faster if the user has a slow network to the harbor server.
