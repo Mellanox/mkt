@@ -298,7 +298,7 @@ def cmd_run(args):
             args.image = section.get('image', None)
 
     if args.image:
-        pci = get_imagesq(args.image)['pci']
+        pci = get_images(args.image)['pci']
         s = pci.split()
 
     union = set(get_simx_rdma_devices()).union(
