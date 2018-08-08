@@ -2,8 +2,17 @@
 
 This is a set of common scripts designed to help developers working with the
 Linux kernel, net and RDMA user space do their jobs efficiently. This toolset
-is designed to work with docker, and has few host dependencies, other than
-docker being installed.
+is designed to work with docker, and has few host dependencies beyond that and
+Python 3.5.
+
+# Documentation
+
+**mkt** is like **git**. It incorporates multiple internal commands under the
+**mkt** multiplexer. Each command has man-page style documentation that can be
+viewed with **mkt cmd --help**, or online as linked below:
+
+* **[mkt images](docs/mkt_images.1.md)**
+* **[mkt run](docs/mkt_run.1.md)**
 
 # Recommended work flow
 
@@ -13,7 +22,9 @@ directly on the hypervisor unless otherwise noted. Developers should not work
 from a VM within their hypervisor.
 
 When working with a standard Mellanox lab server images the recommended
-configuration is latest RHEL or Fedora Core, as desired.
+configuration is latest RHEL or Fedora Core, as desired. Old releases of RHEL
+lack necessary kernel features and are not supported by Docker Community
+Edition.
 
 Working sources should be FIXME
 
@@ -23,14 +34,8 @@ FIXME
 
 ## Testing a kernel and user pace in a VM
 
-Example commands (FIXME):
-
-```sh
-$ mkt run
-$ mkt run --simx device_name
-$ mkt run --pci ... --simx ..
-$ mkt run image_name
-```
+The **[mkt run](docs/mkt_run.1.md)** command will quickly launch a VM
+containing a kernel for testing.
 
 # Installation
 
@@ -79,7 +84,9 @@ Local preferences can be configured in the
 ## Docker preperation
 
 **mkt** uses docker images from the Mellanox private docker container registry
-(harbor.mellanox.com). By default **mkt** will download required images automatically.
+(harbor.mellanox.com). By default **mkt** will download required images
+automatically upon first use.
 
-Images can be generated locally by running the **mkt images** command. This
-may be faster if the user has a slow network to the harbor server.
+Images can be generated locally by running the **[mkt
+images](docs/mkt_images.1.md)** command. This may be faster if the user has a
+slow network connection to the harbor server.
