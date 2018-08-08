@@ -195,7 +195,19 @@ def get_mac():
     mac = None
     try:
         with open("/.autodirect/LIT/SCRIPTS/DHCPD/list.html") as F:
-            mac = "00:50:56:1b:bc:10"
+            import socket
+            hostname = socket.gethostname() + '-0'
+            for line in F:
+                if hostname in line:
+                    ip = line.split(';')[0]
+                    m = line.split(';')[1]
+                    try:
+                        subprocess.check_call(["ping", "-c", "1", ip],
+                                              stdout=subprocess.DEVNULL,
+                                              stderr=subprocess.DEVNULL)
+                    except subprocess.CalledProcessError:
+                        mac = m.strip()
+                        break
     except IOError:
         pass
 
@@ -210,7 +222,6 @@ def get_mac():
             b, '02x') + ":" + format(c, '02x') + ":" + format(d, '02x')
 
     return mac
-
 
 def get_pickle(args):
     usr = pwd.getpwuid(os.getuid())
