@@ -123,6 +123,14 @@ WantedBy=local-fs.target
         cnt = cnt + 1
 
 
+def terminal_size():
+    import fcntl, termios, struct
+    th, tw, hp, wp = struct.unpack(
+        'HHHH',
+        fcntl.ioctl(0, termios.TIOCGWINSZ, struct.pack('HHHH', 0, 0, 0, 0)))
+    return tw, th
+
+
 def set_console():
     """stdin is multiplexed onto three things, the monitor, the serial port and
     hvc0 (virtconsole).  The boot starts showing the serial port and switches
@@ -237,6 +245,38 @@ def write_once(fn, val):
         F.write(val)
 
 
+def setup_console(user):
+    """Configure the tty settings for the console inside kvm to match the settings
+    in docker. This doesn't track dynamically, eg you cannot resize the
+    terminal window and have things work, but it does track once at boot. This
+    avoids a bug in FC28 agetty that does not configure the console properly
+    resulting in passwd prompts not working. Unfortunately we can't invoke
+    login here, for some reason it erases the terminal geometry settings."""
+    os.makedirs(
+        "/etc/systemd/system/serial-getty@hvc0.service.d", exist_ok=True)
+    stty_config = subprocess.check_output(["stty", "-g"])
+    stty_config = stty_config.decode().strip()
+    geom = terminal_size()
+    with open("/etc/systemd/system/serial-getty@hvc0.service.d/override.conf",
+              "wt") as F:
+        F.write("""[Service]
+TTYPath=/dev/%I
+UtmpMode=login
+StandardInput=tty-force
+StandardOutput=tty
+StandardError=tty
+Environment=TERM={term}
+ExecStart=
+ExecStart=-/bin/bash -c "/usr/bin/stty {stty_config} && /usr/bin/stty cols {cols} rows {rows} && exec /usr/bin/su -l jgg"
+""".format(
+            user=user,
+            stty_config=stty_config,
+            cols=geom[0],
+            rows=geom[1],
+            term=os.environ.get("TERM", "xterm"),
+        ))
+
+
 def setup_from_pickle(args, pickle_params):
     """The script that invokes docker passes in some more detailed parameters
     about the environment in a pickle and we adjust the configuration
@@ -248,13 +288,7 @@ def setup_from_pickle(args, pickle_params):
     write_once("/etc/group", "{user}:x:{gid}:\n".format(**p))
     write_once("/etc/sudoers", "{user} ALL=(ALL) NOPASSWD:ALL\n".format(**p))
 
-    # Autologin as the given user
-    with open("/etc/systemd/system/serial-getty@hvc0.service.d/override.conf",
-              "wt") as F:
-        F.write("""[Service]
-ExecStart=
-ExecStart=-/sbin/agetty --keep-baud 115200,38400,9600 --autologin {user} --noclear %I xterm
-            """.format(**p))
+    setup_console(p["user"])
 
     args.kernel = p["kernel"]
     args.simx = p.get("simx", False)
