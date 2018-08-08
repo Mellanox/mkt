@@ -2,12 +2,60 @@
 """
 import os
 from utils.config import init, load, username, group
-from utils.cmdline import query_yes_no
 import platform
-from subprocess import call, Popen
+import subprocess
 import shutil
 from utils.cmdline import *
 
+def install_packages(distname):
+    install_pkg = { 'fedora': (
+                                "git",
+                                "dnf-plugins-core",
+                                "docker-ce",
+                                "python3-argcomplete"
+                              )
+                  }
+
+    if distname == 'fedora':
+        subprocess.call(['sudo', 'dnf',
+                         '-y', 'install',
+                         ' '.join(install_pkg['fedora'])])
+
+def remove_packages(distname):
+    remove_pkg = { 'fedora' : (
+                                "docker",
+                                "docker-client",
+                                "docker-client-latest",
+                                "docker-common",
+                                "docker-latest",
+                                "docker-latest-logrotate",
+                                "docker-logrotate",
+                                "docker-selinux",
+                                "docker-engine-selinux",
+                                "docker-engine"
+                              )
+                 }
+    if distname == 'fedora':
+        subprocess.call(['sudo', 'dnf',
+                         '-y', 'remove',
+                         ' '.join(remove_pkg['fedora'])],
+                         stdout=subprocess.DEVNULL,
+                         stderr=subprocess.DEVNULL)
+
+def configure_docker_repo(distname):
+    if distname == 'fedora':
+        subprocess.call([
+            "sudo", "dnf", "config-manager", "--add-repo",
+            "https://download.docker.com/linux/fedora/docker-ce.repo"
+        ])
+
+def services(distname):
+    subprocess.call(["sudo", "systemctl", "enable", "docker"])
+    subprocess.call(["sudo", "systemctl", "start", "docker"])
+
+def upgrade_distro(distname):
+    if distname == 'fedora':
+        subprocess.call(["sudo", "dnf", "-y", "update"])
 
 def args_setup(parser):
     parser.add_argument(
@@ -85,31 +133,23 @@ def cmd_setup(args):
                                           'no') is False:
         exit("Exiting ...")
 
-    distname, version, id = platform.dist()
-    if distname != "fedora":
-        exit("This script works on Fedora only. Exiting ...")
+    supported_os = {
+        "fedora",
+    }
 
-    if int(version) < 27:
-        exit("Please install latest Fedora. Exiting ...")
+    dist = platform.dist()
+    if dist[0] not in supported_os:
+        exit("""  Your hypervisor is not supported.
+  This script works on Fedora only. Exiting ...""")
 
-    call(["sudo", "dnf", "-y", "install", "git", "dnf-plugins-core"])
-    call([
-        "sudo", "dnf", "remove", "-y", "docker", "docker-client",
-        "docker-client-latest", "docker-common", "docker-latest",
-        "docker-latest-logrotate", "docker-logrotate", "docker-selinux",
-        "docker-engine-selinux", "docker-engine"
-    ])
-    call([
-        "sudo", "dnf", "config-manager", "--add-repo",
-        "https://download.docker.com/linux/fedora/docker-ce.repo"
-    ])
-    call(["sudo", "install", "-y", "docker-ce", "python3-argcomplete"])
-    call(["sudo", "systemctl", "enable", "docker"])
-    call(["sudo", "systemctl", "start", "docker"])
+    remove_packages(dist[0])
+    configure_docker_repo(dist[0])
+    install_packages(dist[0])
+    services(dist[0])
     if args.distupdate:
-        call(["sudo", "dnf", "-y", "update"])
+        upgrade_distro(dist[0])
 
-    call([
+    subprocess.call([
         "sudo", "cp",
         os.path.join(
             os.path.dirname(__file__), "../scripts/connectx_port_config"),
@@ -122,7 +162,7 @@ def cmd_setup(args):
     if args.dirs:
         for key, value in section.items():
             if args.force:
-                call(["sudo", "rm", "-rf", value])
+                subprocess.call(["sudo", "rm", "-rf", value])
             if os.path.exists(value):
                 exit("Please remove " + value + " Exiting ...")
 
@@ -134,8 +174,8 @@ def cmd_setup(args):
                 continue
 
             print("Prepare " + key)
-            call(["sudo", "mkdir", "-p", value])
-            call(["sudo", "chown", "-R", username + ":" + group, value])
+            subprocess.call(["sudo", "mkdir", "-p", value])
+            subprocess.call(["sudo", "chown", "-R", username + ":" + group, value])
 
             if key == "src" or key == "logs" or key == "ccache":
                 continue
