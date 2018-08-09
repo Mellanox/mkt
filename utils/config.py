@@ -7,7 +7,7 @@ import pwd
 import grp
 
 config_f = os.path.expanduser(
-    '~') + '/.config/mellanox/mkt/' + socket.gethostname() + '.mkt'
+    '~') + '/.config/mellanox/mkt/hv-' + socket.gethostname() + '.mkt'
 config = configparser.ConfigParser(allow_no_value=True)
 
 username = pwd.getpwuid(os.getuid())[0]

@@ -12,7 +12,6 @@ from utils.docker import *
 from utils.cmdline import *
 from utils.config import *
 
-
 class DirList(object):
     def __init__(self):
         self.list = set()
@@ -130,72 +129,23 @@ def get_pci_rdma_devices():
                 devices[I] = modalias
     return devices
 
-
-# -------------------------------------------------------------------------
-
-
-def switch_to_vfio(bdf, modalias):
-    """Switch the kernel driver for a PCI device to vfio-pci so it can be used
-    with VFIO passthrough."""
-    cur_driver = os.path.join("/sys/bus/pci/devices", bdf, "driver")
-    if os.path.exists(cur_driver):
-        if os.readlink(cur_driver).endswith("vfio-pci"):
-            return
-
-    if not os.path.exists("/sys/bus/pci/drivers/vfio-pci"):
-        subprocess.check_call(["modprobe", "vfio-pci"])
-
-    # There kernel does not de-dup this list and provides no wy for us to
-    # see, it so, remove then add.
-    with open(
-            "/sys/bus/pci/drivers/vfio-pci/remove_id", "wb", buffering=0) as F:
-        val = "%s %s\n" % (modalias['v'], modalias['d'])
-        try:
-            F.write(val.encode())
-            F.flush()
-        except IOError:
-            # can get enodev if there is no ID in the list
-            pass
-    with open("/sys/bus/pci/drivers/vfio-pci/new_id", "w") as F:
-        F.write("%s %s\n" % (modalias['v'], modalias['d']))
-
-    if os.path.exists(cur_driver):
-        with open(os.path.join(cur_driver, "unbind"), "w") as F:
-            F.write(bdf + "\n")
-    with open("/sys/bus/pci/drivers/vfio-pci/bind", "w") as F:
-        F.write(bdf + "\n")
-
-    assert os.readlink(cur_driver).endswith("vfio-pci")
-
-
-def args_vfio_enable(parser):
-    parser.add_argument(
-        '--pci',
-        metavar="PCI_BDF",
-        action="append",
-        default=[],
-        help="PCI BDF to move to vfio")
-
-
-def cmd_vfio_enable(args):
-    """Move the given PCI BDF to the vfio driver. This is an internal command used
-    automatically by kvm-run"""
-    sd = "/sys/bus/pci/devices/"
-    for I in args.pci:
-        with open(os.path.join(sd, I, "modalias")) as F:
-            modalias = F.read().strip()
-        modalias = {
-            a: b
-            for a, b in re.findall(r"([a-z]+)([0-9A-F]+)", modalias)
-        }
-        switch_to_vfio(I, modalias)
-
-
 def get_mac():
     mac = None
     try:
         with open("/.autodirect/LIT/SCRIPTS/DHCPD/list.html") as F:
-            mac = "00:50:56:1b:bc:10"
+            import socket
+            hostname = socket.gethostname() + '-0'
+            for line in F:
+                if hostname in line:
+                    ip = line.split(';')[0]
+                    m = line.split(';')[1]
+                    try:
+                        subprocess.check_call(["ping", "-c", "1", ip],
+                                              stdout=subprocess.DEVNULL,
+                                              stderr=subprocess.DEVNULL)
+                    except subprocess.CalledProcessError:
+                        mac = m.strip()
+                        break
     except IOError:
         pass
 
@@ -210,7 +160,6 @@ def get_mac():
             b, '02x') + ":" + format(c, '02x') + ":" + format(d, '02x')
 
     return mac
-
 
 def get_pickle(args):
     usr = pwd.getpwuid(os.getuid())
@@ -242,12 +191,6 @@ from . import cmd_images
 def args_run(parser):
     section = load()
     parser.add_argument(
-        "os",
-        nargs=1,
-        help="The OS image name to run",
-        choices=sorted(cmd_images.supported_os),
-        default=section.get('os', 'fc28'))
-    parser.add_argument(
         "image",
         nargs='?',
         choices=sorted(get_images()),
@@ -276,19 +219,18 @@ def args_run(parser):
         choices=sorted(get_pci_rdma_devices().keys()),
         help="Pass a given PCI bus/device/function to the guest")
 
-
 def cmd_run(args):
     """Run a system image container inside KVM"""
     check_not_root()
     section = load()
-    args.os = args.os[0];
+    docker_os = section.get('os', 'fc28');
 
     """
     We have three possible options to execute:
-    1. "x run" without request to specific image. We will try to find default one
-    2. "x run --pci ..." or "x run --simx ...". We won't use default image but add supplied
+    1. "mkt run" without request to specific image. We will try to find default one
+    2. "mkt run --pci ..." or "mkt run --simx ...". We won't use default image but add supplied
        PCIs and SimX devices.
-    3. "x run image_nam --pci ..." or "x run image_nam --simx ...". We will add those PCIs
+    3. "mkt run image_name --pci ..." or "mkt run image_name --simx ...". We will add those PCIs
        and SimX devices to the container.
     """
 
@@ -298,7 +240,7 @@ def cmd_run(args):
             args.image = section.get('image', None)
 
     if args.image:
-        pci = get_imagesq(args.image)['pci']
+        pci = get_images(args.image)['pci']
         s = pci.split()
 
     union = set(get_simx_rdma_devices()).union(
@@ -318,10 +260,11 @@ def cmd_run(args):
 
     # Invoke ourself as root to manipulate sysfs
     if args.pci:
-        subprocess.check_call(["sudo", sys.argv[0], "vfio-enable"] +
-                              ["--pci=%s" % (I) for I in args.pci])
+        subprocess.check_call(["sudo", sys.executable,
+                               os.path.join(os.path.dirname(__file__), "../utils/vfio.py")] +
+                               ["--pci=%s" % (I) for I in args.pci])
 
-    cont = docker_get_containers(name=args.os)
+    cont = docker_get_containers(name=docker_os)
     if cont:
         try:
             docker_call(["kill", *cont])
@@ -355,7 +298,7 @@ def cmd_run(args):
     docker_exec(["run"] + mapdirs.as_docker_bind() + [
         "-v",
         "%s:/plugins:ro" % (src_dir), "--rm", "--net=host", "--privileged",
-        "--name=%s" % (args.os), "--tty", "-e",
+        "--name=%s" % (docker_os), "--tty", "-e",
         "KVM_PICKLE=%s" % (get_pickle(args)), "--interactive",
-        make_image_name("kvm", args.os)
+        make_image_name("kvm", docker_os)
     ] + do_kvm_args)

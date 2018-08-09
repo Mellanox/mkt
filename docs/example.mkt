@@ -9,12 +9,11 @@ logs = /images/leonro/logs/
 # Shared directory for various builder to speed-up process
 ccache = /images/leonro/ccache/
 # Base distro, supported: "fc28"
-# This line can be omitted and default will be "fc28" or
-# overwritten wyth "x run --os fc28".
+# This line can be omitted and default will be "fc28".
 os = fc28
-# Default container image to run if execute "x run" command
+# Default container image to run if execute "mkt run" command
 # without any parameters. It is overwritten by providng image
-# name as an argument to "x run"
+# name as an argument to "mkt run"
 image = cx5-ib
 [cx5-ib]
 # List of PICs to connect to this container
