@@ -13,13 +13,21 @@ def install_packages(distname):
                                 "dnf-plugins-core",
                                 "docker-ce",
                                 "python3-argcomplete"
+                              ),
+                    'ubuntu': (
+                                'git',
+                                'docker-ce',
+                                'python3-argcomplete'
                               )
                   }
 
     if distname == 'fedora':
-        subprocess.call(['sudo', 'dnf',
-                         '-y', 'install',
-                         ' '.join(install_pkg['fedora'])])
+        cmd = ['dnf', '-y', 'install']
+    else:
+        if distname == 'ubuntu':
+            cmd = ['apt-get', '-y', 'install']
+
+    subprocess.call(['sudo'] + cmd + [' '.join(install_pkg[distname])])
 
 def remove_packages(distname):
     remove_pkg = { 'fedora' : (
@@ -33,14 +41,22 @@ def remove_packages(distname):
                                 "docker-selinux",
                                 "docker-engine-selinux",
                                 "docker-engine"
-                              )
+                              ),
+                    'ubuntu' : (
+                                "docker",
+                                "docker-engine",
+                                "docker.io"
+                                )
                  }
     if distname == 'fedora':
-        subprocess.call(['sudo', 'dnf',
-                         '-y', 'remove',
-                         ' '.join(remove_pkg['fedora'])],
-                         stdout=subprocess.DEVNULL,
-                         stderr=subprocess.DEVNULL)
+        cmd = ['dnf', '-y', 'remove']
+    else:
+        if distname == 'ubuntu':
+            cmd = ['apt-get', '-y', 'remove']
+
+    subprocess.call(['sudo'] + cmd + [' '.join(remove_pkg[distname])],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL)
 
 def configure_docker_repo(distname):
     if distname == 'fedora':
@@ -48,14 +64,45 @@ def configure_docker_repo(distname):
             "sudo", "dnf", "config-manager", "--add-repo",
             "https://download.docker.com/linux/fedora/docker-ce.repo"
         ])
+    else:
+        if distname == 'ubuntu':
+            subprocess.call([
+                "sudo", "apt-get", "-y", "install",
+                "apt-transport-https", "ca-certificates",
+                "curl", "software-properties-common"
+            ])
+            subprocess.call([
+                "curl", "-fsSL", "https://download.docker.com/linux/ubuntu/gpg",
+                "|", "sudo", "apt-key", "add", "-"
+            ])
+            subprocess.call([
+                "sudo", "apt-key", "fingerprint", "0EBFCD88"
+            ])
+            subprocess.call([
+                'sudo', 'add-apt-repository',
+                '"deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"'
+            ])
+            subprocess.call([
+                "sudo", "apt-get", "update"
+            ])
+            subprocess.call([
+                "sudo", "apt-get", "install", "docker-ce"
+            ])
 
 def services(distname):
-    subprocess.call(["sudo", "systemctl", "enable", "docker"])
-    subprocess.call(["sudo", "systemctl", "start", "docker"])
+    if distname == 'fedora':
+        subprocess.call(["sudo", "systemctl", "enable", "docker"])
+        subprocess.call(["sudo", "systemctl", "start", "docker"])
+
+    # In Ubuntu docker service starts by default
 
 def upgrade_distro(distname):
     if distname == 'fedora':
         subprocess.call(["sudo", "dnf", "-y", "update"])
+    else:
+        if distname == 'ubuntu':
+            subprocess.call(["sudo", "apt-get", "-y", "update"])
+            subprocess.call(["sudo", "apt-get", "-y", "upgrade"])
 
 def args_setup(parser):
     parser.add_argument(
@@ -134,7 +181,8 @@ def cmd_setup(args):
         exit("Exiting ...")
 
     supported_os = {
-        "fedora",
+        'fedora',
+        'ubuntu',
     }
 
     dist = platform.dist()
