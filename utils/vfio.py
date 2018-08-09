@@ -5,6 +5,7 @@ import os
 import sys
 import re
 import argparse
+import subprocess
 
 def switch_to_vfio(bdf, modalias):
     """Switch the kernel driver for a PCI device to vfio-pci so it can be used
