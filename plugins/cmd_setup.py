@@ -149,13 +149,6 @@ def cmd_setup(args):
     if args.distupdate:
         upgrade_distro(dist[0])
 
-    subprocess.call([
-        "sudo", "cp",
-        os.path.join(
-            os.path.dirname(__file__), "../scripts/connectx_port_config"),
-        "/usr/sbin/connectx_port_config"
-    ])
-
     init()
     section = load()
 
