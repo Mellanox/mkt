@@ -17,9 +17,9 @@ def install_packages(distname):
                   }
 
     if distname == 'fedora':
-        subprocess.call(['sudo', 'dnf',
-                         '-y', 'install',
-                         ' '.join(install_pkg['fedora'])])
+        cmd = ['dnf', '-y', 'install']
+
+    subprocess.call(['sudo'] + cmd + [' '.join(install_pkg[distname])])
 
 def remove_packages(distname):
     remove_pkg = { 'fedora' : (
@@ -36,11 +36,11 @@ def remove_packages(distname):
                               )
                  }
     if distname == 'fedora':
-        subprocess.call(['sudo', 'dnf',
-                         '-y', 'remove',
-                         ' '.join(remove_pkg['fedora'])],
-                         stdout=subprocess.DEVNULL,
-                         stderr=subprocess.DEVNULL)
+        cmd = ['dnf', '-y', 'remove']
+
+    subprocess.call(['sudo'] + cmd + [' '.join(remove_pkg[distname])],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL)
 
 def configure_docker_repo(distname):
     if distname == 'fedora':
