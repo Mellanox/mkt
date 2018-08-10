@@ -77,7 +77,7 @@ def args_setup(parser):
         "--no-dirs",
         dest="dirs",
         action="store_false",
-        help="Do not clone and create ANY directory (kernel, rdma-core and iproutes)",
+        help="Do not clone and create ANY directory (kernel, rdma-core and iproute2)",
         default=True)
     parser.add_argument(
         "--no-kernel",
@@ -92,18 +92,19 @@ def args_setup(parser):
         help="Do not clone and create rdma-core directory",
         default=True)
     parser.add_argument(
-        "--no-iproute",
+        "--no-iproute2",
         dest="iproute",
         action="store_false",
         help="Do not clone and create iproute2 directory",
         default=True)
     parser.add_argument(
-        "--no-distupdate",
-        dest="distupdate",
+        "--no-installs",
+        dest="installs",
         action="store_false",
-        help="Skip hypervisor distro packages update",
+        help="""Skip hypervisor packages installation and configuration.
+           It can be useful if you was asked to work on already pre-configured
+           system""",
         default=True)
-
 
 def cmd_setup(args):
     """Setup environment."""
@@ -127,12 +128,13 @@ def cmd_setup(args):
         args.rdma_core = False
         args.iproute = False
 
-    print(""" This setup script will update your hypervisor to latest
+    if args.installs:
+        print(""" This setup script will update your hypervisor to latest
  distribution packages and install docker. Please restart
  the hypervisor to complete the installation. """)
-    if args.yes is False and query_yes_no("Do you want to proceed?",
-                                          'no') is False:
-        exit("Exiting ...")
+        if args.yes is False and query_yes_no("Do you want to proceed?",
+                                              'no') is False:
+            exit("Exiting ...")
 
     supported_os = {
         "fedora",
@@ -143,11 +145,11 @@ def cmd_setup(args):
         exit("""  Your hypervisor is not supported.
   This script works on Fedora only. Exiting ...""")
 
-    remove_packages(dist[0])
-    configure_docker_repo(dist[0])
-    install_packages(dist[0])
-    services(dist[0])
-    if args.distupdate:
+    if args.installs:
+        remove_packages(dist[0])
+        configure_docker_repo(dist[0])
+        install_packages(dist[0])
+        services(dist[0])
         upgrade_distro(dist[0])
 
     init()
