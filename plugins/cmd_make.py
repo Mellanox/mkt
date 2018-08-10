@@ -45,7 +45,6 @@ def args_make(parser):
 
 def cmd_make(args):
     """Compile project for different architectures."""
-    check_not_root()
     section = load()
 
     # FIXME: It can be done with add_argument_group()

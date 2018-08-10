@@ -84,6 +84,9 @@ def my_print_help(cmd_fn_name, fallback_fn, file=None):
         "pandoc -s -t man %s | man -l -" % (shlex.quote(pd_fn))
     ])
 
+def check_not_root():
+    if not os.getuid():
+        exit("Please don't run this program as root")
 
 def main(cmd_modules, top_module):
     parser = argparse.ArgumentParser(description="""Mellanox Kernel Toolset
@@ -115,9 +118,5 @@ Various utilities for working with the Linux kernel at Mellanox""")
 
     # argparse will set 'func' to the cmd_* that executes this command
     args = parser.parse_args()
+    check_not_root()
     args.func(args)
-
-
-def check_not_root():
-    if not os.getuid():
-        exit("Please don't run this program as root")

@@ -1,6 +1,7 @@
 """Setup all needed pieces on hypervisor
 """
 import os
+import utils
 from utils.config import init, load, username, group
 import platform
 import subprocess
@@ -120,8 +121,6 @@ def cmd_setup(args):
     # 4. Install docker
     # 5. Setup docker
     # 6. Send an email with howtos and help
-
-    check_not_root()
 
     if not args.dirs:
         args.kernel = False
