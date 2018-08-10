@@ -61,7 +61,7 @@ def upgrade_distro(distname):
 def args_setup(parser):
     parser.add_argument(
         "-y",
-        "--assumeyes",
+        "--assume-yes",
         dest="yes",
         action="store_true",
         help="Automatically answer yes for all questions",
