@@ -2,6 +2,7 @@ FROM fedora:28 as rpms
 
 COPY --from=local_mkt/support_rdma_core:fc28 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
 COPY --from=local_mkt/support_simx:fc28 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
+COPY --from=local_mkt/support_pyverbs:fc28 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
 
 RUN rm -f \
    /opt/rpms/*debug*.rpm \
