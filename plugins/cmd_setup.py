@@ -8,57 +8,6 @@ import subprocess
 import shutil
 from utils.cmdline import *
 
-def install_packages(distname):
-    install_pkg = { 'fedora': (
-                                "git",
-                                "dnf-plugins-core",
-                                "docker-ce",
-                                "python3-argcomplete",
-                                "pandoc",
-                              )
-                  }
-
-    if distname == 'fedora':
-        subprocess.call(['sudo', 'dnf',
-                         '-y', 'install',
-                         ' '.join(install_pkg['fedora'])])
-
-def remove_packages(distname):
-    remove_pkg = { 'fedora' : (
-                                "docker",
-                                "docker-client",
-                                "docker-client-latest",
-                                "docker-common",
-                                "docker-latest",
-                                "docker-latest-logrotate",
-                                "docker-logrotate",
-                                "docker-selinux",
-                                "docker-engine-selinux",
-                                "docker-engine"
-                              )
-                 }
-    if distname == 'fedora':
-        subprocess.call(['sudo', 'dnf',
-                         '-y', 'remove',
-                         ' '.join(remove_pkg['fedora'])],
-                         stdout=subprocess.DEVNULL,
-                         stderr=subprocess.DEVNULL)
-
-def configure_docker_repo(distname):
-    if distname == 'fedora':
-        subprocess.call([
-            "sudo", "dnf", "config-manager", "--add-repo",
-            "https://download.docker.com/linux/fedora/docker-ce.repo"
-        ])
-
-def services(distname):
-    subprocess.call(["sudo", "systemctl", "enable", "docker"])
-    subprocess.call(["sudo", "systemctl", "start", "docker"])
-
-def upgrade_distro(distname):
-    if distname == 'fedora':
-        subprocess.call(["sudo", "dnf", "-y", "update"])
-
 def args_setup(parser):
     parser.add_argument(
         "-y",
@@ -145,11 +94,9 @@ def cmd_setup(args):
   This script works on Fedora only. Exiting ...""")
 
     if args.installs:
-        remove_packages(dist[0])
-        configure_docker_repo(dist[0])
-        install_packages(dist[0])
-        services(dist[0])
-        upgrade_distro(dist[0])
+        setuphv = utils.get_internal_fn('scripts/')
+        setuphv += 'setup-hv.' + dist[0]
+        subprocess.check_call(setuphv)
 
     init()
     section = load()
