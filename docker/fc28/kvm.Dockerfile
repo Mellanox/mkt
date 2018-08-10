@@ -8,6 +8,7 @@ COPY --from=local_mkt/support_pcapy:fc28 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/r
 COPY --from=local_mkt/support_netperf:fc28 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
 COPY --from=local_mkt/support_ame:fc28 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
 COPY --from=local_mkt/support_mft:fc28 /opt/mft/*.rpm /opt/rpms/
+COPY --from=local_mkt/support_drivertest:fc28 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
 
 RUN rm -f \
    /opt/rpms/*debug*.rpm \
@@ -23,6 +24,7 @@ RUN \
     echo Israel/Jerusalem > /etc/timezone && \
     echo mellanox.com > /etc/mailname && \
     dnf install -y \
+    PyQt4 \
     bash-completion \
     bzip2 \
     ca-certificates \
@@ -37,10 +39,14 @@ RUN \
     iproute \
     kmod \
     less \
+    linuxptp \
+    iperf \
+    iperf3 \
     lsof \
     man \
     nano \
     net-tools \
+    opensm \
     openssh-server \
     pciutils \
     'perl(File::Basename)' \
@@ -51,6 +57,12 @@ RUN \
     psmisc \
     python-argcomplete \
     python2 \
+    python2-ipaddr \
+    python2-netaddr \
+    python2-netifaces \
+    python2-paramiko \
+    python2-pathlib2 \
+    python2-pyyaml \
     python3 \
     python3-argcomplete \
     qemu-kvm \
@@ -59,6 +71,7 @@ RUN \
     strace \
     sudo \
     tcpdump \
+    traceroute \
     udev \
     unzip \
     valgrind \
@@ -66,6 +79,9 @@ RUN \
     && dnf clean dbcache packages
 
 COPY --from=rpms /opt/rpms /opt/rpms
+
+# FIXME: should run this via support as well
+RUN pip install python-redmine==2.0.2 plumbum==1.6.7
 
 ADD sshd_config ssh_host_rsa_key /etc/ssh/
 
