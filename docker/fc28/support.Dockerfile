@@ -6,6 +6,7 @@ RUN dnf install -y \
     dracut \
     findutils \
     gcc \
+    gcc-c++ \
     git-core \
     glib2-devel \
     kmod \
@@ -15,6 +16,7 @@ RUN dnf install -y \
     libfdt-devel \
     libnl3-cli \
     libnl3-devel \
+    libpcap-devel \
     libseccomp-devel \
     libudev-devel \
     libusb-devel \
