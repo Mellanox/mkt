@@ -14,6 +14,7 @@ RUN dnf install -y \
     libseccomp-devel \
     libusb-devel \
     make \
+    patch \
     pixman-devel \
     pkg-config \
     pulseaudio \
@@ -24,11 +25,4 @@ RUN dnf install -y \
     usbredir-devel \
     uuid-devel \
     zlib-devel \
-    && dnf clean all
-
-ADD do-simx.sh 00*.patch /root/
-
-RUN mkdir -p /opt/src/ && \
-    cd /opt/src/ && \
-    http_proxy= git clone http://webdev01.mtl.labs.mlnx:8080/git/simx.git && \
-    /bin/bash /root/do-simx.sh
+    && dnf clean dbcache packages

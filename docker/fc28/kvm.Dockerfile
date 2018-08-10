@@ -45,8 +45,7 @@ RUN \
     rdma-core \
     && dnf clean dbcache packages
 
-# Get the built simx from the simx builder container
-COPY --from=local_mkt/kvm_simx:fc28 /opt/simx /opt/simx
+COPY --from=local_mkt/support_simx:fc28 /opt/simx /opt/simx
 
 ADD sshd_config ssh_host_rsa_key /etc/ssh/
 

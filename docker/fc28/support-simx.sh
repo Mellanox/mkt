@@ -1,13 +1,11 @@
 #!/bin/bash
+# ---
+# git_url: http://webdev01.mtl.labs.mlnx:8080/git/simx.git
+# git_commit: 0bb8c6753fd8314071bce3fd70a49f5b51803fa1
+# other_files:
+#   - 0001-Fix-compilation-error-on-FC28.patch
 
-set -e
-
-cd /opt/src/simx
-
-git reset --hard 0bb8c6753fd8314071bce3fd70a49f5b51803fa1
-git config --global user.email "leonro@mellanox.com"
-git config --global user.name "Leon Romanovsky"
-git am /root/00*.patch
+patch -p1 < /opt/00*.patch
 
 # See ./mlnx_infra/config.status.mlnx
 SIMX_GCC_FLAGS=
@@ -15,9 +13,10 @@ SIMX_EXTRA_FLAGS="-I/usr/include/libnl3/"
 SIMX_EXTRA_LDFLAGS=
 SIMX_EXTRA_COMPILATION_FLAGS='--enable-werror'
 
-make clean
+mkdir build
+cd build
 
-'./configure' \
+'../configure' \
 ${SIMX_GCC_FLAGS} \
 ${SIMX_EXTRA_COMPILATION_FLAGS} \
 '--python=/usr/bin/python2' \
@@ -69,6 +68,8 @@ ${SIMX_EXTRA_COMPILATION_FLAGS} \
 
 make -j`nproc`
 make install
-rm -rf /opt/src
 mkdir -p /opt/simx/etc/qemu-kvm/
 ln -s /etc/qemu/bridge.conf /opt/simx/etc/qemu-kvm/bridge.conf
+
+cd ..
+rm -rf build
