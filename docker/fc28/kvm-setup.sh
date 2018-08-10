@@ -77,3 +77,21 @@ echo allow br0 >> /etc/qemu/bridge.conf
 # Avoid writing hwdb.bin on boot
 systemd-hwdb update --usr
 rm -f /etc/udev/hwdb.bin
+
+# See /auto/net_linux_verification/tools/ver_ansible/roles/verification_apps_playbook.yml
+# For drivertest, maybe we should build the exact versions they want..
+mkdir -p /opt/verutils/bin/
+
+ln -sf /usr/sbin/ptp4l /opt/verutils/bin/ptp4l
+ln -sf /usr/sbin/hwstamp_ctl /opt/verutils/bin/hwstamp_ctl
+
+ln -sf /usr/bin/iperf /opt/verutils/bin/iperf
+ln -sf /usr/sbin/ip /opt/verutils/bin/ip
+ln -sf /usr/sbin/rdma /opt/verutils/bin/rdma
+ln -sf /usr/sbin/devlink /opt/verutils/bin/devlink
+
+ln -sf /usr/bin/netserver /opt/verutils/bin/netserver
+ln -sf /usr/bin/netperf /opt/verutils/bin/netperf
+ln -sf /usr/bin/iperf3 /opt/verutils/bin/iperf3
+
+ln -sf /usr/sbin/ethtool /opt/verutils/bin/ethtool
