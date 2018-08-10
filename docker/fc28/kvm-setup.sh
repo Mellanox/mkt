@@ -12,21 +12,8 @@ WantedBy=sockets.target
 EOF
 systemctl enable sshd.socket
 
-# Auto start a root console on the qemu console, either ttyS0 or hvc0
-# depending on the kernel command line parameter.
-mkdir -p /etc/systemd/system/serial-getty\@ttyS0.service.d/
-cat <<EOF > /etc/systemd/system/serial-getty\@ttyS0.service.d/override.conf
-[Service]
-ExecStart=
-ExecStart=-/sbin/agetty --keep-baud 115200,38400,9600 --autologin root --noclear %I xterm
-EOF
-
-mkdir -p /etc/systemd/system/serial-getty\@hvc0.service.d/
-cat <<EOF > /etc/systemd/system/serial-getty\@hvc0.service.d/override.conf
-[Service]
-ExecStart=
-ExecStart=-/sbin/agetty --keep-baud 115200,38400,9600 --autologin root --noclear %I xterm
-EOF
+# Auto start a root console on the qemu console. Note that do-kvm adds an
+# override, see setup_console()
 systemctl enable serial-getty@hvc0.service
 
 # Load usual RDMA modules

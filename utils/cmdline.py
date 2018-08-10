@@ -6,6 +6,18 @@ import importlib
 import inspect
 import sys
 import os
+import functools
+import subprocess
+import shlex
+
+source_root = os.path.normpath(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+
+
+def get_internal_fn(fn):
+    """Return the full path to an internal file. When running "in-place" this path
+    points into the source directory"""
+    return os.path.join(source_root, fn)
 
 
 def query_yes_no(question, default="yes"):
@@ -53,6 +65,26 @@ def load_all_commands(name, top_module):
         yield (k, fn, argsfn)
 
 
+def my_print_help(cmd_fn_name, fallback_fn, file=None):
+    """If the command has a manual page in the doc directory then
+    display that instead of the --help output"""
+    pd_fn = get_internal_fn("docs/mkt_%s.1.md" % (cmd_fn_name[4:]))
+    if not os.path.exists(pd_fn) or "MKT_PYTHON_HELP" in os.environ:
+        return fallback_fn(file)
+
+    try:
+        subprocess.check_output(
+            ["bash", "-c", "pandoc --version"], stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError:
+        subprocess.check_call(["less", pd_fn])
+        return
+
+    subprocess.check_call([
+        "bash", "-c",
+        "pandoc -s -t man %s | man -l -" % (shlex.quote(pd_fn))
+    ])
+
+
 def main(cmd_modules, top_module):
     parser = argparse.ArgumentParser(description="""Mellanox Kernel Toolset
 
@@ -72,6 +104,8 @@ Various utilities for working with the Linux kernel at Mellanox""")
         sparser.required = True
         argsfn(sparser)
         sparser.set_defaults(func=fn)
+        sparser.print_help = functools.partial(my_print_help, k,
+                                               sparser.print_help)
 
     try:
         import argcomplete

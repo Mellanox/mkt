@@ -1,11 +1,10 @@
 """Build docker images for different architectures and OS
 """
 import os
-import utils.config
+import utils
 from utils.git import *
 from utils.docker import *
 from subprocess import call, Popen
-from utils.cmdline import *
 
 supported_os = {
     "fc28",
@@ -16,7 +15,8 @@ def args_images(parser):
         "--no-pull",
         dest="pull",
         action="store_false",
-        help="Do not update the base image",
+        help=
+        "Do not update the base docker images from the public docker registry",
         default=True)
 
     section = utils.config.load()
@@ -54,32 +54,46 @@ def get_proxy_arg(run=False):
     return res
 
 
+def do_pull(dockerfn):
+    """This is like docker build --pull but it only pulls things that come
+    from the public docker repositories, it does not indiscriminately pull
+    other things"""
+    images = set()
+    with open(dockerfn, "rt") as F:
+        for ln in F:
+            if ln.startswith("FROM"):
+                name = ln.split()[-1]
+                if (name.startswith("fedora") or name.startswith("ubuntu")
+                        or name.startswith("centos")):
+                    images.add(name)
+    return images
+
+
 def cmd_images(args):
     """Build docker image for different architectures and OS."""
-    check_not_root()
+    utils.check_not_root()
 
-    with in_directory(
-            os.path.join(os.path.dirname(__file__), "../docker/", args.os)):
+    with in_directory(utils.get_internal_fn(os.path.join("docker", args.os))):
+
         # Host network is needed because docker has a hard time in some cases
         # finding the right DNS server for Mellanox's private DNS. (eg over
         # VPN)
         cmd = ["build", "--network=host"] + get_proxy_arg()
 
-        # Pull can only be done for this image as the other FROMs in the later
-        # images refer to internal images. Docker does not handle this well.
-        docker_call(cmd + (["--pull"] if args.pull else ["--pull=false"]) + [
-            "-t",
-            make_local_image_name("kvm_base", args.os), "-f",
-            "base.Dockerfile", "."
-        ])
+        images = (
+            (make_local_image_name("kvm_simx", args.os), "simx.Dockerfile"),
+            (make_image_name("kvm", args.os), "kvm.Dockerfile"),
+        )
 
-        docker_call(cmd + [
-            "-t",
-            make_local_image_name("kvm_simx", args.os), "-f",
-            "simx.Dockerfile", "."
-        ])
+        if args.pull:
+            to_pull = set()
+            for image, dockerfn in images:
+                to_pull.update(do_pull(dockerfn))
+            for I in to_pull:
+                docker_call(["pull", I])
 
-        docker_call(cmd + [
-            "-t",
-            make_image_name("kvm", args.os), "-f", "kvm.Dockerfile", "."
-        ])
+        for image, dockerfn in images:
+            if args.pull:
+                do_pull(dockerfn)
+
+            docker_call(cmd + ["-t", image, "-f", dockerfn, "."])
