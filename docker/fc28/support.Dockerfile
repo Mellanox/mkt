@@ -3,10 +3,12 @@ FROM fedora:28
 RUN dnf install -y \
     binutils \
     cmake \
+    dracut \
     findutils \
     gcc \
     git-core \
     glib2-devel \
+    kmod \
     libaio-devel \
     libattr-devel \
     libcap-devel \
@@ -25,6 +27,8 @@ RUN dnf install -y \
     pkgconfig \
     pulseaudio \
     python \
+    python2-Cython \
+    python2-devel \
     rpm-build \
     spice-protocol \
     spice-server-devel \
