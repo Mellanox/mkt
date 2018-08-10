@@ -85,7 +85,8 @@ def cmd_setup(args):
             exit("Exiting ...")
 
     supported_os = {
-        "fedora",
+        'fedora',
+        'ubuntu',
     }
 
     dist = platform.dist()

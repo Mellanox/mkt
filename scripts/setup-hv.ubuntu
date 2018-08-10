@@ -1,0 +1,41 @@
+#!/bin/bash
+set -euo pipefail
+
+# Mask return error code because the command below will return
+# error in case some of the packages wasn't installed.
+set +e
+# Remove OS packages, they are out-of-date
+sudo apt-get -y remove docker \
+                   docker-engine \
+		   docker.io
+set -e
+# Clean the system
+sudo apt-get -y autoclean
+
+# Install packages to allow apt to use a repository over HTTPS:
+sudo apt-get -y install apt-transport-https \
+			ca-certificates \
+			curl \
+		        software-properties-common
+
+# Add Docker’s official GPG key:
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+
+# Add official stable repository
+sudo add-apt-repository \
+	   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+	   $(lsb_release -cs) stable"
+
+# To get docker-ce
+sudo apt-get -y update
+
+# git - clone repositories from gerrit
+# python3-argcomplete - autocomplete support for mkt tool
+# pandoc - git-style manuals for mkt tool
+sudo apt-get -y install git \
+                    docker-ce \
+                    python3-argcomplete \
+                    pandoc
+
+# Ensure that the HV is up-to-date
+sudo apt-get -y upgrade
