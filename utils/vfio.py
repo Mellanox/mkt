@@ -45,6 +45,7 @@ def vfio_enable(args):
     """Move the given PCI BDF to the vfio driver. This is an internal command used
     automatically by kvm-run"""
     sd = "/sys/bus/pci/devices/"
+    print("Performing VFIO bind/unibnd, it can take time, please be patient ....")
     for I in args.pci:
         with open(os.path.join(sd, I, "modalias")) as F:
             modalias = F.read().strip()
