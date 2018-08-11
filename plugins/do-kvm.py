@@ -267,7 +267,7 @@ StandardOutput=tty
 StandardError=tty
 Environment=TERM={term}
 ExecStart=
-ExecStart=-/bin/bash -c "/usr/bin/stty {stty_config} && /usr/bin/stty cols {cols} rows {rows} && exec /usr/bin/su -l jgg"
+ExecStart=-/bin/bash -c "/usr/bin/stty {stty_config} && /usr/bin/stty cols {cols} rows {rows} && exec /usr/bin/su -l {user}"
 """.format(
             user=user,
             stty_config=stty_config,
