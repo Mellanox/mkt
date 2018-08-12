@@ -73,8 +73,9 @@ enable it globally.
 docker that comes with the operating system, follow the directions at
 https://docs.docker.com/install/
 
-The command **mkt setup** will automatically prepare a Fedora Core 28
-hypervisor.
+The command **mkt setup** will automatically prepare your hypervisor.
+The docker version is used in **mkt** tool works on Ubuntu 16.04 and newer
+and Fedora 26 and above.
 
 ## Local settings
 

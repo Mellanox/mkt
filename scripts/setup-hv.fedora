@@ -1,0 +1,41 @@
+#!/bin/bash
+set -euo pipefail
+
+# Mask return error code because the command below will return
+# error in case some of the packages wasn't installed.
+set +e
+# Remove OS packages, they are out-of-date
+sudo dnf -y remove docker \
+		   docker-client \
+		   docker-client-latest \
+		   docker-common \
+                   docker-latest \
+                   docker-latest-logrotate \
+                   docker-logrotate \
+                   docker-selinux \
+                   docker-engine-selinux \
+                   docker-engine
+set -e
+# Clean the system
+sudo dnf -y autoremove
+
+# Official stable docker repo
+sudo dnf config-manager --add-repo \
+		"https://download.docker.com/linux/fedora/docker-ce.repo"
+
+# git - clone repositories from gerrit
+# dnf-plugins-core - work seamlessly with docker https repo
+# python3-argcomplete - autocomplete support for mkt tool
+# pandoc - git-style manuals for mkt tool
+sudo dnf -y install git \
+                    dnf-plugins-core \
+                    docker-ce \
+                    python3-argcomplete \
+                    pandoc
+
+# In RPM based system, the default is disabled
+sudo systemctl enable docker
+sudo systemctl start docker
+
+# Ensure that the HV is up-to-date
+sudo dnf -y update

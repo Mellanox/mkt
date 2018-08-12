@@ -71,7 +71,6 @@ def do_pull(dockerfn):
 
 def cmd_images(args):
     """Build docker image for different architectures and OS."""
-    utils.check_not_root()
 
     with in_directory(utils.get_internal_fn(os.path.join("docker", args.os))):
 

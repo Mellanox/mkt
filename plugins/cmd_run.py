@@ -221,7 +221,6 @@ def args_run(parser):
 
 def cmd_run(args):
     """Run a system image container inside KVM"""
-    check_not_root()
     section = load()
     docker_os = section.get('os', 'fc28');
 
