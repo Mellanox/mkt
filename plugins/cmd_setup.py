@@ -117,6 +117,9 @@ def cmd_setup(args):
             if key == "iproute2" and not args.iproute:
                 continue
 
+            if key == 'os':
+                continue
+
             print("Prepare " + key)
             subprocess.call(["sudo", "mkdir", "-p", value])
             subprocess.call(["sudo", "chown", "-R", username + ":" + group, value])
