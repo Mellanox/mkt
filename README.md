@@ -39,17 +39,17 @@ containing a kernel for testing.
 
 # Installation
 
-The tools are currently designed to run from a source tree. Clone the
-repository, and link the main tool into your path:
+The tools are currently designed to run from a source tree and **not** as root.
+Clone the repository, and link the main tool into your path:
 
 ```sh
-$ cd ~
+$ cd /swgwork/`whoami`
 $ git clone https://github.com/Mellanox/mkt.git
-$ ln -s ../mkt/mkt ~/bin/
+$ ln -s /swgwork/`whoami`/mkt/mkt ~/bin/
 ```
 
 This assumes your shell profile has configured ~/bin/ to be in your local
-search path, with something like this in the .bashrc:
+search path, with something like this in the .bash_profile:
 
 ```sh
 PATH=$PATH:$HOME/bin
