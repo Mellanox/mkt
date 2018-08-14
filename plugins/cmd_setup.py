@@ -123,7 +123,7 @@ def cmd_setup(args):
             if key == "src" or key == "logs" or key == "ccache":
                 continue
 
-            p = Popen(
+            p = subprocess.Popen(
                 [
                     "git", "clone", "ssh://" + username +
                     "@l-gerrit.mtl.labs.mlnx:29418/upstream/" + key, "."
@@ -131,7 +131,7 @@ def cmd_setup(args):
                 cwd=value)
             p.wait()
 
-            p = Popen(
+            p = subprocess.Popen(
                 [
                     "scp", "-p", "-P", "29418",
                     username + "@l-gerrit.mtl.labs.mlnx:hooks/commit-msg",
@@ -145,7 +145,7 @@ def cmd_setup(args):
                     section['linux'] + "/.config",
                     os.path.join(
                         os.path.dirname(__file__), "../configs/kconfig-kvm-ib"))
-                p = Popen(["make", "olddefconfig"], cwd=value)
+                p = subprocess.Popen(["make", "olddefconfig"], cwd=value)
                 p.wait()
 
     print("Completed, PLEASE RESTART server")
