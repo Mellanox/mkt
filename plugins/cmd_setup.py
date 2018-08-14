@@ -90,13 +90,14 @@ def cmd_setup(args):
     }
 
     dist = platform.dist()
-    if dist[0] not in supported_os:
+    distro = dist[0].lower()
+    if distro not in supported_os:
         exit("""  Your hypervisor is not supported.
   This script works on Fedora only. Exiting ...""")
 
     if args.installs:
         setuphv = utils.get_internal_fn('scripts/')
-        setuphv += 'setup-hv.' + dist[0]
+        setuphv += 'setup-hv.' + distro
         subprocess.check_call(setuphv)
 
     init()
