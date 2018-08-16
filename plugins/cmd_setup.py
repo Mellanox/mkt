@@ -5,7 +5,6 @@ import utils
 import platform
 import subprocess
 import shutil
-from utils.cmdline import *
 
 def args_setup(parser):
     parser.add_argument(
@@ -79,8 +78,7 @@ def cmd_setup(args):
         print(""" This setup script will update your hypervisor to latest
  distribution packages and install docker. Please restart
  the hypervisor to complete the installation. """)
-        if args.yes is False and query_yes_no("Do you want to proceed?",
-                                              'no') is False:
+        if args.yes is False and utils.query_yes_no("Do you want to proceed?", 'no') is False:
             exit("Exiting ...")
 
     supported_os = {
@@ -99,7 +97,7 @@ def cmd_setup(args):
         setuphv += 'setup-hv.' + distro
         subprocess.check_call(setuphv)
 
-    utils.config.init()
+    utils.init_config_file()
     section = utils.load_config_file()
 
     if args.dirs:
@@ -121,14 +119,14 @@ def cmd_setup(args):
 
             print("Prepare " + key)
             subprocess.call(["sudo", "mkdir", "-p", value])
-            subprocess.call(["sudo", "chown", "-R", utils.config.username + ":" + utils.config.group, value])
+            subprocess.call(["sudo", "chown", "-R", utils.username + ":" + utils.group, value])
 
             if key == "src" or key == "logs" or key == "ccache":
                 continue
 
             p = subprocess.Popen(
                 [
-                    "git", "clone", "ssh://" + utils.config.username +
+                    "git", "clone", "ssh://" + utils.username +
                     "@l-gerrit.mtl.labs.mlnx:29418/upstream/" + key, "."
                 ],
                 cwd=value)
@@ -137,7 +135,7 @@ def cmd_setup(args):
             p = subprocess.Popen(
                 [
                     "scp", "-p", "-P", "29418",
-                    utils.config.username + "@l-gerrit.mtl.labs.mlnx:hooks/commit-msg",
+                    utils.username + "@l-gerrit.mtl.labs.mlnx:hooks/commit-msg",
                     ".git/hooks/"
                 ],
                 cwd=value)

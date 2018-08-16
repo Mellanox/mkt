@@ -10,14 +10,15 @@ config_f = os.path.expanduser(
     '~') + '/.config/mellanox/mkt/hv-' + socket.gethostname() + '.mkt'
 config = configparser.ConfigParser(allow_no_value=True)
 
-username = pwd.getpwuid(os.getuid())[0]
-group = grp.getgrgid(os.getgid())[0]
+def username():
+    return pwd.getpwuid(os.getuid())[0]
+def group():
+    return grp.getgrgid(os.getgid())[0]
 
 try:
     config.read(config_f)
 except configparser.MissingSectionHeaderError:
     exit(config_f + " in wrong format. Exiting ..")
-
 
 def load_config_file():
     try:
@@ -27,8 +28,7 @@ def load_config_file():
             "%r machine doesn\'t exist in %r.\nPlease run setup before. Exiting ..."
         ) % (socket.gethostname(), config_f))
 
-
-def init():
+def init_config_file():
     username = pwd.getpwuid(os.getuid())[0]
     config.read(config_f)
     try:
@@ -50,7 +50,6 @@ def init():
     os.makedirs(os.path.dirname(config_f), exist_ok=True)
     with open(config_f, 'w') as f:
         config.write(f)
-
 
 def get_images(name=None):
     if name:

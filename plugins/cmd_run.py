@@ -193,7 +193,7 @@ def args_run(parser):
     parser.add_argument(
         "image",
         nargs='?',
-        choices=sorted(get_images()),
+        choices=sorted(utils.get_images()),
         help="The IB card configuration to use")
     parser.add_argument('--kernel', help="Path to the kernel tree to boot",
                         default=section.get('linux',None))
@@ -239,7 +239,7 @@ def cmd_run(args):
             args.image = section.get('image', None)
 
     if args.image:
-        pci = get_images(args.image)['pci']
+        pci = utils.get_images(args.image)['pci']
         s = pci.split()
 
     union = set(get_simx_rdma_devices()).union(
