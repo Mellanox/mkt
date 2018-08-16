@@ -24,9 +24,7 @@ def load_config_file():
     try:
         return config["defaults"]
     except KeyError:
-        exit((
-            "%r machine doesn\'t exist in %r.\nPlease run setup before. Exiting ..."
-        ) % (socket.gethostname(), config_f))
+        return dict()
 
 def init_config_file():
     username = pwd.getpwuid(os.getuid())[0]

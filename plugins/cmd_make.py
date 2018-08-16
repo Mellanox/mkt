@@ -52,9 +52,17 @@ def cmd_make(args):
             or (args.gcc is not None and args.arch is None)):
         exit("Please provide both GCC version and ARCH for cross-compile.")
 
+    kernel = section.get('linux', None)
+    if not kernel:
+        exit("Please provide kernel location.")
+
+    ccache = section.get('ccache', None)
+    if not ccache:
+        exit("Please provide ccache location.")
+
     cmd = [
         "sudo", "docker", "run", "-t", "--tmpfs", "/build:exec", "--rm", "-v",
-        section['linux'] + ":/kernel:ro", "-v", section['ccache'] + ":/ccache"
+        kernel + ":/kernel:ro", "-v", ccache + ":/ccache"
     ]
 
     f = tempfile.mkdtemp()
@@ -81,8 +89,8 @@ def cmd_make(args):
         else:
             exit("Can't find provided dot-config.")
     else:
-        if os.path.isfile(section['linux'] + "/.config"):
-            shutil.copy(section['linux'] + "/.config", str(f) + "/.config")
+        if os.path.isfile(kernel + "/.config"):
+            shutil.copy(kernel + "/.config", str(f) + "/.config")
         else:
             dirname, filename = os.path.split(os.path.abspath(__file__))
             shutil.copy(dirname + "../docker/kbuild/configs/min-config",
