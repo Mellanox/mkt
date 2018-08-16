@@ -56,18 +56,6 @@ def args_setup(parser):
 
 def cmd_setup(args):
     """Setup environment."""
-    # TODO: rewrite it with Ansible to support other HV
-    # Expectations that developers will get this tool from PATH in their bashrc
-    # and it will be located in shared folder, however the tool itself can work
-    # from any place, including offline.
-    # 1. Check that we are running Fedora
-    # 1.2 Running on HV
-    # 1.3 Has proper IOMMU kernel config
-    # 2. Ask and check provided directories
-    # 3. Update to latest packages
-    # 4. Install docker
-    # 5. Setup docker
-    # 6. Send an email with howtos and help
 
     if not args.dirs:
         args.kernel = False
