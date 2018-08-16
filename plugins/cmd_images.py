@@ -18,6 +18,12 @@ def args_images(parser):
         help=
         "Do not update the base docker images from the public docker registry",
         default=True)
+    parser.add_argument(
+        "--push",
+        action="store_true",
+        help=
+        "Upload created images to docker registry (need to have an account in harbor registry)",
+        default=False)
 
     section = utils.load_config_file()
     parser.add_argument(
@@ -96,3 +102,7 @@ def cmd_images(args):
                 do_pull(dockerfn)
 
             docker_call(cmd + ["-t", image, "-f", dockerfn, "."])
+
+    if args.push:
+        docker_call(["login", docker_registry_name()])
+        docker_call(["push", make_image_name("kvm", args.os)])
