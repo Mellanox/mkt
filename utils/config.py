@@ -19,7 +19,7 @@ except configparser.MissingSectionHeaderError:
     exit(config_f + " in wrong format. Exiting ..")
 
 
-def load():
+def load_config_file():
     try:
         return config["defaults"]
     except KeyError:

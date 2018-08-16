@@ -19,7 +19,7 @@ def args_images(parser):
         "Do not update the base docker images from the public docker registry",
         default=True)
 
-    section = utils.config.load()
+    section = utils.load_config_file()
     parser.add_argument(
         "os",
         nargs='?',

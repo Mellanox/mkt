@@ -2,7 +2,6 @@
 """
 import os
 import utils
-from utils.config import init, load, username, group
 import platform
 import subprocess
 import shutil
@@ -100,8 +99,8 @@ def cmd_setup(args):
         setuphv += 'setup-hv.' + distro
         subprocess.check_call(setuphv)
 
-    init()
-    section = load()
+    utils.config.init()
+    section = utils.load_config_file()
 
     if args.dirs:
         for key, value in section.items():
@@ -122,14 +121,14 @@ def cmd_setup(args):
 
             print("Prepare " + key)
             subprocess.call(["sudo", "mkdir", "-p", value])
-            subprocess.call(["sudo", "chown", "-R", username + ":" + group, value])
+            subprocess.call(["sudo", "chown", "-R", utils.config.username + ":" + utils.config.group, value])
 
             if key == "src" or key == "logs" or key == "ccache":
                 continue
 
             p = subprocess.Popen(
                 [
-                    "git", "clone", "ssh://" + username +
+                    "git", "clone", "ssh://" + utils.config.username +
                     "@l-gerrit.mtl.labs.mlnx:29418/upstream/" + key, "."
                 ],
                 cwd=value)
@@ -138,7 +137,7 @@ def cmd_setup(args):
             p = subprocess.Popen(
                 [
                     "scp", "-p", "-P", "29418",
-                    username + "@l-gerrit.mtl.labs.mlnx:hooks/commit-msg",
+                    utils.config.username + "@l-gerrit.mtl.labs.mlnx:hooks/commit-msg",
                     ".git/hooks/"
                 ],
                 cwd=value)

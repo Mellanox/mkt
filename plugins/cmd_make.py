@@ -1,7 +1,7 @@
 """Compile various projects for different architectures
 """
 import os
-from utils.config import load
+import utils
 import subprocess
 import tempfile
 import shutil
@@ -45,7 +45,7 @@ def args_make(parser):
 
 def cmd_make(args):
     """Compile project for different architectures."""
-    section = load()
+    section = utils.load_config_file()
 
     # FIXME: It can be done with add_argument_group()
     if ((args.gcc is None and args.arch is not None)

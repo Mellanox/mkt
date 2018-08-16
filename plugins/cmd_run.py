@@ -8,9 +8,9 @@ import base64
 import fnmatch
 import re
 import inspect
+import utils
 from utils.docker import *
 from utils.cmdline import *
-from utils.config import *
 
 class DirList(object):
     def __init__(self):
@@ -189,7 +189,7 @@ def get_pickle(args):
 from . import cmd_images
 
 def args_run(parser):
-    section = load()
+    section = utils.load_config_file()
     parser.add_argument(
         "image",
         nargs='?',
@@ -221,7 +221,7 @@ def args_run(parser):
 
 def cmd_run(args):
     """Run a system image container inside KVM"""
-    section = load()
+    section = utils.load_config_file()
     docker_os = section.get('os', 'fc28');
 
     """
