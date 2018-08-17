@@ -317,6 +317,14 @@ qemu_args = {
     "-net": [],
     "-netdev": set(),
     "-device": ["virtio-rng-pci", "virtio-balloon-pci"],
+
+    # Newer FC28 qemu has a version of SeaBIOS with serial console (1.11)
+    # support that clears the console and disables line wrapping, see
+    # https://mail.coreboot.org/pipermail/seabios/2017-September/011792.html
+    #
+    # This is really annoying, disable it by telling SeaBIOS to use a bogus
+    # serial port for its output.
+    "-fw_cfg": ["etc/sercon-port,string=2"],
 }
 
 remove_mounts()
