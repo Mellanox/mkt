@@ -2,11 +2,9 @@
 """
 import os
 import utils
-from utils.config import init, load, username, group
 import platform
 import subprocess
 import shutil
-from utils.cmdline import *
 
 def args_setup(parser):
     parser.add_argument(
@@ -58,18 +56,6 @@ def args_setup(parser):
 
 def cmd_setup(args):
     """Setup environment."""
-    # TODO: rewrite it with Ansible to support other HV
-    # Expectations that developers will get this tool from PATH in their bashrc
-    # and it will be located in shared folder, however the tool itself can work
-    # from any place, including offline.
-    # 1. Check that we are running Fedora
-    # 1.2 Running on HV
-    # 1.3 Has proper IOMMU kernel config
-    # 2. Ask and check provided directories
-    # 3. Update to latest packages
-    # 4. Install docker
-    # 5. Setup docker
-    # 6. Send an email with howtos and help
 
     if not args.dirs:
         args.kernel = False
@@ -80,8 +66,7 @@ def cmd_setup(args):
         print(""" This setup script will update your hypervisor to latest
  distribution packages and install docker. Please restart
  the hypervisor to complete the installation. """)
-        if args.yes is False and query_yes_no("Do you want to proceed?",
-                                              'no') is False:
+        if args.yes is False and utils.query_yes_no("Do you want to proceed?", 'no') is False:
             exit("Exiting ...")
 
     supported_os = {
@@ -100,8 +85,8 @@ def cmd_setup(args):
         setuphv += 'setup-hv.' + distro
         subprocess.check_call(setuphv)
 
-    init()
-    section = load()
+    utils.init_config_file()
+    section = utils.load_config_file()
 
     if args.dirs:
         for key, value in section.items():
@@ -122,14 +107,14 @@ def cmd_setup(args):
 
             print("Prepare " + key)
             subprocess.call(["sudo", "mkdir", "-p", value])
-            subprocess.call(["sudo", "chown", "-R", username + ":" + group, value])
+            subprocess.call(["sudo", "chown", "-R", utils.username + ":" + utils.group, value])
 
             if key == "src" or key == "logs" or key == "ccache":
                 continue
 
             p = subprocess.Popen(
                 [
-                    "git", "clone", "ssh://" + username +
+                    "git", "clone", "ssh://" + utils.username +
                     "@l-gerrit.mtl.labs.mlnx:29418/upstream/" + key, "."
                 ],
                 cwd=value)
@@ -138,7 +123,7 @@ def cmd_setup(args):
             p = subprocess.Popen(
                 [
                     "scp", "-p", "-P", "29418",
-                    username + "@l-gerrit.mtl.labs.mlnx:hooks/commit-msg",
+                    utils.username + "@l-gerrit.mtl.labs.mlnx:hooks/commit-msg",
                     ".git/hooks/"
                 ],
                 cwd=value)

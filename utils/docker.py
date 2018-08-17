@@ -2,10 +2,11 @@ import subprocess
 import os
 from utils.git import in_directory
 
+def docker_registry_name():
+    return "harbor.mellanox.com"
 
 def make_image_name(thing, version):
-    return "harbor.mellanox.com/mkt/%s:%s" % (thing, version)
-
+    return docker_registry_name() + "/mkt/%s:%s" % (thing, version)
 
 def make_local_image_name(thing, version):
     return "local_mkt/%s:%s" % (thing, version)

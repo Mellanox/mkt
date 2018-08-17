@@ -52,6 +52,11 @@ developers working in this area are strongly recommended to place their
 	registry. These are images like the fedora starting container image. This
 	option can be used by **mkt** developers to speed up image rebuilding.
 
+*--push*
+:	Upload newly created images to harbor.mellanox.com registry. This option
+	is needed for developers who has write access to that registry and are
+	responsible for creating base images for the rest.
+
 # INTERNAL OPERATION
 
 OS image builds produce two docker images, the first is the 'simx' image which

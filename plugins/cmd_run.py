@@ -8,9 +8,9 @@ import base64
 import fnmatch
 import re
 import inspect
+import utils
 from utils.docker import *
 from utils.cmdline import *
-from utils.config import *
 
 class DirList(object):
     def __init__(self):
@@ -189,11 +189,11 @@ def get_pickle(args):
 from . import cmd_images
 
 def args_run(parser):
-    section = load()
+    section = utils.load_config_file()
     parser.add_argument(
         "image",
         nargs='?',
-        choices=sorted(get_images()),
+        choices=sorted(utils.get_images()),
         help="The IB card configuration to use")
     parser.add_argument('--kernel', help="Path to the kernel tree to boot",
                         default=section.get('linux',None))
@@ -221,7 +221,7 @@ def args_run(parser):
 
 def cmd_run(args):
     """Run a system image container inside KVM"""
-    section = load()
+    section = utils.load_config_file()
     docker_os = section.get('os', 'fc28');
 
     """
@@ -239,7 +239,7 @@ def cmd_run(args):
             args.image = section.get('image', None)
 
     if args.image:
-        pci = get_images(args.image)['pci']
+        pci = utils.get_images(args.image)['pci']
         s = pci.split()
 
     union = set(get_simx_rdma_devices()).union(
