@@ -12,10 +12,11 @@ import utils.cmdline
 import plugins
 
 cmd_modules = {
-    "cmd_setup",
+    "cmd_drivertest",
     "cmd_images",
-    "cmd_run",
     "cmd_make",
+    "cmd_run",
+    "cmd_setup",
 }
 
 if __name__ == "__main__":
