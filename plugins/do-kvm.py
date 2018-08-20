@@ -13,6 +13,7 @@ import subprocess
 import collections
 import pickle
 import base64
+import multiprocessing
 
 
 def get_mtab():
@@ -341,6 +342,7 @@ qemu_args = {
     # This is really annoying, disable it by telling SeaBIOS to use a bogus
     # serial port for its output.
     "-fw_cfg": ["etc/sercon-port,string=2"],
+    "-smp": "%s" % (multiprocessing.cpu_count())
 }
 
 remove_mounts()
