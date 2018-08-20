@@ -73,3 +73,7 @@ KERNEL=="rdma_ucm", GROUP="1000"
 EOF
 
 echo allow br0 >> /etc/qemu/bridge.conf
+
+# Avoid writing hwdb.bin on boot
+systemd-hwdb update --usr
+rm -f /etc/udev/hwdb.bin
