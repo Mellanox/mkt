@@ -59,7 +59,7 @@ def remove_mounts():
 
 
 def is_passable_mount(v):
-    if v[2] == "nfs":
+    if v[2] == "nfs" or v[2] == "nfs4":
         return True
     if not v[0].startswith("/"):
         return False
