@@ -65,7 +65,7 @@ ${SIMX_EXTRA_COMPILATION_FLAGS} \
 '--disable-rdma' \
 '--disable-tools' \
 '--disable-capstone' \
-'--target-list=x86_64-softmmu,arm-softmmu,ppc64-softmmu,aarch64-softmmu'
+'--target-list=x86_64-softmmu'
 
 make -j`nproc`
 make install
