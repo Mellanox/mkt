@@ -68,6 +68,21 @@ def is_passable_mount(v):
     return True
 
 
+def create_unit(unescaped_name, ext, links, text):
+    unit = b"%s.%s" % (subprocess.check_output(
+        ["systemd-escape", "--path", unescaped_name]).strip(), ext.encode())
+    srv = os.path.join(b"/etc/systemd/system", unit)
+    with open(srv, "w") as F:
+        F.write(text)
+    for I in links:
+        ldfn = os.path.join(b"/etc/systemd/system/", I.encode())
+        os.makedirs(ldfn, exist_ok=True)
+        try:
+            os.symlink(srv, os.path.join(ldfn, unit))
+        except FileExistsError:
+            pass
+
+
 def setup_fs(paths=()):
     """Prepare the root filesystem for KVM under /mnt/self - this is simply our /
     without all the virtual filesystems docker creates"""
@@ -95,31 +110,32 @@ def setup_fs(paths=()):
         qemu_args["-device"].append(
             "virtio-9p-pci,fsdev=host_bind_fs%u,mount_tag=bind%u" % (cnt, cnt))
 
-        unit = b"%s.mount" % (subprocess.check_output(
-            ["systemd-escape", "--path", dfn]).strip())
-        srv = b"/etc/systemd/system/%s" % (unit)
-        with open(srv, "w") as F:
-            F.write("""
+        create_unit(
+            dfn, "mount", ["local-fs.target.wants"], """
 [Unit]
-Description=kvm mount
-DefaultDependencies=no
-Conflicts=umount.target
-Before=local-fs.target umount.target
-After=swap.target
+Description=KVM mount {dfn}
 
 [Mount]
-What=bind%u
-Where=%s
+What=bind{cnt:d}
+Where={dfn}
 Type=9p
 
 [Install]
 WantedBy=local-fs.target
-""" % (cnt, dfn))
-        try:
-            os.symlink(
-                srv, b"/etc/systemd/system/local-fs.target.wants/%s" % (unit))
-        except FileExistsError:
-            pass
+""".format(cnt=cnt, dfn=dfn))
+
+        create_unit(
+            dfn, "automount", ["local-fs.target.requires"], """
+[Unit]
+Description=kvm auto mount {dfn}
+Before=local-fs.target
+Before=systemd-modules-load.service
+Before=systemd-udevd.service
+
+[Automount]
+Where={dfn}
+""".format(cnt=cnt, dfn=dfn))
+
         cnt = cnt + 1
 
 
