@@ -7,13 +7,24 @@ import re
 import argparse
 import subprocess
 
+first_bind = False
+
+
 def switch_to_vfio(bdf, modalias):
     """Switch the kernel driver for a PCI device to vfio-pci so it can be used
     with VFIO passthrough."""
+    global first_bind
+
     cur_driver = os.path.join("/sys/bus/pci/devices", bdf, "driver")
     if os.path.exists(cur_driver):
         if os.readlink(cur_driver).endswith("vfio-pci"):
             return
+
+    if not first_bind:
+        print(
+            "Performing VFIO bind/unibnd, it can take time, please be patient ...."
+        )
+        first_bind = True
 
     if not os.path.exists("/sys/bus/pci/drivers/vfio-pci"):
         subprocess.check_call(["modprobe", "vfio-pci"])
@@ -43,9 +54,8 @@ def switch_to_vfio(bdf, modalias):
 
 def vfio_enable(args):
     """Move the given PCI BDF to the vfio driver. This is an internal command used
-    automatically by kvm-run"""
+    automatically by run"""
     sd = "/sys/bus/pci/devices/"
-    print("Performing VFIO bind/unibnd, it can take time, please be patient ....")
     for I in args.pci:
         with open(os.path.join(sd, I, "modalias")) as F:
             modalias = F.read().strip()
@@ -55,8 +65,13 @@ def vfio_enable(args):
         }
         switch_to_vfio(I, modalias)
 
+
 parser = argparse.ArgumentParser(description="VFIO enable")
-parser.add_argument('--pci', metavar="PCI_BDF", action="append",
-                    default=[], help="PCI BDF to move to vfio")
+parser.add_argument(
+    '--pci',
+    metavar="PCI_BDF",
+    action="append",
+    default=[],
+    help="PCI BDF to move to vfio")
 args = parser.parse_args()
 vfio_enable(args)
