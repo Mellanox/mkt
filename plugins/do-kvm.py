@@ -15,6 +15,8 @@ import pickle
 import base64
 import multiprocessing
 
+VM_Addr = collections.namedtuple("VM_Addr", "hostname ip mac")
+
 
 def get_mtab():
     paths = {}
@@ -227,7 +229,8 @@ def set_kernel(tree):
 def set_bridge_network(args):
     """If a 'br0' is present then we can setup normal bridge networking"""
     qemu_args["-netdev"].add("bridge,br=br0,id=net0")
-    qemu_args["-device"].append("virtio-net,netdev=net0,mac=" + args.mac)
+    qemu_args["-device"].append("virtio-net,netdev=net0,mac=" +
+                                args.vm_addr.mac)
 
 
 def set_loop_network(args):
@@ -237,7 +240,7 @@ def set_loop_network(args):
         "No br0 bridge found, using NAT networking, connected to port localhost:4444 for ssh"
     )
     qemu_args["-net"].extend([
-        "nic,model=virtio,macaddr=%s" % (args.mac),
+        "nic,model=virtio,macaddr=%s" % (args.vm_addr.mac),
         "user,hostfwd=tcp:127.0.0.1:4444-:22"
     ])
 
@@ -310,7 +313,7 @@ def setup_from_pickle(args, pickle_params):
     args.kernel = p["kernel"]
     args.simx = p.get("simx", False)
     args.vfio = p.get("vfio", [])
-    args.mac = p["mac"]
+    args.vm_addr = VM_Addr(**p["vm_addr"])
     args.mem = p["mem"]
 
 

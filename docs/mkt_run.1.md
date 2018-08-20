@@ -113,6 +113,18 @@ a context that can create KVMs. Generally this requires running it on the
 physical machine, not in another VM. Although nested KVM virtualization exists
 it is an advanced feature that requires special setup.
 
+## NETWORKING
+
+When **mkt run** detects it is operating on the Mellanox lab network, and it
+detects a br0 interface (which must be bridged to the lab network) it
+selects a free IP from the set of addresses assigned to the hypervisor and
+launches a new VM instance with this MAC connected to the bridge.
+
+Multiple instances of **mkt run** can be run in parallel, and it automatically
+avoids re-using addresses assigned to existing instances. Use **docker ps**
+and **docker kill** to manage running instances of **mkt run**, particularly
+if they have been backgrounded by a ssh connection drop.
+
 # MKT
 
 Part of the **mkt(1)** suite
