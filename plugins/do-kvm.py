@@ -244,11 +244,32 @@ def set_loop_network(args):
         "user,hostfwd=tcp:127.0.0.1:4444-:22"
     ])
 
-
-def set_simx_network():
+def set_simx_network(simx):
     """Setup options to start a simx card"""
-    qemu_args["-device"].append("connectx4")
+    to_simx_device = { 'cx4' : 'connectx4',
+                       'cx5' : 'connectx5',
+                       'cx6' : 'connectx6',
+                       'cx4lx' : 'connectx4lx',
+                       'cib' : 'connectib'
+                       }
+    subprocess.check_call(['mkdir', '-p', '/opt/simx/cfg/'])
+    with open('/opt/simx/cfg/simx-qemu.cfg', 'a+') as f:
+        f.write('[General Device Capabilities]\n')
+        f.write('driver_version = false\n')
+        f.write('query_driver_version = false\n')
 
+        idx = 0
+        for target in simx:
+            dev = target.split('-')[0]
+            mode = target.split('-')[1]
+            qemu_args["-device"].append(to_simx_device[dev])
+            f.write('[device_%d]\n' % (idx))
+            if mode == 'ib':
+                f.write('port_type = 0x0\n')
+            else:
+                # Ethernet
+                f.write('port_type = 0x1\n')
+            idx = idx + 1
 
 def set_vfio(args):
     """Pass a VFIO owned PCI device through to the guest"""
@@ -364,7 +385,7 @@ set_vfio(args)
 
 if args.simx:
     cmd = ["/opt/simx/bin/qemu-system-x86_64"]
-    set_simx_network()
+    set_simx_network(args.simx)
 else:
     cmd = ["qemu-system-x86_64"]
 
