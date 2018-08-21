@@ -26,11 +26,13 @@ sudo dnf config-manager --add-repo \
 # git - clone repositories from gerrit
 # dnf-plugins-core - work seamlessly with docker https repo
 # python3-argcomplete - autocomplete support for mkt tool
+# python3-yaml - configuration files to build support images
 # pandoc - git-style manuals for mkt tool
 sudo dnf -y install git \
                     dnf-plugins-core \
                     docker-ce \
                     python3-argcomplete \
+		    python3-yaml \
                     pandoc
 
 # In RPM based system, the default is disabled

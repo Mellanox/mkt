@@ -31,10 +31,12 @@ sudo apt-get -y update
 
 # git - clone repositories from gerrit
 # python3-argcomplete - autocomplete support for mkt tool
+# python3-yaml - configuration files to build support images
 # pandoc - git-style manuals for mkt tool
 sudo apt-get -y install git \
                     docker-ce \
                     python3-argcomplete \
+		    python3-yaml \
                     pandoc
 
 # Ensure that the HV is up-to-date
