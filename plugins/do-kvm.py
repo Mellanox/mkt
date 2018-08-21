@@ -14,6 +14,7 @@ import collections
 import pickle
 import base64
 import multiprocessing
+import shlex
 
 VM_Addr = collections.namedtuple("VM_Addr", "hostname ip mac")
 
@@ -86,7 +87,7 @@ def create_unit(unescaped_name, ext, links, text):
             pass
 
 
-def setup_fs(paths=()):
+def setup_fs():
     """Prepare the root filesystem for KVM under /mnt/self - this is simply our /
     without all the virtual filesystems docker creates"""
     # Mount / into /mnt/self to get rid of all virtual filesystems
@@ -226,6 +227,26 @@ def set_kernel(tree):
     })
 
 
+def set_kernel_rpm(src):
+    """Setup a kernel from a compiled kernel RPM"""
+    print("Extracting RPM %r" % (src))
+    fns = subprocess.check_output(
+        ["rpm2cpio %s | cpio -idmv" % (shlex.quote(src))], shell=True, cwd="/", stderr=subprocess.STDOUT)
+    for ln in fns.splitlines():
+        if ln.startswith(b"./boot/vmlinuz-"):
+            vmlinuz = ln[1:]
+            break
+    else:
+        raise ValueError("Could not find vmlinux in the RPM %r" % (src))
+
+    qemu_args.update({
+        "-kernel":
+        vmlinuz,
+        "-append":
+        'root=/dev/root rw ignore_loglevel rootfstype=9p rootflags=trans=virtio earlyprintk=serial,ttyS0,115200 console=hvc0'
+    })
+
+
 def set_bridge_network(args):
     """If a 'br0' is present then we can setup normal bridge networking"""
     qemu_args["-netdev"].add("bridge,br=br0,id=net0")
@@ -331,7 +352,8 @@ def setup_from_pickle(args, pickle_params):
 
     setup_console(p["user"])
 
-    args.kernel = p["kernel"]
+    args.kernel = p.get("kernel", None)
+    args.kernel_rpm = p.get("kernel_rpm", None)
     args.simx = p.get("simx", False)
     args.vfio = p.get("vfio", [])
     args.vm_addr = VM_Addr(**p["vm_addr"])
@@ -371,8 +393,12 @@ qemu_args = {
 
 remove_mounts()
 set_console()
-setup_fs(paths=[args.kernel])
-set_kernel(args.kernel)
+setup_fs()
+
+if args.kernel_rpm:
+    set_kernel_rpm(args.kernel_rpm)
+else:
+    set_kernel(args.kernel)
 
 try:
     subprocess.check_output(
