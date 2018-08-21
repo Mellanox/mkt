@@ -9,8 +9,15 @@ import fnmatch
 import re
 import inspect
 import utils
+import socket
+import collections
+import random
 from utils.docker import *
 from utils.cmdline import *
+from . import cmd_images
+
+VM_Addr = collections.namedtuple("VM_Addr", "hostname ip mac")
+
 
 class DirList(object):
     def __init__(self):
@@ -129,41 +136,65 @@ def get_pci_rdma_devices():
                 devices[I] = modalias
     return devices
 
+
+def get_container_name(vm_addr):
+    """Return the name of the docker container to use for this VM"""
+    return "mkt_run_%s" % (vm_addr.hostname)
+
+
+def random_mac():
+    random.seed()
+    a = random.randint(0, 255)
+    b = random.randint(0, 255)
+    c = random.randint(0, 255)
+    d = random.randint(0, 255)
+    mac = "52:54:%02x:%02x:%02x:%02x" % (a, b, c, d)
+    return VM_Addr(mac=mac, ip=None, hostname=socket.gethostname() + "-vm")
+
+
 def get_mac():
-    mac = None
-    try:
-        with open("/.autodirect/LIT/SCRIPTS/DHCPD/list.html") as F:
-            import socket
-            hostname = socket.gethostname() + '-0'
-            for line in F:
-                if hostname in line:
-                    ip = line.split(';')[0]
-                    m = line.split(';')[1]
-                    try:
-                        subprocess.check_call(["ping", "-c", "1", ip],
-                                              stdout=subprocess.DEVNULL,
-                                              stderr=subprocess.DEVNULL)
-                    except subprocess.CalledProcessError:
-                        mac = m.strip()
-                        break
-    except IOError:
-        pass
+    list_fn = "/.autodirect/LIT/SCRIPTS/DHCPD/list.html"
+    if not os.path.isfile(list_fn):
+        return random_mac()
 
-    if not mac:
-        import random
-        random.seed()
-        a = random.randint(0, 255)
-        b = random.randint(0, 255)
-        c = random.randint(0, 255)
-        d = random.randint(0, 255)
-        mac = "52:54:" + format(a, '02x') + ":" + format(
-            b, '02x') + ":" + format(c, '02x') + ":" + format(d, '02x')
+    # The file is very big and python is very slow, use grep to find the
+    # relevant entries.
+    hostname = socket.gethostname()
+    o = subprocess.check_output(["grep", hostname, list_fn])
+    hosts = {}
+    for ln in o.splitlines():
+        g = re.match(r"(.+?);\s+([0-f:]+?);\s+(.+?);\s+((?:.+?;\s+)+)<br>",
+                     ln.decode())
+        if g is None:
+            continue
+        hosts[g.group(3)] = (g.group(1), g.group(2))
+    if not hosts:
+        raise ValueError("The DHCP file %r could not be parsed for host %r" %
+                         (list_fn, hostname))
 
-    return mac
+    for host, inf in sorted(hosts.items()):
+        if not host.startswith(hostname + "-0"):
+            continue
 
-def get_pickle(args):
+        # docker is used to lock the MAC addresses, other virt systems should use
+        # numbers at the end of the sorted range to try to avoid conflicting here.
+        vm_addr = VM_Addr(ip=inf[0], mac=inf[1], hostname=host)
+        cname = get_container_name(vm_addr)
+        status = docker_output([
+            "ps", "-a", "-q", "--filter",
+            "name=%s" % (cname), "--format", "{{.Status}}"
+        ])
+        if status.startswith(b"Up"):
+            continue
+        return vm_addr
+
+    # We only use MAC addresses from the table
+    raise ValueError("The DHCP file %r could not be parsed for host %r" %
+                     (list_fn, hostname))
+
+
+def get_pickle(args, vm_addr):
     usr = pwd.getpwuid(os.getuid())
-    mac = get_mac()
 
     p = {
         "user": usr.pw_name,
@@ -172,7 +203,7 @@ def get_pickle(args):
         "home": usr.pw_dir,
         "shell": usr.pw_shell,
         "kernel": args.kernel,
-        "mac": mac,
+        "vm_addr": vm_addr._asdict(),
     }
     # In GB: 2GB for real HW and 1 GB for SimX
     mem = 1
@@ -186,7 +217,6 @@ def get_pickle(args):
 
     return base64.b64encode(pickle.dumps(p)).decode()
 
-from . import cmd_images
 
 def args_run(parser):
     section = utils.load_config_file()
@@ -195,8 +225,10 @@ def args_run(parser):
         nargs='?',
         choices=sorted(utils.get_images()),
         help="The IB card configuration to use")
-    parser.add_argument('--kernel', help="Path to the kernel tree to boot",
-                        default=section.get('linux',None))
+    parser.add_argument(
+        '--kernel',
+        help="Path to the kernel tree to boot",
+        default=section.get('linux', None))
     parser.add_argument(
         '--dir', action="append", help="Other paths to map", default=[])
     parser.add_argument(
@@ -219,20 +251,19 @@ def args_run(parser):
         choices=sorted(get_pci_rdma_devices().keys()),
         help="Pass a given PCI bus/device/function to the guest")
 
+
 def cmd_run(args):
     """Run a system image container inside KVM"""
     section = utils.load_config_file()
-    docker_os = section.get('os', 'fc28');
+    docker_os = section.get('os', 'fc28')
 
-    """
-    We have three possible options to execute:
-    1. "mkt run" without request to specific image. We will try to find default one
-    2. "mkt run --pci ..." or "mkt run --simx ...". We won't use default image but add supplied
-       PCIs and SimX devices.
-    3. "mkt run image_name --pci ..." or "mkt run image_name --simx ...". We will add those PCIs
-       and SimX devices to the container.
-    """
-
+    # We have three possible options to execute:
+    # 1. "mkt run" without request to specific image. We will try to find
+    #    default one
+    # 2. "mkt run --pci ..." or "mkt run --simx ...". We won't use default
+    #    image but add supplied PCIs and SimX devices.
+    # 3. "mkt run image_name --pci ..." or "mkt run image_name --simx ...". We
+    #    will add those PCIs and SimX devices to the container.
     s = set()
     if not args.pci and not args.simx:
         if not args.image:
@@ -255,21 +286,16 @@ def cmd_run(args):
     args.simx += set(s).intersection(set(get_simx_rdma_devices()))
 
     if not args.kernel:
-        exit("Must specify a linux kernel with --kernel, or a config file default")
+        exit(
+            "Must specify a linux kernel with --kernel, or a config file default"
+        )
 
     # Invoke ourself as root to manipulate sysfs
     if args.pci:
-        subprocess.check_call(["sudo", sys.executable,
-                               os.path.join(os.path.dirname(__file__), "../utils/vfio.py")] +
-                               ["--pci=%s" % (I) for I in args.pci])
-
-    cont = docker_get_containers(name=docker_os)
-    if cont:
-        try:
-            docker_call(["kill", *cont])
-        except subprocess.CalledProcessError:
-            pass
-        docker_call(["rm", *cont])
+        subprocess.check_call([
+            "sudo", sys.executable,
+            os.path.join(os.path.dirname(__file__), "../utils/vfio.py")
+        ] + ["--pci=%s" % (I) for I in args.pci])
 
     args.kernel = os.path.realpath(args.kernel)
     if not os.path.isdir(args.kernel):
@@ -294,10 +320,32 @@ def cmd_run(args):
     src_dir = os.path.dirname(
         os.path.abspath(inspect.getfile(inspect.currentframe())))
 
+    vm_addr = get_mac()
+    cname = get_container_name(vm_addr)
+    # Clean up a container if it is left over somehow
+    cont = docker_get_containers(name=cname)
+    if cont:
+        try:
+            docker_output(["kill", *cont])
+        except subprocess.CalledProcessError:
+            pass
+        try:
+            docker_output(["rm", *cont])
+        except subprocess.CalledProcessError:
+            pass
+
     docker_exec(["run"] + mapdirs.as_docker_bind() + [
         "-v",
-        "%s:/plugins:ro" % (src_dir), "--rm", "--net=host", "--privileged",
-        "--name=%s" % (docker_os), "--tty", "-e",
-        "KVM_PICKLE=%s" % (get_pickle(args)), "--interactive",
-        make_image_name("kvm", docker_os)
+        "%s:/plugins:ro" % (src_dir),
+        "--rm",
+        "--net=host",
+        "--privileged",
+        "--name=%s" % (cname),
+        "--tty",
+        "--hostname",
+        vm_addr.hostname,
+        "-e",
+        "KVM_PICKLE=%s" % (get_pickle(args, vm_addr)),
+        "--interactive",
+        make_image_name("kvm", docker_os),
     ] + do_kvm_args)

@@ -7,24 +7,30 @@ import pwd
 import grp
 
 config_f = os.path.expanduser(
-    '~') + '/.config/mellanox/mkt/hv-' + socket.gethostname() + '.mkt'
+    "~/.config/mellanox/mkt/hv-%s.mkt" % (socket.gethostname()))
 config = configparser.ConfigParser(allow_no_value=True)
+
 
 def username():
     return pwd.getpwuid(os.getuid())[0]
+
+
 def group():
     return grp.getgrgid(os.getgid())[0]
+
 
 try:
     config.read(config_f)
 except configparser.MissingSectionHeaderError:
     exit(config_f + " in wrong format. Exiting ..")
 
+
 def load_config_file():
     try:
         return config["defaults"]
     except KeyError:
         return dict()
+
 
 def init_config_file():
     username = pwd.getpwuid(os.getuid())[0]
@@ -48,6 +54,7 @@ def init_config_file():
     os.makedirs(os.path.dirname(config_f), exist_ok=True)
     with open(config_f, 'w') as f:
         config.write(f)
+
 
 def get_images(name=None):
     if name:

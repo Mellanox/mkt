@@ -16,6 +16,8 @@ RUN \
     file \
     gdb \
     git-core \
+    infiniband-diags \
+    iproute \
     kmod \
     less \
     lsof \
@@ -25,8 +27,8 @@ RUN \
     openssh-server \
     pciutils \
     psmisc \
-    python2 \
     python-argcomplete \
+    python2 \
     python3 \
     python3-argcomplete \
     qemu-kvm \
@@ -39,14 +41,10 @@ RUN \
     unzip \
     valgrind \
     wget \
-    libibverbs-utils \
-    infiniband-diags \
-    iproute \
-    rdma-core \
     && dnf clean dbcache packages
 
-# Get the built simx from the simx builder container
-COPY --from=local_mkt/kvm_simx:fc28 /opt/simx /opt/simx
+COPY --from=local_mkt/support_simx:fc28 /opt/simx /opt/simx
+COPY --from=local_mkt/support_rdma_core:fc28 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
 
 ADD sshd_config ssh_host_rsa_key /etc/ssh/
 

@@ -12,12 +12,23 @@ import shlex
 
 source_root = os.path.normpath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+cache_dir = None
 
 
 def get_internal_fn(fn):
     """Return the full path to an internal file. When running "in-place" this path
     points into the source directory"""
     return os.path.join(source_root, fn)
+
+
+def get_cache_fn(fn):
+    """Return a 'cache' filename. Cache files are ones that can be deleted without
+    an impact on the operation of mkt - at worst it will run slower."""
+    global cache_dir
+    if cache_dir is None:
+        cache_dir = os.path.expanduser("~/.cache/mellanox/mkt/")
+        os.makedirs(cache_dir, exist_ok=True)
+    return os.path.join(cache_dir, fn)
 
 
 def query_yes_no(question, default="yes"):
@@ -84,9 +95,11 @@ def my_print_help(cmd_fn_name, fallback_fn, file=None):
         "pandoc -s -t man %s | man -l -" % (shlex.quote(pd_fn))
     ])
 
+
 def check_not_root():
     if not os.getuid():
         exit("Please don't run this program as root")
+
 
 def main(cmd_modules, top_module):
     parser = argparse.ArgumentParser(description="""Mellanox Kernel Toolset
