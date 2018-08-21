@@ -20,5 +20,5 @@ image = cx5-ib
 pci = 0000:05:00.0 0000:88:00.0
 [simx]
 # PCI supports simx-aware names, supported options
-# are: cx4-ib, cx4-en, cib, cx5-ib, cx5-en, cx4lx, cx6-ib, cx6-en
+# are: cx4-ib, cx4-eth, cib-ib, cx5-ib, cx5-eth, cx4lx-eth, cx6-ib, cx6-eth
 pci = cx4-ib

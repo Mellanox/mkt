@@ -113,8 +113,8 @@ def has_iommu():
 
 def get_simx_rdma_devices():
     return [
-        'cx4-ib', 'cx4-en', 'cx5-ib', 'cx5-en', 'cib', 'cx4lx', 'cx6-ib',
-        'cx6-en'
+        'cx4-ib', 'cx4-eth', 'cx5-ib', 'cx5-eth',
+        'cib-ib', 'cx4lx-eth', 'cx6-ib', 'cx6-eth'
     ]
 
 
