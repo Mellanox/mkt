@@ -5,6 +5,7 @@ COPY --from=local_mkt/support_simx:fc28 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rp
 COPY --from=local_mkt/support_pyverbs:fc28 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
 COPY --from=local_mkt/support_pypacket:fc28 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
 COPY --from=local_mkt/support_pcapy:fc28 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
+COPY --from=local_mkt/support_netperf:fc28 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
 
 RUN rm -f \
    /opt/rpms/*debug*.rpm \
