@@ -285,6 +285,9 @@ def cmd_run(args):
     args.pci += set(s).intersection(set(get_pci_rdma_devices().keys()))
     args.simx += set(s).intersection(set(get_simx_rdma_devices()))
 
+    if len(args.simx) > 5:
+        exit("SimX doesn't support more than 5 devices")
+
     if not args.kernel:
         exit(
             "Must specify a linux kernel with --kernel, or a config file default"
