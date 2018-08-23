@@ -36,7 +36,7 @@ ${SIMX_EXTRA_COMPILATION_FLAGS} \
 '--disable-xen' \
 '--enable-virtfs' \
 '--enable-kvm' \
-'--enable-libusb' \
+'--disable-libusb' \
 '--enable-spice' \
 '--enable-seccomp' \
 '--enable-fdt' \
@@ -52,7 +52,6 @@ ${SIMX_EXTRA_COMPILATION_FLAGS} \
 '--enable-vnc' \
 '--disable-vnc-sasl' \
 '--enable-linux-aio' \
-'--enable-usb-redir' \
 '--disable-vnc-png' \
 '--disable-vnc-jpeg' \
 '--disable-gtk' \
