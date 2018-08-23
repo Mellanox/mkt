@@ -202,9 +202,14 @@ def get_pickle(args, vm_addr):
         "gid": usr.pw_gid,
         "home": usr.pw_dir,
         "shell": usr.pw_shell,
-        "kernel": args.kernel,
         "vm_addr": vm_addr._asdict(),
     }
+
+    if args.kernel_rpm is not None:
+        p["kernel_rpm"] = args.kernel_rpm
+    else:
+        p["kernel"] = args.kernel
+
     # In GB: 2GB for real HW and 1 GB for SimX
     mem = 1
     if args.pci:
@@ -225,10 +230,15 @@ def args_run(parser):
         nargs='?',
         choices=sorted(utils.get_images()),
         help="The IB card configuration to use")
-    parser.add_argument(
+
+    kernel = parser.add_mutually_exclusive_group()
+    kernel.add_argument(
         '--kernel',
-        help="Path to the kernel tree to boot",
+        help="Path to the the top of a compiled kernel source tree to boot",
         default=section.get('linux', None))
+    kernel.add_argument(
+        '--kernel_rpm', help="Path to a kernel RPM to boot", default=None)
+
     parser.add_argument(
         '--dir', action="append", help="Other paths to map", default=[])
     parser.add_argument(
@@ -288,7 +298,7 @@ def cmd_run(args):
     if len(args.simx) > 5:
         exit("SimX doesn't support more than 5 devices")
 
-    if not args.kernel:
+    if not args.kernel and not args.kernel_rpm:
         exit(
             "Must specify a linux kernel with --kernel, or a config file default"
         )
@@ -300,13 +310,20 @@ def cmd_run(args):
             os.path.join(os.path.dirname(__file__), "../utils/vfio.py")
         ] + ["--pci=%s" % (I) for I in args.pci])
 
-    args.kernel = os.path.realpath(args.kernel)
-    if not os.path.isdir(args.kernel):
-        raise ValueError(
-            "Kernel path is not a directory/does not exist" % (args.kernel))
-
     mapdirs = DirList()
-    mapdirs.add(args.kernel)
+    if args.kernel_rpm is not None:
+        args.kernel_rpm = os.path.realpath(args.kernel_rpm)
+        if not os.path.isfile(args.kernel_rpm):
+            raise ValueError(
+                "Kernel RPM %r does not exist" % (args.kernel_rpm))
+        mapdirs.add(os.path.dirname(args.kernel_rpm))
+        args.kernel = None
+    else:
+        args.kernel = os.path.realpath(args.kernel)
+        if not os.path.isdir(args.kernel):
+            raise ValueError("Kernel path %r is not a directory/does not exist"
+                             % (args.kernel))
+        mapdirs.add(args.kernel)
 
     if not args.dir:
         usr = pwd.getpwuid(os.getuid())
