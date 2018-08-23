@@ -133,7 +133,7 @@ def cmd_setup(args):
                 shutil.copy(
                     section['linux'] + "/.config",
                     os.path.join(
-                        os.path.dirname(__file__), "../configs/kconfig-kvm-ib"))
+                        os.path.dirname(__file__), "../configs/kconfig-kvm"))
                 p = subprocess.Popen(["make", "olddefconfig"], cwd=value)
                 p.wait()
 
