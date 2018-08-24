@@ -29,9 +29,15 @@ def get_cache_fn(fn):
         cache_dir = os.path.expanduser("~/.cache/mellanox/mkt/")
         # In MTL network, user home directories are located on /labhome
         # and doesn't have enough space to build cache efficiently.
-        # Do nasty hack and replace labhome with swgwork, not proud, but it works
-        cache_dir = cache_dir.replace('labhome', 'swgwork')
-        os.makedirs(cache_dir, exist_ok=True)
+        # Do nasty hack and replace labhome with swgwork
+        if not os.path.exists(cache_dir):
+            scache_dir = cache_dir.replace('labhome', 'swgwork')
+            if cache_dir != scache_dir:
+                os.makedirs(scache_dir, exist_ok=True)
+                os.makedirs(os.path.expanduser("~/.cache/mellanox/") , exist_ok=True)
+                subprocess.check_call(["ln", "-s", scache_dir, cache_dir])
+            else:
+                os.makedirs(cache_dir, exist_ok=True)
     return os.path.join(cache_dir, fn)
 
 
