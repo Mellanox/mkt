@@ -121,6 +121,7 @@ def get_simx_rdma_devices():
 def get_pci_rdma_devices():
     """Return a dictionary of PCI BDF to decoded mod aliases"""
     if not has_iommu():
+        print("Your hypervisor doesn't have IOMMU configured.")
         return {}
 
     sd = "/sys/bus/pci/devices/"
