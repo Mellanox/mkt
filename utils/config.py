@@ -33,18 +33,17 @@ def load_config_file():
 
 
 def init_config_file():
-    username = pwd.getpwuid(os.getuid())[0]
     config.read(config_f)
     try:
         config.add_section("defaults")
         # new setup, set defaults
         config["defaults"] = {
-            'src': '/images/' + username + '/src/',
-            'linux': '/images/' + username + '/src/kernel/',
-            'rdma-core': '/images/' + username + '/src/rdma-core/',
-            'iproute2': '/images/' + username + '/src/iproute2/',
-            'logs': '/images/' + username + '/logs/',
-            'ccache': '/images/' + username + '/ccache/',
+            'src': '/images/' + username() + '/src/',
+            'linux': '/images/' + username() + '/src/kernel/',
+            'rdma-core': '/images/' + username() + '/src/rdma-core/',
+            'iproute2': '/images/' + username() + '/src/iproute2/',
+            'logs': '/images/' + username() + '/logs/',
+            'ccache': '/images/' + username() + '/ccache/',
             'os': 'fc28'
         }
     except configparser.DuplicateSectionError:

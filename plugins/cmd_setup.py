@@ -107,14 +107,14 @@ def cmd_setup(args):
 
             print("Prepare " + key)
             subprocess.call(["sudo", "mkdir", "-p", value])
-            subprocess.call(["sudo", "chown", "-R", utils.username + ":" + utils.group, value])
+            subprocess.call(["sudo", "chown", "-R", utils.username() + ":" + utils.group(), value])
 
             if key == "src" or key == "logs" or key == "ccache":
                 continue
 
             p = subprocess.Popen(
                 [
-                    "git", "clone", "ssh://" + utils.username +
+                    "git", "clone", "ssh://" + utils.username() +
                     "@l-gerrit.mtl.labs.mlnx:29418/upstream/" + key, "."
                 ],
                 cwd=value)
@@ -123,7 +123,7 @@ def cmd_setup(args):
             p = subprocess.Popen(
                 [
                     "scp", "-p", "-P", "29418",
-                    utils.username + "@l-gerrit.mtl.labs.mlnx:hooks/commit-msg",
+                    utils.username() + "@l-gerrit.mtl.labs.mlnx:hooks/commit-msg",
                     ".git/hooks/"
                 ],
                 cwd=value)
