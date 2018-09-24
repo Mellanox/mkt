@@ -26,6 +26,11 @@ RUN \
     net-tools \
     openssh-server \
     pciutils \
+    'perl(File::Basename)' \
+    'perl(File::Path)' \
+    'perl(Getopt::Long)' \
+    'perl(strict)' \
+    'perl(warnings)' \
     psmisc \
     python-argcomplete \
     python2 \

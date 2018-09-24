@@ -20,6 +20,7 @@ RUN dnf install -y \
     ninja-build \
     pandoc \
     patch \
+    perl-generators \
     pixman-devel \
     pkg-config \
     pkgconfig \
