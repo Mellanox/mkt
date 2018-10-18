@@ -427,5 +427,4 @@ for k, v in sorted(qemu_args.items()):
         cmd.append(k)
         if v:
             cmd.append(v)
-print(cmd)
 os.execvp(cmd[0], cmd)

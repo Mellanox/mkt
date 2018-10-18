@@ -39,5 +39,9 @@ sudo apt-get -y install git \
 		    python3-yaml \
                     pandoc
 
+# Allow QEMU inside containers to get network
+sudo iptables -I FORWARD -m physdev --physdev-is-bridged -j ACCEPT
+sudo sh -c "iptables-save >> /etc/sysconfig/iptables"
+
 # Ensure that the HV is up-to-date
 sudo apt-get -y upgrade
