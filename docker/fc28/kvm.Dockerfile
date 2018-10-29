@@ -1,3 +1,14 @@
+FROM fedora:28 as rpms
+
+COPY --from=local_mkt/support_rdma_core:fc28 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
+COPY --from=local_mkt/support_simx:fc28 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
+
+RUN rm -f \
+   /opt/rpms/*debug*.rpm \
+   /opt/rpms/*ibacm*.rpm \
+   /opt/rpms/*devel*.rpm \
+   /opt/rpms/*iwpmd*.rpm
+
 FROM fedora:28
 
 # Static files are done before installing to avoid prompting
@@ -48,8 +59,7 @@ RUN \
     wget \
     && dnf clean dbcache packages
 
-COPY --from=local_mkt/support_simx:fc28 /opt/simx /opt/simx
-COPY --from=local_mkt/support_rdma_core:fc28 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
+COPY --from=rpms /opt/rpms /opt/rpms
 
 ADD sshd_config ssh_host_rsa_key /etc/ssh/
 

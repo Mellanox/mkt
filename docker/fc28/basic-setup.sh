@@ -65,10 +65,4 @@ cat <<EOF > /etc/locale.conf
 LANG="en_CA.UTF-8"
 EOF
 
-rm -f \
-   /opt/rpms/*debug*.rpm \
-   /opt/rpms/*ibacm*.rpm \
-   /opt/rpms/*devel*.rpm \
-   /opt/rpms/*iwpmd*.rpm
 rpm -U /opt/rpms/*.rpm
-rm -rf /opt/rpms

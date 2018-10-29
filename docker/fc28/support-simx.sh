@@ -7,14 +7,27 @@
 
 patch -p1 < /opt/00*.patch
 
+cat <<EOF > mlx-simx.spec
+%global debug_package %{nil}
+
+Name:           mlx-simx
+Version:        1
+Release:        1%{?dist}
+Summary:	Mellanox simx enabled qemu
+License:        Proprietary
+
+%description
+From simx.git
+
+%build
+mkdir build
+cd build
+
 # See ./mlnx_infra/config.status.mlnx
 SIMX_GCC_FLAGS=
 SIMX_EXTRA_FLAGS="-I/usr/include/libnl3/"
 SIMX_EXTRA_LDFLAGS=
 SIMX_EXTRA_COMPILATION_FLAGS='--enable-werror'
-
-mkdir build
-cd build
 
 '../configure' \
 ${SIMX_GCC_FLAGS} \
@@ -65,10 +78,17 @@ ${SIMX_EXTRA_COMPILATION_FLAGS} \
 '--disable-capstone' \
 '--target-list=x86_64-softmmu'
 
-make -j`nproc`
-make install
-mkdir -p /opt/simx/etc/qemu-kvm/
-ln -s /etc/qemu/bridge.conf /opt/simx/etc/qemu-kvm/bridge.conf
+make %{?_smp_mflags}
 
-cd ..
-rm -rf build
+#%install
+cd build
+make DESTDIR=%{buildroot} install
+mkdir -p %{buildroot}/opt/simx/etc/qemu-kvm/
+ln -s /etc/qemu/bridge.conf %{buildroot}/opt/simx/etc/qemu-kvm/bridge.conf
+
+%files
+/opt/simx/*
+EOF
+
+rpmbuild --build-in-place -bb mlx-simx.spec
+
