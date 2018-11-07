@@ -328,6 +328,8 @@ def cmd_run(args):
 
     usr = pwd.getpwuid(os.getuid())
     args.dir.append(usr.pw_dir)
+    args.dir += section.get('dir', None).split()
+    args.dir = list(set(args.dir))
 
     for I in args.dir:
         mapdirs.add(I)
