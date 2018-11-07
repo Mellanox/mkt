@@ -326,9 +326,8 @@ def cmd_run(args):
                              % (args.kernel))
         mapdirs.add(args.kernel)
 
-    if not args.dir:
-        usr = pwd.getpwuid(os.getuid())
-        args.dir.append(usr.pw_dir)
+    usr = pwd.getpwuid(os.getuid())
+    args.dir.append(usr.pw_dir)
 
     for I in args.dir:
         mapdirs.add(I)
