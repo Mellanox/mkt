@@ -15,6 +15,11 @@ os = fc28
 # without any parameters. It is overwritten by providng image
 # name as an argument to "mkt run"
 image = cx5-ib
+# Path to directories which will be mounted and visible in docker
+# Home directory (/labhome/username for Mellanox network) will be
+# alway avaialble.
+# The maount point is in ead-only.
+dir = /path/to/first/dir path/to/second/dir /path/to/third/dir
 [cx5-ib]
 # List of PICs to connect to this container
 pci = 0000:05:00.0 0000:88:00.0

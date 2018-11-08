@@ -326,22 +326,34 @@ def cmd_run(args):
                              % (args.kernel))
         mapdirs.add(args.kernel)
 
-    if not args.dir:
-        usr = pwd.getpwuid(os.getuid())
-        args.dir.append(usr.pw_dir)
+    usr = pwd.getpwuid(os.getuid())
+    args.dir.append(usr.pw_dir)
+    args.dir += section.get('dir', None).split()
+    args.dir = list(set(args.dir))
 
     for I in args.dir:
         mapdirs.add(I)
+
+    vm_addr = get_mac()
 
     if args.run_shell:
         do_kvm_args = ["/bin/bash"]
     else:
         do_kvm_args = ["python3", "/plugins/do-kvm.py"]
+        if vm_addr.ip:
+            # Open network for QEMU, relevant for bridged mode only
+            iprule = ["FORWARD", "-m", "physdev", "--physdev-is-bridged", "-j", "ACCEPT"]
+            # First delete old rule
+            subprocess.call(["sudo", "iptables", "-D"] + iprule,
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL)
+            subprocess.call(["sudo", "iptables", "-I"] + iprule,
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL)
 
     src_dir = os.path.dirname(
         os.path.abspath(inspect.getfile(inspect.currentframe())))
 
-    vm_addr = get_mac()
     cname = get_container_name(vm_addr)
     # Clean up a container if it is left over somehow
     cont = docker_get_containers(name=cname)
