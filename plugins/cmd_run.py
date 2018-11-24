@@ -265,8 +265,9 @@ def args_run(parser):
 
 def cmd_run(args):
     """Run a system image container inside KVM"""
+    from . import cmd_images
     section = utils.load_config_file()
-    docker_os = section.get('os', 'fc28')
+    docker_os = section.get('os', cmd_images.default_os)
 
     # We have three possible options to execute:
     # 1. "mkt run" without request to specific image. We will try to find

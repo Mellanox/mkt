@@ -1,7 +1,7 @@
-FROM fedora:28 as rpms
+FROM fedora:29 as rpms
 
-COPY --from=local_mkt/support_rdma_core:fc28 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
-COPY --from=local_mkt/support_simx:fc28 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
+COPY --from=local_mkt/support_rdma_core:fc29 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
+COPY --from=local_mkt/support_simx:fc29 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
 
 RUN rm -f \
    /opt/rpms/*debug*.rpm \
@@ -9,7 +9,7 @@ RUN rm -f \
    /opt/rpms/*devel*.rpm \
    /opt/rpms/*iwpmd*.rpm
 
-FROM fedora:28
+FROM fedora:29
 
 # Static files are done before installing to avoid prompting
 ADD ./sudoers /etc/sudoers.d/local
@@ -43,7 +43,6 @@ RUN \
     'perl(strict)' \
     'perl(warnings)' \
     psmisc \
-    python-argcomplete \
     python2 \
     python3 \
     python3-argcomplete \

@@ -9,9 +9,9 @@ from utils.cmdline import *
 from subprocess import call, Popen
 
 supported_os = {
-    "fc28",
+    "fc29",
 }
-
+default_os = next(iter(supported_os))
 
 def get_proxy_arg(run=False):
     res = []
@@ -268,7 +268,7 @@ def args_images(parser):
         nargs='?',
         help="The image to build",
         choices=sorted(supported_os),
-        default=section.get('os', 'fc28'))
+        default=section.get('os', default_os))
     """
     parser.add_argument("arch",
                         nargs='?',
