@@ -44,7 +44,6 @@ def init_config_file():
             'iproute2': '/images/' + username() + '/src/iproute2/',
             'logs': '/images/' + username() + '/logs/',
             'ccache': '/images/' + username() + '/ccache/',
-            'os': 'fc28'
         }
     except configparser.DuplicateSectionError:
         pass
