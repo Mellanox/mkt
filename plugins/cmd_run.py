@@ -295,7 +295,7 @@ def cmd_run(args):
         )
 
     args.pci += set(s).intersection(set(get_pci_rdma_devices().keys()))
-    args.simx += set(s).intersection(set(get_simx_rdma_devices()))
+    args.simx += [item for item in s if item not in args.pci]
 
     if len(args.simx) > 5:
         exit("SimX doesn't support more than 5 devices")
