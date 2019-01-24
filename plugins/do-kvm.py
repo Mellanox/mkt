@@ -265,6 +265,20 @@ def set_loop_network(args):
         "user,hostfwd=tcp:127.0.0.1:4444-:22"
     ])
 
+def set_simx_log():
+    """Prepare simx log file."""
+
+    # Old SimX version relies on the fact that log file exists,
+    # create that file for them
+    subprocess.check_call(['mkdir', '-p', '/opt/simx/logs/'])
+    f = open('/opt/simx/logs/simx-qemu.log', 'w+')
+    f.close()
+
+    subprocess.check_call(['mkdir', '-p', '/opt/simx/cfg/'])
+    with open('/opt/simx/cfg/simx-qemu.cfg', 'a+') as f:
+         f.write('[logger]\n')
+         f.write('log_file_redirection = /opt/simx/logs/simx-qemu.log\n')
+
 def set_simx_network(simx):
     """Setup options to start a simx card"""
     to_simx_device = { 'cx4' : 'connectx4',
@@ -414,6 +428,7 @@ set_vfio(args)
 
 if args.simx:
     cmd = ["/opt/simx/bin/qemu-system-x86_64"]
+    set_simx_log()
     set_simx_network(args.simx)
 else:
     cmd = ["qemu-system-x86_64"]
