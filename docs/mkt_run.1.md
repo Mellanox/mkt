@@ -125,6 +125,15 @@ avoids re-using addresses assigned to existing instances. Use **docker ps**
 and **docker kill** to manage running instances of **mkt run**, particularly
 if they have been backgrounded by a ssh connection drop.
 
+## SIMX DEBUG
+
+**mkt** runs over SimX are configured to produce /opt/simx/logs/simx-qemu.log
+file directly in the docker instance created by **mkt run**. By default this
+file is almost empty. In order to increase verbosity level and output more
+information, you are invited to add extra logger comands obtaied from SimX
+developers and put it into **set_simx_log()** function of **plugins/do-kvm.py"
+file.
+
 # MKT
 
 Part of the **mkt(1)** suite
