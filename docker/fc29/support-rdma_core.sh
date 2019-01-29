@@ -1,6 +1,6 @@
 #!/bin/bash
 # ---
-# git_url: https://github.com/linux-rdma/rdma-core.git
-# git_commit: v21
+# git_url: /images/leonro/src/rdma-core
+# git_commit: 988936bf
 
 rpmbuild --build-in-place -bb redhat/rdma-core.spec

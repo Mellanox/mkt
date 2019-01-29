@@ -13,6 +13,7 @@ viewed with **mkt cmd --help**, or online as linked below:
 
 * **[mkt images](docs/mkt_images.1.md)**
 * **[mkt run](docs/mkt_run.1.md)**
+* **[mkt build](docs/mkt_build.1.md)**
 
 # Recommended work flow
 
@@ -22,15 +23,16 @@ directly on the hypervisor unless otherwise noted. Developers should not work
 from a VM within their hypervisor.
 
 When working with a standard Mellanox lab server images the recommended
-configuration is latest RHEL or Fedora Core, as desired. Old releases of RHEL
+configuration is latest Fedora or Ubuntu, as desired. Old releases of RHEL
 lack necessary kernel features and are not supported by Docker Community
 Edition.
 
-Working sources should be FIXME
+## Compiling source code
 
-## Compiling a kernel
+The **[mkt run](docs/mkt_build.1.md)** command provides compilation solution
+to build kernel/iproute2/rdma-core with latest development tool chain.
 
-FIXME
+Recommended and optimized kernel .config is located in **[configs/kconfig-kvm](configs/kconfig-kvm)**
 
 ## Testing a kernel and user pace in a VM
 
@@ -67,7 +69,7 @@ your shell of choice.
 Several other commonly used tools make use of this, so it is recommended to
 enable it globally.
 
-## Hypervisor preperation
+## Hypervisor preparation
 
 **mkt** requires a new docker to be installed to be used. Do not use the
 docker that comes with the operating system, follow the directions at
@@ -82,7 +84,7 @@ and Fedora 26 and above.
 Local preferences can be configured in the
 ~/.config/mellanox/mkt/*hv-hostname*.mkt file. FIXME
 
-## Docker preperation
+## Docker preparation
 
 **mkt** uses docker images from the Mellanox private docker container registry
 (harbor.mellanox.com). By default **mkt** will download required images

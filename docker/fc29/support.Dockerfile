@@ -1,22 +1,30 @@
 FROM fedora:29
 
 RUN dnf install -y \
+    bc \
     binutils \
+    bison \
     cmake \
+    elfutils-devel \
+    elfutils-libelf-devel \
     findutils \
+    flex \
     gcc \
     git-core \
     glib2-devel \
+    hostname \
     libaio-devel \
     libattr-devel \
     libcap-devel \
     libfdt-devel \
+    libmnl-devel \
     libnl3-cli \
     libnl3-devel \
     libseccomp-devel \
     libudev-devel \
     libusb-devel \
     make \
+    ncurses-devel \
     ninja-build \
     pandoc \
     patch \
