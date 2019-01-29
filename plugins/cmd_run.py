@@ -236,7 +236,7 @@ def args_run(parser):
     kernel.add_argument(
         '--kernel',
         help="Path to the the top of a compiled kernel source tree to boot",
-        default=section.get('linux', None))
+        default=section.get('kernel', None))
     kernel.add_argument(
         '--kernel-rpm', help="Path to a kernel RPM to boot", default=None)
 

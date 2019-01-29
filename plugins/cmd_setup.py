@@ -132,7 +132,7 @@ def cmd_setup(args):
 
             if key == "kernel":
                 shutil.copy(
-                    section['linux'] + "/.config",
+                    section['kernel'] + "/.config",
                     os.path.join(
                         os.path.dirname(__file__), "../configs/kconfig-kvm"))
                 p = subprocess.Popen(["make", "olddefconfig"], cwd=value)

@@ -1,7 +1,7 @@
 [defaults]
 # Paths to source code
 src = /images/leonro/src/
-linux = /images/leonro/src/kernel/
+kernel = /images/leonro/src/kernel/
 rdma-core = /images/leonro/src/rdma-core/
 iproute2 = /images/leonro/src/iproute2/
 # Direcotry to store various output logs
