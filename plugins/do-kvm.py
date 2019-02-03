@@ -309,6 +309,9 @@ def set_simx_network(simx):
                 f.write('port_type = 0x1\n')
             idx = idx + 1
 
+def set_virt_devices(args):
+    qemu_args["-append"] += " modules_load=rdma_rxe";
+
 def set_vfio(args):
     """Pass a VFIO owned PCI device through to the guest"""
     for bdf in args.vfio:
@@ -373,6 +376,7 @@ def setup_from_pickle(args, pickle_params):
     args.kernel_rpm = p.get("kernel_rpm", None)
     args.simx = p.get("simx", False)
     args.vfio = p.get("vfio", [])
+    args.virt = p.get("virt", False)
     args.vm_addr = VM_Addr(**p["vm_addr"])
     args.mem = p["mem"]
 
@@ -425,6 +429,8 @@ except subprocess.CalledProcessError:
     set_loop_network(args)
 
 set_vfio(args)
+if args.virt:
+    set_virt_devices(args)
 
 if args.simx:
     cmd = ["/opt/simx/bin/qemu-system-x86_64"]

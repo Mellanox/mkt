@@ -27,3 +27,7 @@ pci = 0000:05:00.0 0000:88:00.0
 # PCI supports simx-aware names, supported options
 # are: cx4-ib, cx4-eth, cib-ib, cx5-ib, cx5-eth, cx4lx-eth, cx6-ib, cx6-eth
 pci = cx4-ib
+[virt]
+# Virtual devices in yepy-interface format, currently only RXE is supported,
+# and future version will support SIW too.
+pci = rxe-eth0

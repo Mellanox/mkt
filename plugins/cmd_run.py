@@ -110,6 +110,11 @@ def has_iommu():
         return True
     return False
 
+def get_virt_rdma_devices():
+    # In the future, it will support siw too and we will generate
+    # automatically the list of interfaces, and fix initialization
+    # over loopback.
+    return [ 'rxe-eth0' ]
 
 def get_simx_rdma_devices():
     return [
@@ -219,6 +224,8 @@ def get_pickle(args, vm_addr):
     if args.simx:
         p["simx"] = sorted(args.simx)
         mem += len(p["simx"])
+    if args.virt:
+        p["virt"] = sorted(args.virt)
     p["mem"] = str(mem) + 'G'
 
     return base64.b64encode(pickle.dumps(p)).decode()
@@ -261,7 +268,13 @@ def args_run(parser):
         default=[],
         choices=sorted(get_pci_rdma_devices().keys()),
         help="Pass a given PCI bus/device/function to the guest")
-
+    parser.add_argument(
+        '--virt',
+        metavar="VIRT_DEV",
+        action="append",
+        default=[],
+        choices=sorted(get_virt_rdma_devices()),
+        help="Pass a virtual device type-interface format to the guest")
 
 def cmd_run(args):
     """Run a system image container inside KVM"""
@@ -286,16 +299,20 @@ def cmd_run(args):
         s = pci.split()
 
     union = set(get_simx_rdma_devices()).union(
-        set(get_pci_rdma_devices().keys()))
+        set(get_pci_rdma_devices().keys())).union(
+        set(get_virt_rdma_devices()))
+
     if not set(s).issubset(union):
         # It is possible only for config files, because we sanitized
         # input to ensure that valid data is supplied.
         exit(
-            "There is an error in configuration file, PCI and/or SIMX devices don't exists."
+            "There is an error in configuration file, PCI, SIMX or VIRT devices don't exists."
         )
 
     args.pci += set(s).intersection(set(get_pci_rdma_devices().keys()))
-    args.simx += [item for item in s if item not in args.pci]
+    args.virt += set(s).intersection(set(get_virt_rdma_devices()))
+    b = args.pci + args.virt
+    args.simx += [item for item in s if item not in b]
 
     if len(args.simx) > 5:
         exit("SimX doesn't support more than 5 devices")
