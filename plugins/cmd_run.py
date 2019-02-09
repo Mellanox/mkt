@@ -3,6 +3,7 @@
 import os
 import sys
 import pwd
+import grp
 import pickle
 import base64
 import fnmatch
@@ -201,9 +202,10 @@ def get_mac():
 
 def get_pickle(args, vm_addr):
     usr = pwd.getpwuid(os.getuid())
-
+    gr = grp.getgrgid(os.getgid())
     p = {
         "user": usr.pw_name,
+        "group": gr.gr_name,
         "uid": usr.pw_uid,
         "gid": usr.pw_gid,
         "home": usr.pw_dir,

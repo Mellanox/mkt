@@ -367,7 +367,7 @@ def setup_from_pickle(args, pickle_params):
     write_once("/etc/passwd",
                "{user}:x:{uid}:{gid}:,,,:{home}:{shell}\n".format(**p))
     write_once("/etc/shadow", "{user}:x:17486:0:99999:7:::\n".format(**p))
-    write_once("/etc/group", "{user}:x:{gid}:\n".format(**p))
+    write_once("/etc/group", "{group}:x:{gid}:\n".format(**p))
     write_once("/etc/sudoers", "{user} ALL=(ALL) NOPASSWD:ALL\n".format(**p))
 
     setup_console(p["user"])
