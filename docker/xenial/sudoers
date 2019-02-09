@@ -1,2 +1,0 @@
-Defaults env_keep += HOME
-ALL	ALL=(ALL:ALL) ALL

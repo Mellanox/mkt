@@ -21,6 +21,11 @@ def group():
 
 try:
     config.read(config_f)
+    # Fix naming error, where we gave to "kernel" folder "linux" as the alias
+    try:
+        config["defaults"]['kernel'] = config["defaults"]['linux']
+    except KeyError:
+        pass
 except configparser.MissingSectionHeaderError:
     exit(config_f + " in wrong format. Exiting ..")
 
@@ -31,7 +36,6 @@ def load_config_file():
     except KeyError:
         return dict()
 
-
 def init_config_file():
     config.read(config_f)
     try:
@@ -39,7 +43,7 @@ def init_config_file():
         # new setup, set defaults
         config["defaults"] = {
             'src': '/images/' + username() + '/src/',
-            'linux': '/images/' + username() + '/src/kernel/',
+            'kernel': '/images/' + username() + '/src/kernel/',
             'rdma-core': '/images/' + username() + '/src/rdma-core/',
             'iproute2': '/images/' + username() + '/src/iproute2/',
             'logs': '/images/' + username() + '/logs/',

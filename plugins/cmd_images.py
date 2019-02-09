@@ -269,18 +269,6 @@ def args_images(parser):
         help="The image to build",
         choices=sorted(supported_os),
         default=section.get('os', default_os))
-    """
-    parser.add_argument("arch",
-                        nargs='?',
-                        help="Architecture to build",
-                        choices=sorted([
-                            "x86_64",
-                            "arm64",
-                            "ppc64",
-                            "ppc64le",
-                        ]),
-                        default="x86_64");
-    """
 
 
 def cmd_images(args):
@@ -291,7 +279,7 @@ def cmd_images(args):
 
     with in_directory(utils.get_internal_fn(os.path.join("docker", args.os))):
         images = (
-            (None, "support.Dockerfile"),
+            (make_image_name("build", args.os), "support.Dockerfile"),
             (make_image_name("kvm", args.os), "kvm.Dockerfile"),
         )
         if args.pull:
