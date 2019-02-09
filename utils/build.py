@@ -26,12 +26,15 @@ class Build(object):
             return self._clean()
         return self._in_place()
 
-    def run_cmd(self, os):
+    def run_cmd(self, supos, build_recipe=None):
         ccache = section.get('ccache', None)
-        docker_os = section.get('os', os)
-        return ["--rm", "-v", self.src + ":" + self.src + ":rw",
-                "-it", "-v", ccache + ":/ccache", "-w",
-                self.src, make_image_name("build", docker_os)]
+        docker_os = section.get('os', supos)
+        cmd = ["--rm", "-v", self.src + ":" + self.src + ":rw",
+                "-it", "-v", ccache + ":/ccache"]
+        if build_recipe:
+            cmd += ["-v", "%s:%s:ro" % (build_recipe, build_recipe)]
+
+        return cmd + ["-w", self.src, make_image_name("build", docker_os)]
 
     def rpm(self):
         """Build RPM from source"""

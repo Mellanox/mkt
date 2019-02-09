@@ -21,6 +21,8 @@ def args_build(parser):
         action="store_true",
         default=False,
         help="Run a shell inside the container instead of invoking build script")
+    parser.add_argument(
+        '--build-recipe', help="File with build recipe")
 
 def cmd_build(args):
     """Smart build."""
@@ -31,9 +33,17 @@ def cmd_build(args):
 
     build = BuildSrc(args.project)
 
+    recipe_dir = None
+    if args.build_recipe is not None:
+        args.build_recipe = os.path.realpath(args.build_recipe)
+        recipe_dir = os.path.dirname(args.build_recipe)
+
     if args.run_shell:
         do_cmd = ["/bin/bash"]
     else:
-        do_cmd = build.do_cmd(args.clean)
+        if args.build_recipe:
+            do_cmd = ["/bin/bash", args.build_recipe]
+        else:
+            do_cmd = build.do_cmd(args.clean)
 
-    docker_exec_run(build.run_cmd(cmd_images.default_os) + do_cmd)
+    docker_exec_run(build.run_cmd(cmd_images.default_os, recipe_dir) + do_cmd)
