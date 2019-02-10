@@ -4,6 +4,7 @@ RUN dnf install -y \
     bc \
     binutils \
     bison \
+    ccache \
     cmake \
     elfutils-devel \
     elfutils-libelf-devel \
