@@ -113,6 +113,9 @@ def cmd_setup(args):
             if key == "src" or key == "logs" or key == "ccache":
                 continue
 
+            if key == "kernel":
+                key = "linux"
+
             p = subprocess.Popen(
                 [
                     "git", "clone", "ssh://" + utils.username() +
@@ -130,7 +133,7 @@ def cmd_setup(args):
                 cwd=value)
             p.wait()
 
-            if key == "kernel":
+            if key == "linux":
                 shutil.copy(
                     section['kernel'] + "/.config",
                     os.path.join(
