@@ -33,6 +33,8 @@ class Build(object):
                 "-it", "-v", ccache + ":/ccache"]
         if build_recipe:
             cmd += ["-v", "%s:%s:ro" % (build_recipe, build_recipe)]
+        if ccache:
+            cmd += ["-e", "CCACHE_DIR=/ccache"]
 
         return cmd + ["-w", self.src, make_image_name("build", docker_os)]
 
@@ -51,6 +53,9 @@ class KernelBuild(Build):
         return self.entry + ["make clean"]
     def _in_place(self):
         print("Start kernel compilation in silent mode")
+        ccache = section.get('ccache', None)
+        if ccache:
+            return self.entry + ["make CC=\"ccache gcc\" -j%d -s" % (self.num_jobs)]
         return self.entry + ["make -j%d -s" % (self.num_jobs)]
 
 class Iproute2Build(Build):
