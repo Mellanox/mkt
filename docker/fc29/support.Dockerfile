@@ -34,6 +34,8 @@ RUN dnf install -y \
     pkgconfig \
     pulseaudio \
     python \
+    python3-Cython \
+    python3-devel \
     rpm-build \
     spice-protocol \
     spice-server-devel \
