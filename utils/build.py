@@ -10,7 +10,7 @@ class Build(object):
     def  __init__(self, project):
         self.src = section.get(project, None)
         self.project = project
-        self.entry = ["bash", "-c"]
+        self.entry = ["/bin/bash", "-c"]
         # Take into acount affinity, but blindly assume
         # that we can run "2 threads per-CPU".
         self.num_jobs = len(os.sched_getaffinity(0)) * 2
@@ -29,12 +29,11 @@ class Build(object):
     def run_cmd(self, supos, build_recipe=None):
         ccache = section.get('ccache', None)
         docker_os = section.get('os', supos)
-        cmd = ["--rm", "-v", self.src + ":" + self.src + ":rw",
-                "-it", "-v", ccache + ":/ccache"]
+        cmd = ["--rm", "-v", self.src + ":" + self.src + ":rw", "-it"]
         if build_recipe:
             cmd += ["-v", "%s:%s:ro" % (build_recipe, build_recipe)]
         if ccache:
-            cmd += ["-e", "CCACHE_DIR=/ccache"]
+            cmd += ["-v", ccache + ":/ccache"]
 
         return cmd + ["-w", self.src, make_image_name("build", docker_os)]
 
@@ -55,7 +54,7 @@ class KernelBuild(Build):
         print("Start kernel compilation in silent mode")
         ccache = section.get('ccache', None)
         if ccache:
-            return self.entry + ["make CC=\"ccache gcc\" -j%d -s" % (self.num_jobs)]
+            return self.entry + ["export CCACHE_DIR=/ccache && make CC=\"ccache gcc\" -j%d -s" % (self.num_jobs)]
         return self.entry + ["make -j%d -s" % (self.num_jobs)]
 
 class Iproute2Build(Build):
