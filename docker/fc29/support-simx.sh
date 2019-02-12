@@ -1,11 +1,7 @@
 #!/bin/bash
 # ---
 # git_url: http://webdev01.mtl.labs.mlnx:8080/git/simx.git
-# git_commit: 0bb8c6753fd8314071bce3fd70a49f5b51803fa1
-# other_files:
-#   - 0001-Fix-compilation-error-on-FC28.patch
-
-patch -p1 < /opt/00*.patch
+# git_commit: v3.10
 
 cat <<EOF > mlx-simx.spec
 %global debug_package %{nil}
