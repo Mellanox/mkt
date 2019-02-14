@@ -38,6 +38,25 @@ def fork(args):
     args.src = "/build/%s" %(args.project)
     args.rev = head
 
+def build_dirlist(args):
+    files = subprocess.check_output(["git", "show", "--name-only",
+        "--oneline", args.rev], cwd=args.src).decode().split('\n')
+    # Remove subjet line
+    files = files[1:]
+    # Leave only directories which we know how to check
+    supported = ("arch", "block", "crypto", "fs", "init", "ipc", "kernel",
+        "lib", "mm", "drivers", "net", "security", "sound", "virt")
+    dirlist = set()
+    for f in files:
+        if f.startswith(supported):
+            dirlist.add(os.path.join(os.path.dirname(f), ''))
+    args.dirlist = list(dirlist)
+
+def sparse(args):
+    subprocess.call(["make", "-j", "64", "-s", "clean"])
+    subprocess.call(["make", "-j", "64", "-s", "allyesconfig"])
+    subprocess.call(["make", "-j", "64", "-s", "CHECK=sparse", "C=2"] + args.dirlist)
+
 def checkpatch(args):
     subprocess.call(["%s/scripts/checkpatch.pl" %(args.src), "-q", "--no-summary",
         "-g", args.rev]);
@@ -51,6 +70,7 @@ def setup_from_pickle(args, pickle_params):
     args.project = p.get("project", None)
     args.rev = p.get("rev", 'HEAD')
     args.checkpatch = p.get("checkpatch", True)
+    args.sparse = p.get("sparse", True)
 
 parser = argparse.ArgumentParser(description='CI container')
 args = parser.parse_args()
@@ -62,3 +82,6 @@ fork(args)
 if args.project == "kernel":
     if args.checkpatch:
         checkpatch(args)
+    build_dirlist(args)
+    if args.sparse:
+        sparse(args)

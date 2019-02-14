@@ -14,6 +14,7 @@ RUN dnf install -y \
     gcc \
     git-core \
     glib2-devel \
+    gtk2-devel \
     hostname \
     libaio-devel \
     libattr-devel \
@@ -25,6 +26,7 @@ RUN dnf install -y \
     libseccomp-devel \
     libudev-devel \
     libusb-devel \
+    libxml2-devel \
     make \
     ncurses-devel \
     ninja-build \

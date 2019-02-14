@@ -21,6 +21,12 @@ def args_ci(parser):
         nargs=1,
         default=['HEAD'],
         help="Commit to check")
+    parser.add_argument(
+        "--no-sparse",
+        action="store_false",
+        dest="sparse",
+        help="Skip sparse check",
+        default=True)
 
 def cmd_ci(args):
     """Local continuous integration check."""
@@ -31,6 +37,8 @@ def cmd_ci(args):
 
     build = BuildSrc(args.project)
     build.pickle['checkpatch'] = args.checkpatch
+    build.pickle['sparse'] = args.sparse
+
     # FIXME: allow git revisions as input to --rev.
     # But for now, let's give an option to provide
     # commit.
