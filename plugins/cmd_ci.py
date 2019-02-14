@@ -16,6 +16,11 @@ def args_ci(parser):
         dest="checkpatch",
         help="Skip checkpatch check",
         default=True)
+    parser.add_argument(
+        "--rev",
+        nargs=1,
+        default=['HEAD'],
+        help="Commit to check")
 
 def cmd_ci(args):
     """Local continuous integration check."""
@@ -26,6 +31,9 @@ def cmd_ci(args):
 
     build = BuildSrc(args.project)
     build.pickle['checkpatch'] = args.checkpatch
-
+    # FIXME: allow git revisions as input to --rev.
+    # But for now, let's give an option to provide
+    # commit.
+    build.pickle['rev'] = args.rev[0]
     do_cmd = ["python3", "/plugins/do-ci.py"]
     docker_exec(["run"] + build.run_ci_cmd(cmd_images.default_os) + do_cmd)

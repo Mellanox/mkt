@@ -22,7 +22,6 @@ class Build(object):
     def _get_pickle(self):
         self.pickle["project"] = self.project
         self.pickle["src"] = self.src
-        self.pickle["rev"] = 'HEAD'
 
         return base64.b64encode(pickle.dumps(self.pickle)).decode()
 
