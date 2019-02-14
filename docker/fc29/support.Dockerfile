@@ -6,6 +6,7 @@ RUN dnf install -y \
     bison \
     ccache \
     cmake \
+    ctags \
     elfutils-devel \
     elfutils-libelf-devel \
     findutils \
