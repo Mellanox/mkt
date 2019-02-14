@@ -3,6 +3,9 @@
 import os
 import utils
 from utils.docker import *
+import inspect
+import pickle
+import base64
 
 section = utils.load_config_file()
 
@@ -15,6 +18,14 @@ class Build(object):
         # that we can run "2 threads per-CPU".
         self.num_jobs = len(os.sched_getaffinity(0)) * 2
 
+    def _get_pickle(self):
+        p = dict()
+        p["project"] = self.project
+        p["src"] = self.src
+        p["rev"] = 'HEAD'
+
+        return base64.b64encode(pickle.dumps(p)).decode()
+
     def factory(project):
         if project == "kernel": return KernelBuild(project);
         if project == "iproute2": return Iproute2Build(project);
@@ -26,7 +37,7 @@ class Build(object):
             return self._clean()
         return self._in_place()
 
-    def run_cmd(self, supos, build_recipe=None):
+    def _run_cmd(self, supos, build_recipe, image_name):
         ccache = section.get('ccache', None)
         docker_os = section.get('os', supos)
         cmd = ["--rm", "-v", self.src + ":" + self.src + ":rw", "-it"]
@@ -35,7 +46,19 @@ class Build(object):
         if ccache:
             cmd += ["-v", ccache + ":/ccache"]
 
-        return cmd + ["-w", self.src, make_image_name("build", docker_os)]
+        return cmd + ["-w", self.src, make_image_name(image_name, docker_os)]
+
+    def run_build_cmd(self, supos, build_recipe=None):
+        return self._run_cmd(supos, build_recipe, "build")
+
+    def run_ci_cmd(self, supos):
+        src_dir = os.path.dirname(
+                       os.path.abspath(inspect.getfile(inspect.currentframe()) + "/../"))
+        cmd = ["-v", "%s/plugins/:/plugins:ro" %(src_dir)]
+        cmd += ["--tmpfs", "/build:rw,exec,nosuid,mode=755,size=10G"]
+        cmd += ["-e", "CI_PICKLE=%s" % (self._get_pickle())]
+
+        return cmd + self._run_cmd(supos, None, "ci")
 
     def rpm(self):
         """Build RPM from source"""
