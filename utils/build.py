@@ -17,14 +17,14 @@ class Build(object):
         # Take into acount affinity, but blindly assume
         # that we can run "2 threads per-CPU".
         self.num_jobs = len(os.sched_getaffinity(0)) * 2
+        self.pickle = dict()
 
     def _get_pickle(self):
-        p = dict()
-        p["project"] = self.project
-        p["src"] = self.src
-        p["rev"] = 'HEAD'
+        self.pickle["project"] = self.project
+        self.pickle["src"] = self.src
+        self.pickle["rev"] = 'HEAD'
 
-        return base64.b64encode(pickle.dumps(p)).decode()
+        return base64.b64encode(pickle.dumps(self.pickle)).decode()
 
     def factory(project):
         if project == "kernel": return KernelBuild(project);

@@ -10,6 +10,12 @@ def args_ci(parser):
         nargs='?',
         choices=build_list(),
         help="Project to build")
+    parser.add_argument(
+        "--no-checkpatch",
+        action="store_false",
+        dest="checkpatch",
+        help="Skip checkpatch check",
+        default=True)
 
 def cmd_ci(args):
     """Local continuous integration check."""
@@ -19,6 +25,7 @@ def cmd_ci(args):
         set_args_project(args, section)
 
     build = BuildSrc(args.project)
+    build.pickle['checkpatch'] = args.checkpatch
 
     do_cmd = ["python3", "/plugins/do-ci.py"]
     docker_exec(["run"] + build.run_ci_cmd(cmd_images.default_os) + do_cmd)

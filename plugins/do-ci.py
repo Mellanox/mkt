@@ -36,6 +36,11 @@ def fork(args):
         copy("%s/.config" %(args.src), "/build/%s" %(args.project))
 
     args.src = "/build/%s" %(args.project)
+    args.rev = head
+
+def checkpatch(args):
+    subprocess.call(["%s/scripts/checkpatch.pl" %(args.src), "-q", "--no-summary",
+        "-g", args.rev]);
 
 def setup_from_pickle(args, pickle_params):
     """The script that invokes docker passes in some more detailed parameters
@@ -45,6 +50,7 @@ def setup_from_pickle(args, pickle_params):
     args.src = p.get("src", None)
     args.project = p.get("project", None)
     args.rev = p.get("rev", 'HEAD')
+    args.checkpatch = p.get("checkpatch", True)
 
 parser = argparse.ArgumentParser(description='CI container')
 args = parser.parse_args()
@@ -53,5 +59,6 @@ pickle_data = os.environ.get("CI_PICKLE")
 setup_from_pickle(args, pickle_data)
 fork(args)
 
-
-subprocess.check_call(["/bin/bash"])
+if args.project == "kernel":
+    if args.checkpatch:
+        checkpatch(args)
