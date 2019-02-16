@@ -27,6 +27,12 @@ def args_ci(parser):
         dest="sparse",
         help="Skip sparse check",
         default=True)
+    parser.add_argument(
+        "--no-ignore-gerrit",
+        action="store_false",
+        dest="gerrit",
+        help="Ensure that gerrit trash is not in the patch",
+        default=True)
 
 def cmd_ci(args):
     """Local continuous integration check."""
@@ -38,6 +44,7 @@ def cmd_ci(args):
     build = BuildSrc(args.project)
     build.pickle['checkpatch'] = args.checkpatch
     build.pickle['sparse'] = args.sparse
+    build.pickle['gerrit'] = args.gerrit
 
     # FIXME: allow git revisions as input to --rev.
     # But for now, let's give an option to provide
