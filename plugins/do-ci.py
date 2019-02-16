@@ -54,6 +54,7 @@ def build_dirlist(args):
         if f.startswith("include"):
             is_include_was_changed = True
 
+    args.filter_by_diff = False
     if not dirlist and is_include_was_changed:
         # Let's do smart guess and try to check subsystems,
         # which we are changing most of the time.
@@ -63,13 +64,51 @@ def build_dirlist(args):
         dirlist.add("net/")
         dirlist.add("drivers/nvme/")
         dirlist.add("mm/")
+        args.filter_by_diff = True
 
     args.dirlist = list(dirlist)
+    args.files = files
+
+def print_filtered_output(args, out):
+    # sparse output everything on stderr
+    for line in out.stderr.split('\n'):
+        l = line.split(":")
+        try:
+            if l[0] not in args.files:
+                continue
+            if not l[1].isdigit():
+                continue
+        except IndexError:
+            if not l:
+                print(line)
+            continue
+        blame = subprocess.check_output(["git", "blame", l[0], "-L%s,%s" %(l[1], l[1]), "-l", "-s"])
+        blame = blame.split()[0]
+        if args.rev == blame:
+            print(line)
 
 def sparse(args):
     subprocess.call(["make", "-j", "64", "-s", "clean"])
     subprocess.call(["make", "-j", "64", "-s", "allyesconfig"])
-    subprocess.call(["make", "-j", "64", "-s", "CHECK=sparse", "C=2"] + args.dirlist)
+    cmd = ["make", "-j", "64", "-s", "CHECK=sparse", "C=2"] + args.dirlist
+    if args.show_all:
+        subprocess.run(cmd)
+        return
+
+    out = subprocess.run(cmd, encoding='utf-8', capture_output=True)
+    if args.filter_by_diff:
+        subprocess.check_call(["git", "reset", "--hard", "-q", args.rev.decode() + "~1"])
+        subprocess.call(["make", "-j", "64", "-s", "clean"])
+        subprocess.call(["make", "-j", "64", "-s", "allyesconfig"])
+
+        pre = subprocess.run(cmd, encoding='utf-8', capture_output=True)
+        diff = list(set(out.stderr.split('\n')) - set(pre.stderr.split('\n')))
+        # Restore
+        subprocess.check_call(["git", "reset", "--hard", "-q", args.rev])
+        for line in diff:
+            print(line)
+    else:
+        print_filtered_output(args, out)
 
 def checkpatch(args):
     cmd = ["%s/scripts/checkpatch.pl" %(args.src), "-q", "--no-summary", "-g", args.rev]
@@ -89,6 +128,7 @@ def setup_from_pickle(args, pickle_params):
     args.checkpatch = p.get("checkpatch", True)
     args.sparse = p.get("sparse", True)
     args.gerrit = p.get("gerrit", True)
+    args.show_all = p.get("show_all", False)
 
 parser = argparse.ArgumentParser(description='CI container')
 args = parser.parse_args()

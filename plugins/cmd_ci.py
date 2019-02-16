@@ -33,6 +33,12 @@ def args_ci(parser):
         dest="gerrit",
         help="Ensure that gerrit trash is not in the patch",
         default=True)
+    parser.add_argument(
+        "--show-all",
+        action="store_true",
+        dest="show_all",
+        help="Show all errors and not only introduced in specific commit",
+        default=False)
 
 def cmd_ci(args):
     """Local continuous integration check."""
@@ -45,6 +51,7 @@ def cmd_ci(args):
     build.pickle['checkpatch'] = args.checkpatch
     build.pickle['sparse'] = args.sparse
     build.pickle['gerrit'] = args.gerrit
+    build.pickle['show_all'] = args.show_all;
 
     # FIXME: allow git revisions as input to --rev.
     # But for now, let's give an option to provide
