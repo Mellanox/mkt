@@ -47,9 +47,23 @@ def build_dirlist(args):
     supported = ("arch", "block", "crypto", "fs", "init", "ipc", "kernel",
         "lib", "mm", "drivers", "net", "security", "sound", "virt")
     dirlist = set()
+    is_include_was_changed = False
     for f in files:
         if f.startswith(supported):
             dirlist.add(os.path.join(os.path.dirname(f), ''))
+        if f.startswith("include"):
+            is_include_was_changed = True
+
+    if not dirlist and is_include_was_changed:
+        # Let's do smart guess and try to check subsystems,
+        # which we are changing most of the time.
+        dirlist.add("drivers/infiniband/")
+        dirlist.add("lib/")
+        dirlist.add("drivers/net/ethernet/mellanox/")
+        dirlist.add("net/")
+        dirlist.add("drivers/nvme/")
+        dirlist.add("mm/")
+
     args.dirlist = list(dirlist)
 
 def sparse(args):
