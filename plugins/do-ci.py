@@ -88,9 +88,10 @@ def print_filtered_output(args, out):
             print(line)
 
 def sparse(args):
-    subprocess.call(["make", "-j", "64", "-s", "clean"])
-    subprocess.call(["make", "-j", "64", "-s", "allyesconfig"])
-    cmd = ["make", "-j", "64", "-s", "CHECK=sparse", "C=2"] + args.dirlist
+    base_cmd = ["make", "-j", str(args.num_jobs), "-s"]
+    subprocess.call(base_cmd + ["clean"])
+    subprocess.call(base_cmd + ["allyesconfig"])
+    cmd = base_cmd + ["CHECK=sparse", "C=2"] + args.dirlist
     if args.show_all:
         subprocess.run(cmd)
         return
@@ -98,8 +99,8 @@ def sparse(args):
     out = subprocess.run(cmd, encoding='utf-8', capture_output=True)
     if args.filter_by_diff:
         subprocess.check_call(["git", "reset", "--hard", "-q", args.rev.decode() + "~1"])
-        subprocess.call(["make", "-j", "64", "-s", "clean"])
-        subprocess.call(["make", "-j", "64", "-s", "allyesconfig"])
+        subprocess.call(base_cmd + ["clean"])
+        subprocess.call(base_cmd + ["allyesconfig"])
 
         pre = subprocess.run(cmd, encoding='utf-8', capture_output=True)
         diff = list(set(out.stderr.split('\n')) - set(pre.stderr.split('\n')))
@@ -133,6 +134,7 @@ def setup_from_pickle(args, pickle_params):
 parser = argparse.ArgumentParser(description='CI container')
 args = parser.parse_args()
 
+args.num_jobs = len(os.sched_getaffinity(0)) * 2
 pickle_data = os.environ.get("CI_PICKLE")
 setup_from_pickle(args, pickle_data)
 fork(args)
