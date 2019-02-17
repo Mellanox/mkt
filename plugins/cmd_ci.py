@@ -39,6 +39,12 @@ def args_ci(parser):
         dest="show_all",
         help="Show all errors and not only introduced in specific commit",
         default=False)
+    parser.add_argument(
+        "--no-extra-warnings",
+        action="store_false",
+        dest="warnings",
+        help="Skip W=1 compilation",
+        default=True)
 
 def cmd_ci(args):
     """Local continuous integration check."""
@@ -51,7 +57,8 @@ def cmd_ci(args):
     build.pickle['checkpatch'] = args.checkpatch
     build.pickle['sparse'] = args.sparse
     build.pickle['gerrit'] = args.gerrit
-    build.pickle['show_all'] = args.show_all;
+    build.pickle['show_all'] = args.show_all
+    build.pickle["warnings"] = args.warnings
 
     # FIXME: allow git revisions as input to --rev.
     # But for now, let's give an option to provide
