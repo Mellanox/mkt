@@ -29,6 +29,7 @@ RUN \
     git-core \
     infiniband-diags \
     iproute \
+    iputils \
     kmod \
     less \
     lsof \
