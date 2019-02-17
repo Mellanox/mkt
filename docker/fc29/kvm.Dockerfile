@@ -37,6 +37,7 @@ RUN \
     nano \
     net-tools \
     openssh-server \
+    opensm \
     pciutils \
     'perl(File::Basename)' \
     'perl(File::Path)' \
