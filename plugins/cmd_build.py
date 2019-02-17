@@ -46,4 +46,4 @@ def cmd_build(args):
         else:
             do_cmd = build.do_cmd(args.clean)
 
-    docker_exec_run(build.run_cmd(cmd_images.default_os, recipe_dir) + do_cmd)
+    docker_exec_run(build.run_build_cmd(cmd_images.default_os, recipe_dir) + do_cmd)

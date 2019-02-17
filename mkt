@@ -16,6 +16,7 @@ cmd_modules = {
     "cmd_images",
     "cmd_run",
     "cmd_build",
+    "cmd_ci",
 }
 
 if __name__ == "__main__":
