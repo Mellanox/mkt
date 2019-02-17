@@ -118,6 +118,41 @@ def checkpatch(args):
 
     subprocess.call(cmd);
 
+def warnings(args):
+    base_cmd = ["make", "-j", str(args.num_jobs), "-s"]
+    subprocess.call(base_cmd + ["clean"])
+    subprocess.call(base_cmd + ["allyesconfig"])
+    cmd = base_cmd + ["W=1"] + args.dirlist
+    yes = subprocess.run(cmd, encoding='utf-8', capture_output=True)
+
+    subprocess.call(base_cmd + ["clean"])
+    subprocess.call(base_cmd + ["allnoconfig"])
+    no = subprocess.run(cmd, encoding='utf-8', capture_output=True)
+
+    subprocess.call(base_cmd + ["clean"])
+    subprocess.call(base_cmd + ["allmodconfig"])
+    mod = subprocess.run(cmd, encoding='utf-8', capture_output=True)
+
+    for line in yes.stderr.split('\n'):
+        if line.startswith("scripts") or line == '':
+            # Fixup to https://lore.kernel.org/lkml/1521810279-6282-3-git-send-email-yamada.masahiro@socionext.com/
+            continue
+        print(line)
+    for line in no.stderr.split('\n'):
+        if line in yes.stderr.split('\n'):
+            continue
+        if line.startswith("scripts") or line == '':
+            continue
+        print(line)
+    for line in mod.stderr.split('\n'):
+        if line in yes.stderr.split('\n'):
+            continue
+        if line in no.stderr.split('\n'):
+            continue
+        if line.startswith("scripts") or line == '':
+            continue
+        print(line)
+
 def setup_from_pickle(args, pickle_params):
     """The script that invokes docker passes in some more detailed parameters
     about the environment in a pickle and we adjust the configuration
@@ -130,6 +165,7 @@ def setup_from_pickle(args, pickle_params):
     args.sparse = p.get("sparse", True)
     args.gerrit = p.get("gerrit", True)
     args.show_all = p.get("show_all", False)
+    args.warnings = p.get("warnings", True)
 
 parser = argparse.ArgumentParser(description='CI container')
 args = parser.parse_args()
@@ -145,3 +181,5 @@ if args.project == "kernel":
     build_dirlist(args)
     if args.sparse:
         sparse(args)
+    if args.warnings:
+        warnings(args)
