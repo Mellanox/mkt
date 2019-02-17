@@ -14,6 +14,7 @@ viewed with **mkt cmd --help**, or online as linked below:
 * **[mkt images](docs/mkt_images.1.md)**
 * **[mkt run](docs/mkt_run.1.md)**
 * **[mkt build](docs/mkt_build.1.md)**
+* **[mkt ci](docs/mkt_ci.1.md)**
 
 # Recommended work flow
 
@@ -38,6 +39,11 @@ Recommended and optimized kernel .config is located in **[configs/kconfig-kvm](c
 
 The **[mkt run](docs/mkt_run.1.md)** command will quickly launch a VM
 containing a kernel for testing.
+
+## Continious integration
+
+The **[mkt run](docs/mkt_ci.1.md)** command will perform continious integration
+tests over local source code.
 
 # Installation
 
