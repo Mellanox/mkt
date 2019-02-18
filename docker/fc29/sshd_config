@@ -74,3 +74,5 @@ Subsystem sftp /usr/libexec/openssh/sftp-server
 # PAM authentication, then enable this but set PasswordAuthentication
 # and ChallengeResponseAuthentication to 'no'.
 UsePAM yes
+
+UseDNS no

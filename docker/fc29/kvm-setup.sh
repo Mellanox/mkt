@@ -77,3 +77,5 @@ echo allow br0 >> /etc/qemu/bridge.conf
 # Avoid writing hwdb.bin on boot
 systemd-hwdb update --usr
 rm -f /etc/udev/hwdb.bin
+# Allow to regular users to run ping
+chmod a+s /usr/bin/ping
