@@ -14,7 +14,6 @@ RUN dnf install -y \
     gcc \
     git-core \
     glib2-devel \
-    gtk2-devel \
     hostname \
     libaio-devel \
     libattr-devel \
