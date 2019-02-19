@@ -41,7 +41,7 @@ recreated locally using the **mkt images** command.
 bridges to the physical network. If one is found it connects *eth0* in the VM
 to this bridge and the VM will obtain a DHCP address. If a bridge is not
 available then the VM is setup to use qemu 'hostfwd' networking that gives NAT
-access to the public network and port fowards port localhost 4444 on the host
+access to the public network and port forwards port localhost 4444 on the host
 to the VM's ssh server.
 
 The key design philosophy for **mkt run** is performance. It can typically
@@ -102,13 +102,13 @@ located under **docker/OS/kvm.Dockerfile** in the source repository, but general
 - The system has only one account that can be logged into, the root user, with
   the usual Mellanox lab password.
 
-- The usename in the host is created in the VM and given unrestricted sudo access.
+- The username in the host is created in the VM and given unrestricted sudo access.
 
 - The ssh key for all VMS is hardwired and always the same.
 
-- Basic RDMA kernel modules are autoloaded.
+- Basic RDMA kernel modules are auto loaded.
 
-Since **mkt run** invokes qemu directly to create a new KVM it must be run in
+Since **mkt run** invokes emu directly to create a new KVM it must be run in
 a context that can create KVMs. Generally this requires running it on the
 physical machine, not in another VM. Although nested KVM virtualization exists
 it is an advanced feature that requires special setup.
@@ -130,7 +130,7 @@ if they have been backgrounded by a ssh connection drop.
 **mkt** runs over SimX are configured to produce /opt/simx/logs/simx-qemu.log
 file directly in the docker instance created by **mkt run**. By default this
 file is almost empty. In order to increase verbosity level and output more
-information, you are invited to add extra logger comands obtaied from SimX
+information, you are invited to add extra logger commands obtained from SimX
 developers and put it into **set_simx_log()** function of **plugins/do-kvm.py"
 file.
 
