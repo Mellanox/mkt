@@ -8,6 +8,8 @@ RUN \
     dnf install -y \
     'perl(Term::ANSIColor)' \
     'perl(Encode)' \
+    python-ply \
+    python2-GitPython \
     && dnf clean dbcache packages
 
 RUN rpm -U /opt/rpms/*.rpm
