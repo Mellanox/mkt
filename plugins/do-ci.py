@@ -87,11 +87,17 @@ def print_filtered_output(args, out):
         if args.rev == blame:
             print(line)
 
-def sparse(args):
+def smatch_and_sparse(args, tool):
+    if tool == "smatch":
+        tool_cmd = ["CHECK=/opt/smatch/bin/smatch -p=kernel --data=/opt/smatch/share/smatch/smatch_data/",
+                "C=1"]
+    if tool == "sparse":
+        tool_cmd = ["CHECK=sparse", "C=1", "CF='-fdiagnostic-prefix -D__CHECK_ENDIAN__'"]
+
     base_cmd = ["make", "-j", str(args.num_jobs), "-s"]
     subprocess.call(base_cmd + ["clean"])
     subprocess.call(base_cmd + ["allyesconfig"])
-    cmd = base_cmd + ["CHECK=sparse", "C=1", "CF='-fdiagnostic-prefix -D__CHECK_ENDIAN__'"] + args.dirlist
+    cmd = base_cmd + tool_cmd + args.dirlist
     if args.show_all:
         subprocess.run(cmd)
         return
@@ -110,6 +116,7 @@ def sparse(args):
             print(line)
     else:
         print_filtered_output(args, out)
+
 
 def checkpatch(args):
     cmd = ["%s/scripts/checkpatch.pl" %(args.src), "-q", "--no-summary", "-g", args.rev]
@@ -171,6 +178,7 @@ def setup_from_pickle(args, pickle_params):
     args.gerrit = p.get("gerrit", True)
     args.show_all = p.get("show_all", False)
     args.warnings = p.get("warnings", True)
+    args.smatch = p.get("smatch", True)
 
 parser = argparse.ArgumentParser(description='CI container')
 args = parser.parse_args()
@@ -185,6 +193,8 @@ if args.project == "kernel":
         checkpatch(args)
     build_dirlist(args)
     if args.sparse:
-        sparse(args)
+        smatch_and_sparse(args, "sparse")
     if args.warnings:
         warnings(args)
+    if args.smatch:
+        smatch_and_sparse(args, "smatch")
