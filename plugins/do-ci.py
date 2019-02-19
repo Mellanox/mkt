@@ -91,7 +91,7 @@ def sparse(args):
     base_cmd = ["make", "-j", str(args.num_jobs), "-s"]
     subprocess.call(base_cmd + ["clean"])
     subprocess.call(base_cmd + ["allyesconfig"])
-    cmd = base_cmd + ["CHECK=sparse", "C=2"] + args.dirlist
+    cmd = base_cmd + ["CHECK=sparse", "C=1", "CF='-fdiagnostic-prefix -D__CHECK_ENDIAN__'"] + args.dirlist
     if args.show_all:
         subprocess.run(cmd)
         return
