@@ -11,8 +11,6 @@ Summary:    A semantic parser of source files
 Group:      Development/Tools
 License:    MIT
 URL:        https://sparse.wiki.kernel.org
-BuildRequires:  gcc
-BuildRequires: libxml2-devel gtk2-devel
 
 %description
 Sparse is a semantic parser of source files: it's neither a compiler
@@ -40,16 +38,13 @@ Sparse is primarily used in the development and debugging of the Linux kernel.
 %{nil}
 
 %build
-%make_destdir %{?_smp_mflags} CFLAGS="%{optflags}" HAVE_LLVM=no
+%make_destdir %{?_smp_mflags} CFLAGS="%{optflags}"
 
 %install
 rm -rf %{buildroot}
 mkdir -p %{buildroot}%{_bindir}
 mkdir -p %{buildroot}%{_libdir}
-%make_destdir install HAVE_LLVM=no
-
-%check
-make check HAVE_LLVM=no
+%make_destdir install
 
 %clean
 rm -rf %{buildroot}
@@ -58,9 +53,10 @@ make clean
 %files
 %doc LICENSE README FAQ
 %{_bindir}/sparse
+%{_bindir}/sparse-llvm
+%{_bindir}/sparsec
 %{_bindir}/cgcc
 %{_bindir}/c2xml
-%{_bindir}/test-inspect
 %{_mandir}/man1/*
 
 EOF

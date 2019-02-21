@@ -12,9 +12,9 @@ RUN dnf install -y \
     findutils \
     flex \
     gcc \
+    gcc-c++ \
     git-core \
     glib2-devel \
-    gtk2-devel \
     hostname \
     libaio-devel \
     libattr-devel \
@@ -27,6 +27,7 @@ RUN dnf install -y \
     libudev-devel \
     libusb-devel \
     libxml2-devel \
+    llvm-devel \
     make \
     ncurses-devel \
     ninja-build \
@@ -43,6 +44,7 @@ RUN dnf install -y \
     rpm-build \
     spice-protocol \
     spice-server-devel \
+    sqlite-devel \
     systemd \
     systemd-devel \
     systemtap-sdt-devel \

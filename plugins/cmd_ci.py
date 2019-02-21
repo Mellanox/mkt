@@ -45,6 +45,12 @@ def args_ci(parser):
         dest="warnings",
         help="Skip W=1 compilation",
         default=True)
+    parser.add_argument(
+        "--no-smatch",
+        action="store_false",
+        dest="smatch",
+        help="Skip smatch checks",
+        default=True)
 
 def cmd_ci(args):
     """Local continuous integration check."""
@@ -59,6 +65,7 @@ def cmd_ci(args):
     build.pickle['gerrit'] = args.gerrit
     build.pickle['show_all'] = args.show_all
     build.pickle["warnings"] = args.warnings
+    build.pickle["smatch"] = args.smatch
 
     # FIXME: allow git revisions as input to --rev.
     # But for now, let's give an option to provide
