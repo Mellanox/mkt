@@ -59,7 +59,7 @@ def cmd_ci(args):
     if not args.project:
         set_args_project(args, section)
 
-    build = BuildSrc(args.project)
+    build = Build(args.project)
     build.pickle['checkpatch'] = args.checkpatch
     build.pickle['sparse'] = args.sparse
     build.pickle['gerrit'] = args.gerrit
