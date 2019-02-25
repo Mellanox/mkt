@@ -40,6 +40,11 @@ class Build(object):
         ccache = section.get('ccache', None)
         docker_os = section.get('os', supos)
         cmd = ["--rm", "-v", self.src + ":" + self.src + ":rw", "-it"]
+
+        src_dir = os.path.dirname(
+                       os.path.abspath(inspect.getfile(inspect.currentframe()) + "/../"))
+        cmd += ["-v", "%s/plugins/:/plugins:ro" %(src_dir)]
+
         if build_recipe:
             cmd += ["-v", "%s:%s:ro" % (build_recipe, build_recipe)]
         if ccache:
@@ -51,10 +56,7 @@ class Build(object):
         return self._run_cmd(supos, build_recipe, "build")
 
     def run_ci_cmd(self, supos):
-        src_dir = os.path.dirname(
-                       os.path.abspath(inspect.getfile(inspect.currentframe()) + "/../"))
-        cmd = ["-v", "%s/plugins/:/plugins:ro" %(src_dir)]
-        cmd += ["--tmpfs", "/build:rw,exec,nosuid,mode=755,size=10G"]
+        cmd = ["--tmpfs", "/build:rw,exec,nosuid,mode=755,size=10G"]
         cmd += ["-e", "CI_PICKLE=%s" % (self._get_pickle())]
 
         return cmd + self._run_cmd(supos, None, "ci")
