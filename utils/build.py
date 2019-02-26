@@ -12,13 +12,19 @@ section = utils.load_config_file()
 
 class Build(object):
     def  __init__(self, project):
-        self.src = section.get(project, None)
+        if project == 'custom':
+            self.src = section.get('src', None)
+        else:
+            self.src = section.get(project, None)
         self.project = project
         self.pickle = dict()
 
     def _get_pickle(self):
         self.pickle["project"] = self.project
         self.pickle["src"] = self.src
+
+        if self.project == 'custom':
+            self.pickle['shell'] = True
 
         return base64.b64encode(pickle.dumps(self.pickle)).decode()
 
@@ -57,12 +63,13 @@ project_marks = {
 }
 
 def build_list():
-    return sorted(project_marks.values())
+    return sorted(sorted(project_marks.values()) + ['custom'])
 
 def set_args_project(args, section):
     """Look in the local folder to determine
     what we were requested to build"""
 
+    # "custom" project can't be sensed and must be provided explicitly
     for key, value in project_marks.items():
         if os.path.isdir(key):
             args.project = value
