@@ -23,6 +23,11 @@ def args_build(parser):
         help="Run a shell inside the container instead of invoking build script")
     parser.add_argument(
         '--build-recipe', help="File with build recipe")
+    parser.add_argument(
+        '--with-kernel-headers',
+        action="store_true",
+        default=False,
+        help="Install kernel headers (used in custom build target)")
 
 def cmd_build(args):
     """Smart build."""
@@ -30,6 +35,9 @@ def cmd_build(args):
     section = utils.load_config_file()
     if not args.project:
         set_args_project(args, section)
+
+    if args.project != 'custom' and args.with_kernel_headers:
+        exit("--with-kernel-headers is applicable for \"custom\" target only.")
 
     build = Build(args.project)
 
@@ -47,6 +55,9 @@ def cmd_build(args):
     build.pickle["home"] = os.getenv("HOME")
     build.pickle['clean'] = args.clean
     build.pickle['build_recipe'] = args.build_recipe
+
+    if args.with_kernel_headers:
+        build.pickle['kernel'] = section.get('kernel', None)
 
     do_cmd = ["python3", "/plugins/do-build.py"]
     docker_exec(["run"] + build.run_build_cmd(cmd_images.default_os, recipe_dir) + do_cmd)

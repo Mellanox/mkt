@@ -54,6 +54,7 @@ def setup_from_pickle(args, pickle_params):
     args.shell = p.get("shell", False)
     args.home = p.get('home', None)
     args.build_recipe = p.get('build_recipe', None)
+    args.kernel = p.get('kernel', None)
 
 parser = argparse.ArgumentParser(description='CI container')
 args = parser.parse_args()
@@ -61,6 +62,10 @@ args = parser.parse_args()
 args.num_jobs = len(os.sched_getaffinity(0)) * 2
 pickle_data = os.environ.get("BUILD_PICKLE")
 setup_from_pickle(args, pickle_data)
+
+if args.project and args.kernel:
+    subprocess.check_output(['make', 'headers_install',
+        'INSTALL_HDR_PATH=/usr'], cwd=args.kernel)
 
 switch_to_user(args)
 if args.shell:
