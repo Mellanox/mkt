@@ -16,19 +16,19 @@ def make_kernel(args):
         cmd += ['CC=ccache gcc']
 
     print('Start kernel compilation in silent mode')
-    subprocess.check_output(cmd + ['-j%d' %(args.num_jobs), '-s'])
+    subprocess.call(cmd + ['-j%d' %(args.num_jobs), '-s'])
 
 def make_iproute2(args):
     if args.clean:
         subprocess.check_output(['make', 'distclean'])
         return
-    subprocess.check_output(['make', '-j%d' %(args.num_jobs)])
+    subprocess.call(['make', '-j%d' %(args.num_jobs)])
 
 def make_rdma_core(args):
     if args.clean:
         subprocess.check_output(['rm', '-rf', 'build'])
         return
-    subprocess.check_output(['./build.sh'])
+    subprocess.call(['./build.sh'])
 
 def switch_to_user(args):
     with open("/etc/passwd","a") as F:
