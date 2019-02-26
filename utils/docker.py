@@ -27,15 +27,6 @@ def docker_exec(args):
         'docker',
     ] + args)
 
-def docker_exec_run(args):
-    """Execute docker docker run with user credentials and display the output to the terminal"""
-    return os.execvp("sudo", [
-        'sudo',
-        'docker',
-        'run',
-        ] + ['--user', "%s:%s" %(os.getuid(), os.getgid())] + args)
-
-
 def docker_output(args, mode=None):
     """Run docker and return the output"""
     o = subprocess.check_output([

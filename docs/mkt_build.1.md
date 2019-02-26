@@ -47,6 +47,9 @@ to simulate exact look and feel like execution of "make ..."  scripts in the hye
 *---build-recipe*
 :	Provide script for complete custom build experience.
 
+*----with-kernel-headers*
+:	Install latest kernel headers from kernel source directory, used for application
+    custom builds.
 # MKT
 
 Part of the **mkt(1)** suite
