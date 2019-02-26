@@ -192,9 +192,9 @@ if args.project == "kernel":
     if args.checkpatch:
         checkpatch(args)
     build_dirlist(args)
-    if args.sparse:
+    if args.sparse and args.dirlist:
         smatch_and_sparse(args, "sparse")
-    if args.warnings:
+    if args.warnings and args.dirlist:
         warnings(args)
-    if args.smatch:
+    if args.smatch and args.dirlist:
         smatch_and_sparse(args, "smatch")
