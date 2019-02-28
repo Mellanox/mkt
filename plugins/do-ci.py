@@ -121,7 +121,7 @@ def smatch_and_sparse(args, tool):
 def checkpatch(args):
     cmd = ["%s/scripts/checkpatch.pl" %(args.src), "-q", "--no-summary", "-g", args.rev]
     if args.gerrit:
-        cmd += ["--ignore", "GERRIT_CHANGE_ID"]
+        cmd += ["--ignore", "GERRIT_CHANGE_ID,FILE_PATH_CHANGES"]
 
     subprocess.call(cmd);
 
