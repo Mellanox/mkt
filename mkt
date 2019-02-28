@@ -13,6 +13,7 @@ import plugins
 
 cmd_modules = {
     "cmd_setup",
+    "cmd_drivertest",
     "cmd_images",
     "cmd_run",
     "cmd_build",

@@ -39,6 +39,15 @@ RUN dnf install -y \
     pkgconfig \
     pulseaudio \
     python \
+    python2-devel \
+    python2-ipaddr \
+    python2-netaddr \
+    python2-netifaces \
+    python2-pathlib2 \
+    python2-paramiko \
+    python2-pcapy \
+    python2-pymongo \
+    python2-pyyaml \
     python3-Cython \
     python3-devel \
     rpm-build \
@@ -53,3 +62,5 @@ RUN dnf install -y \
     valgrind-devel \
     zlib-devel \
     && dnf clean dbcache packages
+
+RUN pip install python-redmine==2.0.2 pathlib2==2.3.0

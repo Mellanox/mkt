@@ -401,5 +401,5 @@ def cmd_run(args):
         "-e",
         "KVM_PICKLE=%s" % (get_pickle(args, vm_addr)),
         "--interactive",
-        make_image_name("kvm", docker_os),
+        make_image_name("drivertest", docker_os),
     ] + do_kvm_args)
