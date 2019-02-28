@@ -282,6 +282,7 @@ def cmd_images(args):
             (make_image_name("build", args.os), "support.Dockerfile"),
             (make_image_name("kvm", args.os), "kvm.Dockerfile"),
             (make_image_name("ci", args.os), "ci.Dockerfile"),
+            (make_image_name("drivertest", args.os), "drivertest.Dockerfile")
         )
         if args.pull:
             to_pull = set()
