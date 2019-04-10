@@ -149,9 +149,10 @@ def setup_login_script(args):
 [Service]
 User={user}
 Group={group}
-Description=Login script {script}
 ExecStart={script}
 Type=oneshot
+[Unit]
+Description=Login script {script}
 Wants=serial-getty@hvc0.service
 After=serial-getty@hvc0.service
 
