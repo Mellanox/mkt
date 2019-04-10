@@ -142,6 +142,22 @@ Where={dfn}
 
         cnt = cnt + 1
 
+def setup_login_script(args):
+    """Create systemd unit to run custom user script right before login"""
+    create_unit(
+        "boot-script", "service", ["getty.target.wants"], """
+[Service]
+User={user}
+Group={group}
+Description=Login script {script}
+ExecStart={script}
+Type=oneshot
+Wants=serial-getty@hvc0.service
+After=serial-getty@hvc0.service
+
+[Install]
+WantedBy=getty.target
+""".format(user=args.user, group=args.group, script=args.boot_script))
 
 def terminal_size():
     import fcntl, termios, struct
@@ -379,6 +395,9 @@ def setup_from_pickle(args, pickle_params):
     args.virt = p.get("virt", False)
     args.vm_addr = VM_Addr(**p["vm_addr"])
     args.mem = p["mem"]
+    args.boot_script = p.get("boot_script", None)
+    args.user = p["user"]
+    args.group = p["group"]
 
 
 parser = argparse.ArgumentParser(
@@ -448,4 +467,8 @@ for k, v in sorted(qemu_args.items()):
         cmd.append(k)
         if v:
             cmd.append(v)
+
+if args.boot_script:
+    setup_login_script(args)
+
 os.execvp(cmd[0], cmd)

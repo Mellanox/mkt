@@ -2,6 +2,7 @@
 """
 import os
 import sys
+import stat
 import pwd
 import grp
 import pickle
@@ -230,8 +231,34 @@ def get_pickle(args, vm_addr):
         p["virt"] = sorted(args.virt)
     p["mem"] = str(mem) + 'G'
 
+    if args.boot_script:
+        p["boot_script"] = args.boot_script
+
     return base64.b64encode(pickle.dumps(p)).decode()
 
+def validate_and_set_boot(args):
+    if not args.boot_script:
+        try:
+            args.boot_script = utils.get_images(args.image)['boot_script']
+        except KeyError:
+            pass
+
+    if not args.boot_script:
+        return None;
+
+    try:
+        executable = stat.S_IXUSR & os.stat(args.boot_script)[stat.ST_MODE]
+    except FileNotFoundError:
+        exit("Wrong path to boot script. Exiting ...")
+
+    if not executable:
+        exit("Bootup script needs to be executable. Exiting ...")
+
+    with open(args.boot_script, 'r') as f:
+        if not f.readline().startswith("#!"):
+            exit("Missing shebang in the first line of boot script. Exiting ...")
+
+    return args.boot_script
 
 def args_run(parser):
     section = utils.load_config_file()
@@ -244,7 +271,7 @@ def args_run(parser):
     kernel = parser.add_mutually_exclusive_group()
     kernel.add_argument(
         '--kernel',
-        help="Path to the the top of a compiled kernel source tree to boot",
+        help="Path to the top of a compiled kernel source tree to boot",
         default=section.get('kernel', None))
     kernel.add_argument(
         '--kernel-rpm', help="Path to a kernel RPM to boot", default=None)
@@ -277,6 +304,10 @@ def args_run(parser):
         default=[],
         choices=sorted(get_virt_rdma_devices()),
         help="Pass a virtual device type-interface format to the guest")
+    parser.add_argument(
+        '--boot-script',
+        help="Path to the custom boot script which will be executed after boot",
+        default=None)
 
 def cmd_run(args):
     """Run a system image container inside KVM"""
@@ -354,6 +385,10 @@ def cmd_run(args):
 
     for I in args.dir:
         mapdirs.add(I)
+
+    args.boot_script = validate_and_set_boot(args)
+    if args.boot_script:
+        mapdirs.add(os.path.dirname(args.boot_script))
 
     vm_addr = get_mac()
 
