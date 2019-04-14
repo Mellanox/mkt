@@ -43,8 +43,8 @@ def docker_output(args, mode=None):
         raise ValueError("Bad mode %r" % (mode))
 
 
-def docker_get_containers(name):
+def docker_get_containers(label):
     containers = docker_output(
-        ["ps", "-a", "-q", "--filter",
-         "name=%s" % (name)], mode="lines")
+        ["ps", "--format", '"{{.Names}}"', "--filter",
+         "label=%s" % (label)], mode="lines")
     return containers

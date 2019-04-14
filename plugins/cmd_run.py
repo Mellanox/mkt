@@ -149,6 +149,9 @@ def get_container_name(vm_addr):
     """Return the name of the docker container to use for this VM"""
     return "mkt_run_%s" % (vm_addr.hostname)
 
+def get_host_name(cname):
+    """Return the host name of the docker container"""
+    return cname[8:]
 
 def random_mac():
     random.seed()
@@ -410,31 +413,40 @@ def cmd_run(args):
     src_dir = os.path.dirname(
         os.path.abspath(inspect.getfile(inspect.currentframe())))
 
-    cname = get_container_name(vm_addr)
-    # Clean up a container if it is left over somehow
-    cont = docker_get_containers(name=cname)
-    if cont:
-        try:
-            docker_output(["kill", *cont])
-        except subprocess.CalledProcessError:
-            pass
-        try:
-            docker_output(["rm", *cont])
-        except subprocess.CalledProcessError:
-            pass
+    ssh = False
+    if args.pci:
+        # chack if we have container running with bound PCI device to it
+        # sudo docker ps --filter "label=pci" --format "{{.Names}}"
+        # sudo docker inspect --format='{{.Config.Labels.pci}}' mkt_run_nps-server-14-015
+        cont = docker_get_containers(label="pci")
+        for c in cont:
+            c = c.decode()[1:-1]
+            cpci = docker_output(["inspect", "--format", '"{{.Config.Labels.pci}}"', c])
+            cpci = cpci.decode()[2:-2].split(', ')
+            cpci = [x[1:-1] for x in cpci]
+            common = set(cpci).intersection(set(args.pci))
+            if common:
+                ssh = True;
+                cname = c;
 
-    docker_exec(["run"] + mapdirs.as_docker_bind() + [
-        "-v",
-        "%s:/plugins:ro" % (src_dir),
-        "--rm",
-        "--net=host",
-        "--privileged",
-        "--name=%s" % (cname),
-        "--tty",
-        "--hostname",
-        vm_addr.hostname,
-        "-e",
-        "KVM_PICKLE=%s" % (get_pickle(args, vm_addr)),
-        "--interactive",
-        make_image_name("kvm", docker_os),
-    ] + do_kvm_args)
+    if ssh:
+        subprocess.call(["ssh", "root@%s" % (get_host_name(cname))])
+    else:
+        cname = get_container_name(vm_addr)
+        docker_exec(["run"] + mapdirs.as_docker_bind() + [
+            "-v",
+            "%s:/plugins:ro" % (src_dir),
+            "--rm",
+            "--net=host",
+            "--privileged",
+            "--name=%s" % (cname),
+            "--tty",
+            "-l",
+            "pci=%s" % (args.pci),
+            "--hostname",
+            vm_addr.hostname,
+            "-e",
+            "KVM_PICKLE=%s" % (get_pickle(args, vm_addr)),
+            "--interactive",
+            make_image_name("kvm", docker_os),
+        ] + do_kvm_args)
