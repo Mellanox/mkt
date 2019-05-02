@@ -1,7 +1,7 @@
-FROM harbor.mellanox.com/mkt/build:fc29
+FROM harbor.mellanox.com/mkt/build:fc30
 
-COPY --from=local_mkt/support_sparse:fc29 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
-COPY --from=local_mkt/support_smatch:fc29 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
+COPY --from=local_mkt/support_sparse:fc30 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
+COPY --from=local_mkt/support_smatch:fc30 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
 
 RUN \
     echo Israel/Jerusalem > /etc/timezone && \

@@ -9,7 +9,7 @@ from utils.cmdline import *
 from subprocess import call, Popen
 
 supported_os = {
-    "fc29",
+    "fc30",
 }
 default_os = next(iter(supported_os))
 
