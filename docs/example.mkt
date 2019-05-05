@@ -8,9 +8,9 @@ iproute2 = /images/leonro/src/iproute2/
 logs = /images/leonro/logs/
 # Shared directory for various builder to speed-up process
 ccache = /images/leonro/ccache/
-# Base distro, supported: "fc29"
-# This line can be omitted and default will be "fc29".
-os = fc29
+# Base distro, supported: "fc30"
+# This line can be omitted and default will be "fc30".
+os = fc30
 # Default container image to run if execute "mkt run" command
 # without any parameters. It is overwritten by providng image
 # name as an argument to "mkt run"

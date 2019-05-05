@@ -306,9 +306,6 @@ def set_simx_network(simx):
                        }
     subprocess.check_call(['mkdir', '-p', '/opt/simx/cfg/'])
     with open('/opt/simx/cfg/simx-qemu.cfg', 'a+') as f:
-        f.write('[general]\n')
-        f.write('support_feature_according_to_device_id_and_port_type = false\n')
-
         f.write('[General Device Capabilities]\n')
         f.write('driver_version = false\n')
         f.write('query_driver_version = false\n')
