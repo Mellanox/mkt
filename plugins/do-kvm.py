@@ -414,6 +414,7 @@ qemu_args = {
     "-cpu": "host",
     "-vga": "none",
     "-no-reboot": None,
+    "-nodefaults": None,
     "-m": args.mem,
     "-net": [],
     "-netdev": set(),
