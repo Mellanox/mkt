@@ -311,17 +311,28 @@ def set_simx_network(simx):
         f.write('query_driver_version = false\n')
 
         idx = 0
+        eth_sriov = False
         for target in simx:
             dev = target.split('-')[0]
             mode = target.split('-')[1]
-            qemu_args["-device"].append(to_simx_device[dev])
+            devargs = to_simx_device[dev]
             f.write('[device_%d]\n' % (idx))
             if mode == 'ib':
                 f.write('port_type = 0x0\n')
             else:
                 # Ethernet
                 f.write('port_type = 0x1\n')
+                if args.num_of_vfs:
+                    devargs += ',bus=pcie_port.1'
+                    eth_sriov = True
+
+            qemu_args["-device"].append(devargs)
             idx = idx + 1
+
+        if eth_sriov:
+            f.write('[adapter]\n')
+            f.write('num_of_function = %s\n' % (args.num_of_vfs))
+            qemu_args["-device"].insert(-idx, 'pcie-root-port,pref64-reserve=500M,slot=0,id=pcie_port.1')
 
 def set_virt_devices(args):
     qemu_args["-append"] += " modules_load=rdma_rxe";
@@ -396,7 +407,7 @@ def setup_from_pickle(args, pickle_params):
     args.boot_script = p.get("boot_script", None)
     args.user = p["user"]
     args.group = p["group"]
-
+    args.num_of_vfs = p.get("num_of_vfs", 0)
 
 parser = argparse.ArgumentParser(
     description='Launch kvm using the filesystem from the container')
@@ -414,6 +425,7 @@ qemu_args = {
     "-cpu": "host",
     "-vga": "none",
     "-no-reboot": None,
+    "-nodefaults": None,
     "-m": args.mem,
     "-net": [],
     "-netdev": set(),
