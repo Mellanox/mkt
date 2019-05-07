@@ -1,7 +1,7 @@
 #!/bin/bash
 # ---
 # git_url: http://webdev01.mtl.labs.mlnx:8080/git/simx.git
-# git_commit: v4.0
+# git_commit: 34ae94e93ff557c7fdee2b6d65b39a70aac8656d
 
 cat <<EOF > mlx-simx.spec
 %global debug_package %{nil}
