@@ -62,11 +62,8 @@ def get_images(name=None):
     if name:
         return config[name]
 
-    images = []
-
     for I in config.keys():
         if I in ('DEFAULT', 'defaults'):
             continue
-        images.append(I)
-
-    return images
+        return config[I];
+    return {}
