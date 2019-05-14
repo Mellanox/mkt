@@ -54,8 +54,8 @@ EOF
 
 # Setup ulimits good for rdma
 cat <<EOF > /etc/security/limits.d/local-rdma.conf
-@1000 hard memlock unlimited
-@1000 soft memlock unlimited
+* hard memlock unlimited
+* soft memlock unlimited
 EOF
 
 cat <<EOF > /etc/fstab
