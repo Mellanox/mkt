@@ -237,14 +237,18 @@ def get_pickle(args, vm_addr):
     if args.boot_script:
         p["boot_script"] = args.boot_script
 
-    try:
-        p["num_of_vfs"] = utils.get_images(args.image)['num_of_vfs']
-    except KeyError:
-        pass
+    if args.image:
+        try:
+            p["num_of_vfs"] = utils.get_images(args.image)['num_of_vfs']
+        except KeyError:
+            pass
 
     return base64.b64encode(pickle.dumps(p)).decode()
 
 def validate_and_set_boot(args):
+    if not args.image:
+        return None
+
     if not args.boot_script:
         try:
             args.boot_script = utils.get_images(args.image)['boot_script']
@@ -252,7 +256,7 @@ def validate_and_set_boot(args):
             pass
 
     if not args.boot_script:
-        return None;
+        return None
 
     try:
         executable = stat.S_IXUSR & os.stat(args.boot_script)[stat.ST_MODE]
