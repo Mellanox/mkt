@@ -288,13 +288,13 @@ def set_simx_log():
     # Old SimX version relies on the fact that log file exists,
     # create that file for them
     subprocess.check_call(['mkdir', '-p', '/opt/simx/logs/'])
-    f = open('/opt/simx/logs/simx-qemu.log', 'w+')
+    f = open('/logs/simx-qemu.log', 'w+')
     f.close()
 
     subprocess.check_call(['mkdir', '-p', '/opt/simx/cfg/'])
     with open('/opt/simx/cfg/simx-qemu.cfg', 'a+') as f:
          f.write('[logger]\n')
-         f.write('log_file_redirection = /opt/simx/logs/simx-qemu.log\n')
+         f.write('log_file_redirection = /logs/simx-qemu.log\n')
 
 def set_simx_network(simx):
     """Setup options to start a simx card"""

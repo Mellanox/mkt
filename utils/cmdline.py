@@ -9,6 +9,7 @@ import os
 import functools
 import subprocess
 import shlex
+import utils
 
 source_root = os.path.normpath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
@@ -142,4 +143,5 @@ Various utilities for working with the Linux kernel at Mellanox""")
     # argparse will set 'func' to the cmd_* that executes this command
     args = parser.parse_args()
     check_not_root()
+    utils.init_log_dir(args.command)
     args.func(args)

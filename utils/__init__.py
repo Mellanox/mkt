@@ -1,5 +1,5 @@
 from .cmdline import get_internal_fn, query_yes_no
-from .config import load_config_file, username, group, init_config_file, get_images
+from .config import load_config_file, username, group, init_config_file, get_images, init_log_dir
 
 __all__ = [
     "get_internal_fn",
@@ -8,5 +8,6 @@ __all__ = [
     "username",
     "group",
     "init_config_file",
+    "init_log_dir",
     "get_images",
 ]
