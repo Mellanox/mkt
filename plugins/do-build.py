@@ -12,7 +12,6 @@ def make_kernel(args):
         return
     cmd = ['make']
     if os.path.isdir('/ccache'):
-        os.environ['CCACHE_DIR'] = '/ccache'
         cmd += ['CC=ccache gcc']
 
     print('Start kernel compilation in silent mode')
@@ -68,6 +67,9 @@ if args.project and args.kernel:
         'INSTALL_HDR_PATH=/usr'], cwd=args.kernel)
 
 switch_to_user(args)
+if os.path.isdir('/ccache'):
+    os.environ['CCACHE_DIR'] = '/ccache'
+
 if args.shell:
     os.execvp('/bin/bash', ['/bin/bash'])
 
