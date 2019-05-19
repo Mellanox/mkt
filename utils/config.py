@@ -70,3 +70,18 @@ def get_images(name=None):
         images.append(I)
 
     return images
+
+runtime_logs_dir = None
+
+def init_log_dir(cmd):
+    from datetime import datetime
+
+    global runtime_logs_dir
+    try:
+        logs = config["defaults"]['logs']
+    except KeyError:
+        logs = "/tmp/"
+
+    d = datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
+    runtime_logs_dir = logs + cmd + "/" + d + "/"
+    os.makedirs(runtime_logs_dir, exist_ok=True)

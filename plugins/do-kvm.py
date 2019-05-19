@@ -240,7 +240,9 @@ def set_kernel(tree):
         # to debug:  systemd.journald.forward_to_console=1 systemd.log_level=debug
         # Change and enable debug-shell.service to use /dev/console
         "-append":
-        'root=/dev/root rw ignore_loglevel rootfstype=9p rootflags=trans=virtio earlyprintk=serial,ttyS0,115200 console=hvc0'
+        'root=/dev/root rw ignore_loglevel rootfstype=9p rootflags=trans=virtio earlyprintk=serial,ttyS0,115200 \
+ console=hvc0 noibrs noibpb nopti nospectre_v2  nospectre_v1 l1tf=off nospec_store_bypass_disable no_stf_barrier \
+ mds=off mitigations=off'
     })
 
 
@@ -288,13 +290,13 @@ def set_simx_log():
     # Old SimX version relies on the fact that log file exists,
     # create that file for them
     subprocess.check_call(['mkdir', '-p', '/opt/simx/logs/'])
-    f = open('/opt/simx/logs/simx-qemu.log', 'w+')
+    f = open('/logs/simx-qemu.log', 'w+')
     f.close()
 
     subprocess.check_call(['mkdir', '-p', '/opt/simx/cfg/'])
     with open('/opt/simx/cfg/simx-qemu.cfg', 'a+') as f:
          f.write('[logger]\n')
-         f.write('log_file_redirection = /opt/simx/logs/simx-qemu.log\n')
+         f.write('log_file_redirection = /logs/simx-qemu.log\n')
 
 def set_simx_network(simx):
     """Setup options to start a simx card"""

@@ -445,6 +445,8 @@ def cmd_run(args):
         docker_exec(["run"] + mapdirs.as_docker_bind() + [
             "-v",
             "%s:/plugins:ro" % (src_dir),
+            "--mount",
+            "type=bind,source=%s,destination=/logs" % (utils.config.runtime_logs_dir),
             "--rm",
             "--net=host",
             "--privileged",
