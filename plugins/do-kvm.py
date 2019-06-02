@@ -482,4 +482,6 @@ for k, v in sorted(qemu_args.items()):
 if args.boot_script:
     setup_login_script(args)
 
+with open('/logs/qemu.cmdline', 'w+') as f:
+    f.write(" ".join(cmd))
 os.execvp(cmd[0], cmd)
