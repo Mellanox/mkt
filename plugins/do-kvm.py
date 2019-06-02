@@ -289,7 +289,6 @@ def set_simx_log():
 
     # Old SimX version relies on the fact that log file exists,
     # create that file for them
-    subprocess.check_call(['mkdir', '-p', '/opt/simx/logs/'])
     f = open('/logs/simx-qemu.log', 'w+')
     f.close()
 
