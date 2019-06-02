@@ -77,7 +77,7 @@ class SupportImage(object):
                 text.append(I[2:])
             else:
                 raise ValueError("Bad script %r, mising trailer" % (script))
-        self.spec = yaml.load(b"".join(text))
+        self.spec = yaml.safe_load(b"".join(text))
 
     def _fetch_git(self):
         """Make sure that the required commit ID is available under ~/.cache/ for
