@@ -311,13 +311,15 @@ def set_simx_network(simx):
         f.write('driver_version = false\n')
         f.write('query_driver_version = false\n')
 
-        idx = 0
+        idx = 1
         eth_sriov = False
         for target in simx:
+            # TODO: Ensure that virbr0 exists
+            qemu_args["-netdev"].add("bridge,br=virbr0,id=net%d" %(idx))
             dev = target.split('-')[0]
             mode = target.split('-')[1]
             devargs = to_simx_device[dev]
-            f.write('[device_%d]\n' % (idx))
+            f.write('[device_%d]\n' % (idx - 1))
             if mode == 'ib':
                 f.write('port_type = 0x0\n')
             else:
@@ -327,6 +329,7 @@ def set_simx_network(simx):
                     devargs += ',bus=pcie_port.1'
                     eth_sriov = True
 
+            devargs += ',netdev=net%d' %(idx)
             qemu_args["-device"].append(devargs)
             idx = idx + 1
 
