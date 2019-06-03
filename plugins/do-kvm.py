@@ -297,6 +297,22 @@ def set_simx_log():
          f.write('[logger]\n')
          f.write('log_file_redirection = /logs/simx-qemu.log\n')
 
+def set_sriov_vfs(args, idx):
+    qemu_args["-device"].append('pcie-root-port,pref64-reserve=500M,slot=%d,id=pcie_port.%d' %(idx-1, idx))
+    # TODO: Configure SRIOV for more than one card
+    create_unit(
+            "sriov-vfs", "service", ["multi-user.target.wants"], """
+[Unit]
+Before=
+After=network-online.target
+[Service]
+Type=oneshot
+RemainAfterExit=false
+ExecStart=/bin/bash -c \"echo {numb} > /sys/class/net/eth1/device/sriov_numvfs\"
+[Install]
+WantedBy=multi-user.target
+""".format(numb=args.num_of_vfs))
+
 def set_simx_network(simx):
     """Setup options to start a simx card"""
     to_simx_device = { 'cx4' : 'connectx4',
@@ -326,8 +342,9 @@ def set_simx_network(simx):
                 # Ethernet
                 f.write('port_type = 0x1\n')
                 if args.num_of_vfs:
-                    devargs += ',bus=pcie_port.1'
+                    devargs += ',bus=pcie_port.%d' %(idx)
                     eth_sriov = True
+                    set_sriov_vfs(args, idx)
 
             devargs += ',netdev=net%d' %(idx)
             qemu_args["-device"].append(devargs)
@@ -336,7 +353,6 @@ def set_simx_network(simx):
         if eth_sriov:
             f.write('[adapter]\n')
             f.write('num_of_function = %s\n' % (args.num_of_vfs))
-            qemu_args["-device"].insert(-idx, 'pcie-root-port,pref64-reserve=500M,slot=0,id=pcie_port.1')
 
 def set_virt_devices(args):
     qemu_args["-append"] += " modules_load=rdma_rxe";
