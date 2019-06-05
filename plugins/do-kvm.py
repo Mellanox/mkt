@@ -289,7 +289,6 @@ def set_simx_log():
 
     # Old SimX version relies on the fact that log file exists,
     # create that file for them
-    subprocess.check_call(['mkdir', '-p', '/opt/simx/logs/'])
     f = open('/logs/simx-qemu.log', 'w+')
     f.close()
 
@@ -297,6 +296,22 @@ def set_simx_log():
     with open('/opt/simx/cfg/simx-qemu.cfg', 'a+') as f:
          f.write('[logger]\n')
          f.write('log_file_redirection = /logs/simx-qemu.log\n')
+
+def set_sriov_vfs(args, idx):
+    qemu_args["-device"].append('pcie-root-port,pref64-reserve=500M,slot=%d,id=pcie_port.%d' %(idx-1, idx))
+    # TODO: Configure SRIOV for more than one card
+    create_unit(
+            "sriov-vfs", "service", ["multi-user.target.wants"], """
+[Unit]
+Before=
+After=network-online.target
+[Service]
+Type=oneshot
+RemainAfterExit=false
+ExecStart=/bin/bash -c \"echo {numb} > /sys/class/net/eth1/device/sriov_numvfs\"
+[Install]
+WantedBy=multi-user.target
+""".format(numb=args.num_of_vfs))
 
 def set_simx_network(simx):
     """Setup options to start a simx card"""
@@ -312,29 +327,32 @@ def set_simx_network(simx):
         f.write('driver_version = false\n')
         f.write('query_driver_version = false\n')
 
-        idx = 0
+        idx = 1
         eth_sriov = False
         for target in simx:
+            # TODO: Ensure that virbr0 exists
+            qemu_args["-netdev"].add("bridge,br=virbr0,id=net%d" %(idx))
             dev = target.split('-')[0]
             mode = target.split('-')[1]
             devargs = to_simx_device[dev]
-            f.write('[device_%d]\n' % (idx))
+            f.write('[device_%d]\n' % (idx - 1))
             if mode == 'ib':
                 f.write('port_type = 0x0\n')
             else:
                 # Ethernet
                 f.write('port_type = 0x1\n')
                 if args.num_of_vfs:
-                    devargs += ',bus=pcie_port.1'
+                    devargs += ',bus=pcie_port.%d' %(idx)
                     eth_sriov = True
+                    set_sriov_vfs(args, idx)
 
+            devargs += ',netdev=net%d' %(idx)
             qemu_args["-device"].append(devargs)
             idx = idx + 1
 
         if eth_sriov:
             f.write('[adapter]\n')
             f.write('num_of_function = %s\n' % (args.num_of_vfs))
-            qemu_args["-device"].insert(-idx, 'pcie-root-port,pref64-reserve=500M,slot=0,id=pcie_port.1')
 
 def set_virt_devices(args):
     qemu_args["-append"] += " modules_load=rdma_rxe";
@@ -483,4 +501,6 @@ for k, v in sorted(qemu_args.items()):
 if args.boot_script:
     setup_login_script(args)
 
+with open('/logs/qemu.cmdline', 'w+') as f:
+    f.write(" ".join(cmd))
 os.execvp(cmd[0], cmd)

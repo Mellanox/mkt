@@ -77,13 +77,13 @@ class SupportImage(object):
                 text.append(I[2:])
             else:
                 raise ValueError("Bad script %r, mising trailer" % (script))
-        self.spec = yaml.load(b"".join(text))
+        self.spec = yaml.safe_load(b"".join(text))
 
     def _fetch_git(self):
         """Make sure that the required commit ID is available under ~/.cache/ for
         later use, fetching the git repo if necessary"""
 
-        git_url = self.spec["git_url"]
+        git_url = self.spec["git_url"].rstrip('/')
         git_ref = self.spec["git_commit"]
 
         # FIXME: We could look in the config file for an existing local git

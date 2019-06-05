@@ -1,6 +1,6 @@
 import subprocess
 import os
-from utils.git import in_directory
+import utils
 
 def docker_registry_name():
     return "harbor.mellanox.com"
@@ -14,6 +14,9 @@ def make_local_image_name(thing, version):
 
 def docker_call(args):
     """Run docker and display the output to the terminal"""
+    with open('%sdocker.cmdline' %(utils.config.runtime_logs_dir), 'w+') as f:
+        f.write(" ".join(args))
+
     return subprocess.check_call([
         'sudo',
         'docker',
@@ -22,6 +25,9 @@ def docker_call(args):
 
 def docker_exec(args):
     """Run docker and display the output to the terminal"""
+    with open('%sdocker.cmdline' %(utils.config.runtime_logs_dir), 'w+') as f:
+        f.write(" ".join(args))
+
     return os.execvp("sudo", [
         'sudo',
         'docker',
@@ -29,6 +35,9 @@ def docker_exec(args):
 
 def docker_output(args, mode=None):
     """Run docker and return the output"""
+    with open('%sdocker.cmdline' %(utils.config.runtime_logs_dir), 'w+') as f:
+        f.write(" ".join(args))
+
     o = subprocess.check_output([
         'sudo',
         'docker',

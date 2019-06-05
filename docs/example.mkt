@@ -34,6 +34,6 @@ pci = cx4-ib
 pci = rxe-eth0
 
 [simx-eth-sriov]
-# Ethernet SR-IOV device with 7 VFs. Those VFs are not enabled by default.
+# Ethernet SR-IOV device with 7 VFs. Those VFs will be enabled by default.
 pci = cx5-eth
 num_of_vfs = 7
