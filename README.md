@@ -1,9 +1,22 @@
 # Mellanox Kernel Developer Toolset
 
 This is a set of common scripts designed to help developers working with the
-Linux kernel, net and RDMA user space do their jobs efficiently. This toolset
-is designed to work with docker, and has few host dependencies beyond that and
-Python 3.5.
+Linux kernel, net and RDMA user space do their jobs efficiently.
+
+## Prerequisites
+
+This toolset requires Python 3.5 and PyYAML, while **[mkt images](docs/mkt_setup.1.md)**
+will handle everything else needed for successful setup and will automatically prepare
+your hypervisor.
+
+MKT heavily relies on docker to provide containerized environment and it needs modern
+distribution used as a host.
+
+Minimal host OSes are
+```
+Fedora 26
+Ubuntu 16.04
+```
 
 # Documentation
 
@@ -74,16 +87,6 @@ your shell of choice.
 
 Several other commonly used tools make use of this, so it is recommended to
 enable it globally.
-
-## Hypervisor preparation
-
-**mkt** requires a new docker to be installed to be used. Do not use the
-docker that comes with the operating system, follow the directions at
-https://docs.docker.com/install/
-
-The command **mkt setup** will automatically prepare your hypervisor.
-The docker version is used in **mkt** tool works on Ubuntu 16.04 and newer
-and Fedora 26 and above.
 
 ## Local settings
 
