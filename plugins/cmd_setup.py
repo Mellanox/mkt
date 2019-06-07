@@ -72,6 +72,8 @@ def cmd_setup(args):
     supported_os = {
             'fedora' : '26',
             'ubuntu' : '16',
+            'rhel' : '8',
+            'redhat' : '8',
     }
 
     # Python API stability is dissaster
@@ -91,6 +93,8 @@ def cmd_setup(args):
 
     if args.installs:
         setuphv = utils.get_internal_fn('scripts/')
+        if distro_id == 'redhat':
+            distro_id = 'rhel'
         setuphv += 'setup-hv.' + distro_id
         subprocess.check_call(setuphv)
 
