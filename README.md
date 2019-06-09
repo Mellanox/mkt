@@ -5,7 +5,7 @@ Linux kernel, net and RDMA user space do their jobs efficiently.
 
 ## Prerequisites
 
-This toolset requires Python 3.5 and PyYAML, while **[mkt images](docs/mkt_setup.1.md)**
+This toolset requires Python 3.5 or above, while **[mkt images](docs/mkt_setup.1.md)**
 will handle everything else needed for successful setup and will automatically prepare
 your hypervisor.
 

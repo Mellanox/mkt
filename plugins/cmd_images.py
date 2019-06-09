@@ -2,7 +2,6 @@
 """
 import os
 import utils
-import yaml
 from utils.git import *
 from utils.docker import *
 from utils.cmdline import *
@@ -77,6 +76,7 @@ class SupportImage(object):
                 text.append(I[2:])
             else:
                 raise ValueError("Bad script %r, mising trailer" % (script))
+        import yaml
         self.spec = yaml.safe_load(b"".join(text))
 
     def _fetch_git(self):
