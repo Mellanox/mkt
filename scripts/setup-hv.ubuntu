@@ -35,6 +35,7 @@ sudo apt-get -y update
 # pandoc - git-style manuals for mkt tool
 sudo apt-get -y install git \
                     docker-ce \
+		    flex \
                     python3-argcomplete \
 		    python3-yaml \
                     pandoc

@@ -33,6 +33,7 @@ sudo dnf config-manager --add-repo \
 sudo dnf -y install git \
                     dnf-plugins-core \
                     docker-ce \
+		    flex \
                     python3-argcomplete \
 		    python3-yaml \
                     pandoc
