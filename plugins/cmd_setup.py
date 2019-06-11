@@ -2,7 +2,6 @@
 """
 import os
 import utils
-import platform
 import subprocess
 import shutil
 import tempfile
@@ -71,19 +70,32 @@ def cmd_setup(args):
             exit("Exiting ...")
 
     supported_os = {
-        'fedora',
-        'ubuntu',
+            'fedora' : '26',
+            'ubuntu' : '16',
+            'rhel' : '8',
+            'redhat' : '8',
     }
 
-    dist = platform.dist()
-    distro = dist[0].lower()
-    if distro not in supported_os:
-        exit("""  Your hypervisor is not supported.
-  This script works on Fedora only. Exiting ...""")
+    # Python API stability is dissaster
+    # module platform was deprecated https://docs.python.org/3/library/platform.html
+    # Luckily enough, they added distro module before removing platform
+    try:
+        import distro
+        distro_id = distro.id()
+        distro_v = distro.major_version()
+    except ModuleNotFoundError:
+        import platform
+        distro_id = platform.dist()[0].lower()
+        distro_v = platform.dist()[1].split('.')[0]
+
+    if distro_id not in supported_os.keys() or distro_v < supported_os[distro_id]:
+        exit("""  Your hypervisor is not supported. Exiting ...""")
 
     if args.installs:
         setuphv = utils.get_internal_fn('scripts/')
-        setuphv += 'setup-hv.' + distro
+        if distro_id == 'redhat':
+            distro_id = 'rhel'
+        setuphv += 'setup-hv.' + distro_id
         subprocess.check_call(setuphv)
 
     utils.init_config_file()
