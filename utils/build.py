@@ -63,6 +63,7 @@ project_marks = {
         "libibverbs": "rdma-core",
         "rdma": "iproute2",
         "kernel": "kernel",
+        "mlnx_infra": "simx",
 }
 
 def build_list():

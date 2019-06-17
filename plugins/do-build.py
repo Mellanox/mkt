@@ -29,6 +29,19 @@ def make_rdma_core(args):
         return
     subprocess.call(['./build.sh'])
 
+def make_simx(args):
+    if args.clean:
+        subprocess.check_output(['make', 'distclean'])
+        return
+    if not os.path.isfile('config.status'):
+        subprocess.check_output(['./mlnx_infra/config.status.mlnx', '--target=x86', '--prefix=/opt/simx'])
+
+    cmd = ['make']
+    if os.path.isdir('/ccache'):
+        cmd += ['CC=ccache gcc']
+
+    subprocess.call(cmd + ['-j%d' %(args.num_jobs)])
+
 def switch_to_user(args):
     with open("/etc/passwd","a") as F:
         F.write(args.passwd + "\n");
@@ -82,3 +95,5 @@ if args.project == "iproute2":
     make_iproute2(args)
 if args.project == "rdma-core":
     make_rdma_core(args)
+if args.project == "simx":
+    make_simx(args)

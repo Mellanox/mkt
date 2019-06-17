@@ -4,6 +4,7 @@ src = /images/leonro/src/
 kernel = /images/leonro/src/kernel/
 rdma-core = /images/leonro/src/rdma-core/
 iproute2 = /images/leonro/src/iproute2/
+simx = /images/leonro/src/simx/
 # Direcotry to store various output logs
 logs = /images/leonro/logs/
 # Shared directory for various builder to speed-up process
