@@ -265,6 +265,16 @@ def set_kernel_rpm(src):
         'root=/dev/root rw ignore_loglevel rootfstype=9p rootflags=trans=virtio earlyprintk=serial,ttyS0,115200 console=hvc0'
     })
 
+def set_custom_qemu(tree):
+    """Overwrite installed QEMU variant with local version"""
+    subprocess.check_call(['ln', '-f', '-s',
+        tree + '/x86_64-softmmu/qemu-system-x86_64', '/opt/simx/bin/qemu-system-x86_64'])
+    subprocess.check_call(['ln', '-f', '-s',
+        tree + '/scsi/qemu-pr-helper', '/opt/simx/bin/qemu-pr-helper'])
+    subprocess.check_call(['ln', '-f', '-s',
+        tree + '/fsdev/virtfs-proxy-helper', '/opt/simx/bin/virtfs-proxy-helper'])
+    subprocess.check_call(['ln', '-f', '-s',
+        tree + '/qemu-bridge-helper', '/opt/simx/libexec/qemu-bridge-helper'])
 
 def set_bridge_network(args):
     """If a 'br0' is present then we can setup normal bridge networking"""
@@ -428,6 +438,7 @@ def setup_from_pickle(args, pickle_params):
     args.user = p["user"]
     args.group = p["group"]
     args.num_of_vfs = p.get("num_of_vfs", 0)
+    args.custom_qemu = p.get("custom_qemu", None)
 
 parser = argparse.ArgumentParser(
     description='Launch kvm using the filesystem from the container')
@@ -469,6 +480,9 @@ if args.kernel_rpm:
     set_kernel_rpm(args.kernel_rpm)
 else:
     set_kernel(args.kernel)
+
+if args.custom_qemu:
+    set_custom_qemu(args.custom_qemu)
 
 try:
     subprocess.check_output(

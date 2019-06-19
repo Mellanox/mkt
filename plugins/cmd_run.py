@@ -243,6 +243,9 @@ def get_pickle(args, vm_addr):
         except KeyError:
             pass
 
+    if args.custom_qemu:
+        p["custom_qemu"] = args.custom_qemu
+
     return base64.b64encode(pickle.dumps(p)).decode()
 
 def validate_and_set_boot(args):
@@ -388,6 +391,21 @@ def cmd_run(args):
             raise ValueError("Kernel path %r is not a directory/does not exist"
                              % (args.kernel))
         mapdirs.add(args.kernel)
+
+    if args.image:
+        try:
+            if utils.get_images(args.image)['custom_qemu'] != "true":
+                raise KeyError
+            args.custom_qemu = section.get('simx', None)
+        except KeyError:
+            args.custom_qemu = None
+
+    if args.custom_qemu:
+        args.custom_qemu = os.path.realpath(args.custom_qemu)
+        if not os.path.isdir(args.custom_qemu):
+            raise ValueError("SimX path %r is not a directory/does not exist"
+                             % (args.custom_qemu))
+        mapdirs.add(args.custom_qemu)
 
     usr = pwd.getpwuid(os.getuid())
     args.dir.append(usr.pw_dir)
