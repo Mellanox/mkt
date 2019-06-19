@@ -481,12 +481,10 @@ set_vfio(args)
 if args.virt:
     set_virt_devices(args)
 
+cmd = ["/opt/simx/bin/qemu-system-x86_64"]
 if args.simx:
-    cmd = ["/opt/simx/bin/qemu-system-x86_64"]
     set_simx_log()
     set_simx_network(args.simx)
-else:
-    cmd = ["qemu-system-x86_64"]
 
 for k, v in sorted(qemu_args.items()):
     if isinstance(v, set) or isinstance(v, list):
