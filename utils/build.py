@@ -16,6 +16,9 @@ class Build(object):
             self.src = section.get('src', None)
         else:
             self.src = section.get(project, None)
+        if self.src is None:
+            exit("Please configure source directory in MKT config.")
+
         self.project = project
         self.pickle = dict()
 
@@ -60,6 +63,7 @@ project_marks = {
         "libibverbs": "rdma-core",
         "rdma": "iproute2",
         "kernel": "kernel",
+        "mlnx_infra": "simx",
 }
 
 def build_list():

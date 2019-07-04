@@ -4,6 +4,7 @@ src = /images/leonro/src/
 kernel = /images/leonro/src/kernel/
 rdma-core = /images/leonro/src/rdma-core/
 iproute2 = /images/leonro/src/iproute2/
+simx = /images/leonro/src/simx/
 # Direcotry to store various output logs
 logs = /images/leonro/logs/
 # Shared directory for various builder to speed-up process
@@ -37,3 +38,8 @@ pci = rxe-eth0
 # Ethernet SR-IOV device with 7 VFs. Those VFs will be enabled by default.
 pci = cx5-eth
 num_of_vfs = 7
+
+[custom-qemu]
+pci = cx4-ib 0000:05:00.0
+# Use precompiled version of QEMU
+custom_qemu = true

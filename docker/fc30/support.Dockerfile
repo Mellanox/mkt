@@ -34,6 +34,7 @@ RUN dnf install -y \
     pandoc \
     patch \
     perl-generators \
+    perl-podlators \
     pixman-devel \
     pkg-config \
     pkgconfig \
