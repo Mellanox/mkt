@@ -41,7 +41,20 @@ ClientIdentifier=mac
 UseMTU=true
 UseDomains=true
 EOF
-systemctl enable systemd-networkd.service systemd-resolved.service
+
+cat <<EOF > /etc/systemd/system/fix-fedora-systemd.service
+[Unit]
+Description=Fix Fedora 30 not-bringing interface up
+After=multi-user.target
+
+[Service]
+ExecStart=ip link set eth0 up
+
+[Install]
+WantedBy=default.target
+EOF
+
+systemctl enable systemd-networkd.service systemd-resolved.service fix-fedora-systemd.service
 
 # Do not use /var/log/ with journald, doesn't work with 9pfs
 rm -rf /var/log/journal
