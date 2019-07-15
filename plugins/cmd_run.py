@@ -399,6 +399,8 @@ def cmd_run(args):
             args.custom_qemu = section.get('simx', None)
         except KeyError:
             args.custom_qemu = None
+    else:
+        args.custom_qemu = None
 
     if args.custom_qemu:
         args.custom_qemu = os.path.realpath(args.custom_qemu)
