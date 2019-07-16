@@ -2,6 +2,10 @@
 # ---
 # git_url: http://webdev01.mtl.labs.mlnx:8080/git/simx.git
 # git_commit: dd77dfb88a7f08157819240cb7c99b1f82f57b21
+# other_files:
+#   - 0001-mlx5-Set-multifunction-bit-in-config-space-header-ty.patch
+
+patch -p1 < /opt/00*.patch
 
 cat <<EOF > mlx-simx.spec
 %global debug_package %{nil}
