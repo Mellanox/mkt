@@ -70,7 +70,7 @@ following loop:
 
 An abbreviated loop is also available where #3 does not reload the entire
 kernel, but just re-loads the modules. This is suitable for test flows that do
-not damage the running kernel. (FIXME see mkt modules-reload)
+not damage the running kernel. (See **mkt modules-reload**)
 
 # OPTIONS
 
