@@ -42,6 +42,7 @@ RUN dnf install -y \
     python \
     python3-Cython \
     python3-devel \
+    python3-docutils \
     rpm-build \
     spice-protocol \
     spice-server-devel \
