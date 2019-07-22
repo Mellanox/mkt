@@ -323,6 +323,14 @@ ExecStart=/bin/bash -c \"echo {numb} > /sys/class/net/eth1/device/sriov_numvfs\"
 WantedBy=multi-user.target
 """.format(numb=args.num_of_vfs))
 
+def have_netdev(name):
+    try:
+        subprocess.check_output(
+            ["ip", "link", "show", "dev", name], stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError:
+        return False;
+    return True;
+
 def set_simx_network(simx):
     """Setup options to start a simx card"""
     to_simx_device = { 'cx4' : 'connectx4',
@@ -332,6 +340,8 @@ def set_simx_network(simx):
                        'cib' : 'connectib'
                        }
     subprocess.check_call(['mkdir', '-p', '/opt/simx/cfg/'])
+    have_virbr = have_netdev("virbr0")
+
     with open('/opt/simx/cfg/simx-qemu.cfg', 'a+') as f:
         f.write('[General Device Capabilities]\n')
         f.write('driver_version = false\n')
@@ -340,8 +350,6 @@ def set_simx_network(simx):
         idx = 1
         eth_sriov = False
         for target in simx:
-            # TODO: Ensure that virbr0 exists
-            qemu_args["-netdev"].add("bridge,br=virbr0,id=net%d" %(idx))
             dev = target.split('-')[0]
             mode = target.split('-')[1]
             devargs = to_simx_device[dev]
@@ -356,7 +364,10 @@ def set_simx_network(simx):
                     eth_sriov = True
                     set_sriov_vfs(args, idx)
 
-            devargs += ',netdev=net%d' %(idx)
+            if have_virbr:
+                qemu_args["-netdev"].add("bridge,br=virbr0,id=net%d" %(idx))
+                devargs += ',netdev=net%d' %(idx)
+
             qemu_args["-device"].append(devargs)
             idx = idx + 1
 
@@ -484,11 +495,9 @@ else:
 if args.custom_qemu:
     set_custom_qemu(args.custom_qemu)
 
-try:
-    subprocess.check_output(
-        ["ip", "link", "show", "dev", "br0"], stderr=subprocess.STDOUT)
+if have_netdev("br0"):
     set_bridge_network(args)
-except subprocess.CalledProcessError:
+else:
     set_loop_network(args)
 
 set_vfio(args)
