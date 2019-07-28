@@ -119,10 +119,12 @@ def smatch_and_sparse(args, tool):
 
 
 def checkpatch(args):
-    cmd = ["%s/scripts/checkpatch.pl" %(args.src), "-q", "--no-summary", "-g", args.rev]
+    cmd = ["%s/scripts/checkpatch.pl" %(args.checkpatch_root_dir), "-q", "--no-summary", "-g", args.rev]
+    if args.project != "kernel":
+        cmd += ["--no-tree", "--ignore", "PREFER_KERNEL_TYPES,FILE_PATH_CHANGES,EXECUTE_PERMISSIONS,USE_NEGATIVE_ERRNO,CONST_STRUCT"]
+
     if args.gerrit:
         cmd += ["--ignore", "GERRIT_CHANGE_ID,FILE_PATH_CHANGES"]
-
     subprocess.call(cmd);
 
 def warnings(args):
@@ -174,11 +176,27 @@ def setup_from_pickle(args, pickle_params):
     args.project = p.get("project", None)
     args.rev = p.get("rev", 'HEAD')
     args.checkpatch = p.get("checkpatch", True)
+    args.checkpatch_root_dir = p.get("checkpatch_root_dir", None)
     args.sparse = p.get("sparse", True)
     args.gerrit = p.get("gerrit", True)
     args.show_all = p.get("show_all", False)
     args.warnings = p.get("warnings", True)
     args.smatch = p.get("smatch", True)
+
+def kernel_ci(args):
+    if args.checkpatch:
+        checkpatch(args)
+    build_dirlist(args)
+    if args.sparse and args.dirlist:
+        smatch_and_sparse(args, "sparse")
+    if args.warnings and args.dirlist:
+        warnings(args)
+    if args.smatch and args.dirlist:
+        smatch_and_sparse(args, "smatch")
+
+def rdma_core_ci(args):
+    if args.checkpatch:
+        checkpatch(args)
 
 parser = argparse.ArgumentParser(description='CI container')
 args = parser.parse_args()
@@ -189,12 +207,7 @@ setup_from_pickle(args, pickle_data)
 fork(args)
 
 if args.project == "kernel":
-    if args.checkpatch:
-        checkpatch(args)
-    build_dirlist(args)
-    if args.sparse and args.dirlist:
-        smatch_and_sparse(args, "sparse")
-    if args.warnings and args.dirlist:
-        warnings(args)
-    if args.smatch and args.dirlist:
-        smatch_and_sparse(args, "smatch")
+    kernel_ci(args)
+
+if args.project == "rdma-core":
+    rdma_core_ci(args)

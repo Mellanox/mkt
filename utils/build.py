@@ -25,6 +25,7 @@ class Build(object):
     def _get_pickle(self):
         self.pickle["project"] = self.project
         self.pickle["src"] = self.src
+        self.pickle["checkpatch_root_dir"] = section.get('kernel', None)
 
         if self.project == 'custom':
             self.pickle['shell'] = True
@@ -56,6 +57,8 @@ class Build(object):
     def run_ci_cmd(self, supos):
         cmd = ["--tmpfs", "/build:rw,exec,nosuid,mode=755,size=10G"]
         cmd += ["-e", "CI_PICKLE=%s" % (self._get_pickle())]
+        if self.pickle["src"] != self.pickle["checkpatch_root_dir"]:
+            cmd += ["-v", "%s:%s:ro" %(self.pickle["checkpatch_root_dir"], self.pickle["checkpatch_root_dir"])]
 
         return cmd + self._run_cmd(supos, None, "ci")
 
