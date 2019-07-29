@@ -208,6 +208,10 @@ def rdma_core_ci(args):
     if args.checkpatch:
         checkpatch(args)
 
+def iproute2_ci(args):
+    if args.checkpatch:
+        checkpatch(args)
+
 parser = argparse.ArgumentParser(description='CI container')
 args = parser.parse_args()
 
@@ -221,3 +225,6 @@ if args.project == "kernel":
 
 if args.project == "rdma-core":
     rdma_core_ci(args)
+
+if args.project == "iproute2":
+    iproute2_ci(args)
