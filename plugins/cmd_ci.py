@@ -51,6 +51,12 @@ def args_ci(parser):
         dest="smatch",
         help="Skip smatch checks",
         default=True)
+    parser.add_argument(
+        "--no-clang",
+        action="store_false",
+        dest="clang",
+        help="Skip CLANG checks",
+        default=True)
 
 def cmd_ci(args):
     """Local continuous integration check."""
@@ -66,6 +72,7 @@ def cmd_ci(args):
     build.pickle['show_all'] = args.show_all
     build.pickle["warnings"] = args.warnings
     build.pickle["smatch"] = args.smatch
+    build.pickle["clang"] = args.clang
 
     # FIXME: allow git revisions as input to --rev.
     # But for now, let's give an option to provide

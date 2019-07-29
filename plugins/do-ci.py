@@ -117,6 +117,12 @@ def smatch_and_sparse(args, tool):
     else:
         print_filtered_output(args, out)
 
+def clang(args):
+    base_cmd = ["make", "-j", str(args.num_jobs), "-s", "CC=/opt/llvm/bin/clang"]
+    subprocess.call(base_cmd + ["clean"])
+    subprocess.call(base_cmd + ["allyesconfig"])
+    cmd = base_cmd + args.dirlist
+    subprocess.call(cmd);
 
 def checkpatch(args):
     cmd = ["%s/scripts/checkpatch.pl" %(args.checkpatch_root_dir), "-q", "--no-summary", "-g", args.rev]
@@ -182,17 +188,21 @@ def setup_from_pickle(args, pickle_params):
     args.show_all = p.get("show_all", False)
     args.warnings = p.get("warnings", True)
     args.smatch = p.get("smatch", True)
+    args.clang = p.get("clang", True)
 
 def kernel_ci(args):
     if args.checkpatch:
         checkpatch(args)
     build_dirlist(args)
-    if args.sparse and args.dirlist:
-        smatch_and_sparse(args, "sparse")
-    if args.warnings and args.dirlist:
-        warnings(args)
-    if args.smatch and args.dirlist:
-        smatch_and_sparse(args, "smatch")
+    if args.dirlist:
+        if args.sparse:
+            smatch_and_sparse(args, "sparse")
+        if args.warnings:
+            warnings(args)
+        if args.smatch:
+            smatch_and_sparse(args, "smatch")
+        if args.clang:
+            clang(args)
 
 def rdma_core_ci(args):
     if args.checkpatch:
