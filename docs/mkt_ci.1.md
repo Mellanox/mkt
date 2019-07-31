@@ -54,6 +54,9 @@ Checkpatch, sparse and build with extra warnings (W=1) are part of this
 *---no-smatch*
 :	Don't run smatch check.
 
+*---no-clang*
+:	Don't run CLANG check.
+
 # TOOLS
 
 ## CHECKPATCH
