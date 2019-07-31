@@ -15,6 +15,7 @@ import pickle
 import base64
 import multiprocessing
 import shlex
+import stat
 
 VM_Addr = collections.namedtuple("VM_Addr", "hostname ip mac")
 
@@ -220,9 +221,16 @@ def set_kernel(tree):
     mdir = os.path.join(mdir, "modules")
     if not os.path.isdir(mdir):
         os.makedirs(mdir)
+    fn_info = {}
     for I in files:
         if I.endswith(".ko"):
-            os.symlink(I, os.path.join(mdir, os.path.basename(I)))
+            bn = os.path.basename(I)
+            os.symlink(I, os.path.join(mdir, bn))
+            st = os.stat(I)
+            fn_info[bn] = {"size": st[stat.ST_SIZE],
+                           "mtime": st[stat.ST_MTIME]}
+    with open(os.path.join(mdir, "mkt_module_data.pickle"), "wb") as out:
+        pickle.dump(fn_info, out)
 
     if os.path.isdir("/boot"):
         shutil.rmtree("/boot")
