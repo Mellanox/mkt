@@ -30,17 +30,17 @@ sudo dnf config-manager --add-repo \
 # python3-argcomplete - autocomplete support for mkt tool
 # python3-yaml - configuration files to build support images
 # pandoc - git-style manuals for mkt tool
-sudo dnf -y install git \
+sudo dnf -y install --nobest git \
                     dnf-plugins-core \
+		    containerd.io \
                     docker-ce \
 		    flex \
                     python3-argcomplete \
-		    python3-yaml \
-                    pandoc
+		    python3-yaml
 
 # In RPM based system, the default is disabled
 sudo systemctl enable docker
 sudo systemctl start docker
 
 # Ensure that the HV is up-to-date
-sudo dnf -y update
+sudo dnf -y update --nobest
