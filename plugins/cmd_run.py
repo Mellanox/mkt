@@ -245,6 +245,9 @@ def get_pickle(args, vm_addr):
     if args.custom_qemu:
         p["custom_qemu"] = args.custom_qemu
 
+    if args.gdbserver:
+        p["gdbserver"] = args.gdbserver
+
     return base64.b64encode(pickle.dumps(p)).decode()
 
 def validate_and_set_boot(args):
@@ -321,6 +324,12 @@ def args_run(parser):
     parser.add_argument(
         '--boot-script',
         help="Path to the custom boot script which will be executed after boot",
+        default=None)
+    parser.add_argument(
+        '--gdbserver',
+        metavar='PORT',
+        type=int,
+        help="TCP port for QEMU's GDB server",
         default=None)
 
 def cmd_run(args):
