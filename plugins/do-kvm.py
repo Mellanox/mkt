@@ -432,6 +432,9 @@ ExecStart=-/bin/bash -c "/usr/bin/stty {stty_config} && /usr/bin/stty cols {cols
             term=os.environ.get("TERM", "xterm"),
         ))
 
+def setup_gdbserver(args):
+    if args.gdbserver:
+        qemu_args['-gdb'] = 'tcp::%d' % args.gdbserver
 
 def setup_from_pickle(args, pickle_params):
     """The script that invokes docker passes in some more detailed parameters
@@ -458,6 +461,7 @@ def setup_from_pickle(args, pickle_params):
     args.group = p["group"]
     args.num_of_vfs = p.get("num_of_vfs", 0)
     args.custom_qemu = p.get("custom_qemu", None)
+    args.gdbserver = p.get("gdbserver", None)
 
 parser = argparse.ArgumentParser(
     description='Launch kvm using the filesystem from the container')
@@ -516,6 +520,8 @@ cmd = ["/opt/simx/bin/qemu-system-x86_64"]
 if args.simx:
     set_simx_log()
     set_simx_network(args.simx)
+
+setup_gdbserver(args)
 
 for k, v in sorted(qemu_args.items()):
     if isinstance(v, set) or isinstance(v, list):

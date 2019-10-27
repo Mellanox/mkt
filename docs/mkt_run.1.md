@@ -84,6 +84,10 @@ not damage the running kernel. (See **mkt modules-reload**)
 	in the configuration file. **mkt** will automatically extract the vmlinux
 	and all module from the source tree and make them available to the VM.
 
+*--gdbserver PORT*
+:	Specify a TCP port number for accessing QEMU's GDB server, in order to
+	allow interactive debugging of the VM.
+
 # INTERNAL OPERATION
 
 Internally this tool uses docker to create the root file-system for the
@@ -133,6 +137,18 @@ file is almost empty. In order to increase verbosity level and output more
 information, you are invited to add extra logger commands obtained from SimX
 developers and put it into **set_simx_log()** function of **plugins/do-kvm.py"
 file.
+
+## GDBSERVER DEBUG
+
+By using the `--gdbserver` parameter you may enable a gdb server of the VM,
+allowing interactive debugging of the guest kernel. After enabling the gdb
+server with a port 1234, you may use these gdb commands:
+
+    (gdb) add-auto-load-safe-path .
+    (gdb) file vmlinux
+    (gdb) target remote :1234
+
+For more information see [Debugging kernel and modules via gdb](https://www.kernel.org/doc/html/latest/dev-tools/gdb-kernel-debugging.html).
 
 # MKT
 
