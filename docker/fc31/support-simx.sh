@@ -1,11 +1,13 @@
 #!/bin/bash
 # ---
 # git_url: http://webdev01.mtl.labs.mlnx:8080/git/simx.git
-# git_commit: dd77dfb88a7f08157819240cb7c99b1f82f57b21
+# git_commit: 92d08cab5f974f79cdad8c2ae63a37c9424ca2b2
 # other_files:
-#   - 0001-mlx5-Set-MLX5-to-be-multifunction-device.patch
+#  - 0001-mlnx_infra-Disable-Wnonull-check-to-compile-on-FC31.patch
+#  - 0002-keyamp-Make-compatible-with-python-3.patch
 
-patch -p1 < /opt/00*.patch
+patch -p1 < /opt/0001-mlnx_infra-Disable-Wnonull-check-to-compile-on-FC31.patch
+patch -p1 < /opt/0002-keyamp-Make-compatible-with-python-3.patch
 
 cat <<EOF > mlx-simx.spec
 %global debug_package %{nil}
@@ -22,11 +24,14 @@ From simx.git
 %build
 ./mlnx_infra/config.status.mlnx --target=x86 --prefix=/opt/simx
 make %{?_smp_mflags}
+make %{?_smp_mflags} -C mellanox/
 
 #%install
 make DESTDIR=%{buildroot} install
 mkdir -p %{buildroot}/etc/qemu-kvm/
 ln -s /etc/qemu/bridge.conf %{buildroot}/etc/qemu-kvm/bridge.conf
+mkdir -p %{buildroot}/opt/simx/lib/
+cp mellanox/libml*.so %{buildroot}/opt/simx/lib/
 
 %files
 /opt/simx/*

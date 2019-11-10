@@ -1,0 +1,35 @@
+From 6ab76581c6dd9565d7b3e6fa0797915aad511c7b Mon Sep 17 00:00:00 2001
+From: Leon Romanovsky <leonro@mellanox.com>
+Date: Wed, 6 Nov 2019 13:11:01 +0200
+Subject: [PATCH 1/2] mlnx_infra: Disable Wnonull check to compile on FC31
+
+SimX fails to compile on Fedora 31 with the following message:
++ ./mlnx_infra/config.status.mlnx --target=x86 --prefix=/opt/simx
+
+ERROR: configure test passed without -Werror but failed with -Werror.
+       This is probably a bug in the configure script. The failing command
+       will be at the bottom of config.log.
+       You can run configure with --disable-werror to bypass this check.
+
+Disable -Wnonull check which is root cause for this failure.
+
+Signed-off-by: Leon Romanovsky <leonro@mellanox.com>
+---
+ mlnx_infra/config.status.mlnx | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/mlnx_infra/config.status.mlnx b/mlnx_infra/config.status.mlnx
+index 5c8b19dd..ad0e3fa3 100755
+--- a/mlnx_infra/config.status.mlnx
++++ b/mlnx_infra/config.status.mlnx
+@@ -107,6 +107,7 @@ exec './configure' \
+ 		-Wunreachable-code \
+ 		-Wno-address-of-packed-member \
+ 		-Wno-format-truncation \
++		-Wno-nonnull \
+ 		-Wno-stringop-truncation \
+ 		-Wredundant-decls \
+ 		${SIMX_EXTRA_FLAGS}" \
+-- 
+2.20.1
+

@@ -1,0 +1,106 @@
+From 5f9e7c79db54e388ec0ff79c61aa53ec5c152826 Mon Sep 17 00:00:00 2001
+From: Leon Romanovsky <leonro@mellanox.com>
+Date: Wed, 6 Nov 2019 17:06:09 +0200
+Subject: [PATCH 2/2] keyamp: Make compatible with python 3
+
+Traceback (most recent call last):
+  File "/opt/src/ui/keycodemapdb/tools/keymap-gen", line 973, in <module>
+    main()
+  File "/opt/src/ui/keycodemapdb/tools/keymap-gen", line 968, in main
+    args.func(args)
+  File "/opt/src/ui/keycodemapdb/tools/keymap-gen", line 852, in code_map
+    SRC_GENERATORS[args.lang].generate_code_map(args.varname, database,
+args.frommapname, args.tomapname)
+  File "/opt/src/ui/keycodemapdb/tools/keymap-gen", line 359, in generate_code_map
+    elif type(tolinux.keys()[0]) == str:
+TypeError: 'dict_keys' object is not subscriptable
+
+Signed-off-by: Leon Romanovsky <leonro@mellanox.com>
+---
+ ui/keycodemapdb/tools/keymap-gen | 18 +++++++++---------
+ 1 file changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/ui/keycodemapdb/tools/keymap-gen b/ui/keycodemapdb/tools/keymap-gen
+index d4594b4f..3416e210 100755
+--- a/ui/keycodemapdb/tools/keymap-gen
++++ b/ui/keycodemapdb/tools/keymap-gen
+@@ -356,19 +356,19 @@ class LanguageSrcGenerator(LanguageGenerator):
+ 
+         if frommapname in database.ENUM_COLUMNS:
+             fromtype = self.TYPE_ENUM
+-        elif type(tolinux.keys()[0]) == str:
++        elif type(list(tolinux.keys())[0]) == str:
+             fromtype = self.TYPE_STRING
+         else:
+             fromtype = self.TYPE_INT
+ 
+         if tomapname in database.ENUM_COLUMNS:
+             totype = self.TYPE_ENUM
+-        elif type(fromlinux.values()[0]) == str:
++        elif type(list(fromlinux.values())[0]) == str:
+             totype = self.TYPE_STRING
+         else:
+             totype = self.TYPE_INT
+ 
+-        keys = tolinux.keys()
++        keys = list(tolinux.keys())
+         keys.sort()
+         if fromtype == self.TYPE_INT:
+             keys = range(keys[-1] + 1)
+@@ -402,7 +402,7 @@ class LanguageSrcGenerator(LanguageGenerator):
+             raise Exception("Unknown map %s, expected one of %s" % (
+                             mapname, ", ".join(database.mapto.keys())))
+ 
+-        keys = database.mapto[Database.MAP_LINUX].keys()
++        keys = list(database.mapto[Database.MAP_LINUX].keys())
+         keys.sort()
+         names = [database.mapname[Database.MAP_LINUX].get(key, "unnamed") for key in keys]
+ 
+@@ -440,7 +440,7 @@ class LanguageSrcGenerator(LanguageGenerator):
+         if varname is None:
+             varname = "name_map_%s_to_%s" % (frommapname, tomapname)
+ 
+-        keys = tolinux.keys()
++        keys = list(tolinux.keys())
+         keys.sort()
+         if type(keys[0]) == int:
+             keys = range(keys[-1] + 1)
+@@ -470,7 +470,7 @@ class LanguageSrcGenerator(LanguageGenerator):
+             raise Exception("Unknown map %s, expected one of %s" % (
+                             mapname, ", ".join(database.mapname.keys())))
+ 
+-        keys = database.mapto[Database.MAP_LINUX].keys()
++        keys = list(database.mapto[Database.MAP_LINUX].keys())
+         keys.sort()
+         names = [database.mapname[Database.MAP_LINUX].get(key, "unnamed") for key in keys]
+ 
+@@ -514,7 +514,7 @@ class LanguageDocGenerator(LanguageGenerator):
+             raise Exception("Unknown map %s, expected one of %s" % (
+                             mapname, ", ".join(database.mapname.keys())))
+ 
+-        keys = database.mapto[Database.MAP_LINUX].keys()
++        keys = list(database.mapto[Database.MAP_LINUX].keys())
+         keys.sort()
+         names = [database.mapname[Database.MAP_LINUX].get(key, "unnamed") for key in keys]
+ 
+@@ -537,7 +537,7 @@ class LanguageDocGenerator(LanguageGenerator):
+                             mapname, ", ".join(database.mapfrom.keys())))
+ 
+         tolinux = database.mapfrom[mapname]
+-        keys = tolinux.keys()
++        keys = list(tolinux.keys())
+         keys.sort()
+         if mapname in database.mapname:
+             names = database.mapname[mapname]
+@@ -553,7 +553,7 @@ class LanguageDocGenerator(LanguageGenerator):
+ 
+         for i in range(len(keys)):
+             key = keys[i]
+-            self._array_code_entry(key, names.get(tolinux[key], "unnamed"))
++            self._array_code_entry(key, names.get(list(tolinux[key]), "unnamed"))
+ 
+         self._array_end()
+ 
+-- 
+2.20.1
+

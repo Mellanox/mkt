@@ -42,26 +42,7 @@ UseMTU=true
 UseDomains=true
 EOF
 
-cat <<EOF > /usr/local/sbin/fix-fedora-links
-#!/bin/bash
-/usr/sbin/ip -o link | gawk -F: '{ print \$2 }' | grep -v " lo" | awk '{ print "link set " \$1 " up" > "/tmp/bring-up" }'
-/usr/sbin/ip -b /tmp/bring-up
-rm -rf /tmp/bring-up
-EOF
-
-cat <<EOF > /etc/systemd/system/fix-fedora-systemd.service
-[Unit]
-Description=Fix Fedora 30 not-bringing interface up
-After=multi-user.target
-
-[Service]
-ExecStart=bash /usr/local/sbin/fix-fedora-links
-
-[Install]
-WantedBy=default.target
-EOF
-
-systemctl enable systemd-networkd.service systemd-resolved.service fix-fedora-systemd.service
+systemctl enable systemd-networkd.service systemd-resolved.service
 
 # Do not use /var/log/ with journald, doesn't work with 9pfs
 rm -rf /var/log/journal

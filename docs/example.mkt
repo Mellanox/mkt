@@ -9,9 +9,9 @@ simx = /images/leonro/src/simx/
 logs = /images/leonro/logs/
 # Shared directory for various builder to speed-up process
 ccache = /images/leonro/ccache/
-# Base distro, supported: "fc30"
-# This line can be omitted and default will be "fc30".
-os = fc30
+# Base distro, supported: "fc31"
+# This line can be omitted and default will be "fc31".
+os = fc31
 # Default container image to run if execute "mkt run" command
 # without any parameters. It is overwritten by providng image
 # name as an argument to "mkt run"
@@ -19,7 +19,7 @@ image = cx5-ib
 # Path to directories which will be mounted and visible in docker
 # Home directory (/labhome/username for Mellanox network) will be
 # alway avaialble.
-# The maount point is in ead-only.
+# The maount point is in read-only.
 dir = /path/to/first/dir path/to/second/dir /path/to/third/dir
 [cx5-ib]
 # List of PICs to connect to this container

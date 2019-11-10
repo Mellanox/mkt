@@ -1,13 +1,11 @@
 #!/bin/bash
 # ---
 # git_url: git://repo.or.cz/smatch.git
-# git_commit: 9a545fb8823a91372b9e52ace9681b75c0a53a6d
+# git_commit: 773e0c191fc861c1adce9688d0f459d199da5f44
 # other_files:
-#   - 0001-Explicitly-use-python2-to-solve-rpmbuild-error.patch
-#   - 0002-smatch-Fix-compilation-error.patch
+#   - 0001-Explicitly-use-python3-to-solve-rpmbuild-error.patch
 
 patch -p1 < /opt/0001*.patch
-patch -p1 < /opt/0002*.patch
 
 cat <<EOF > smatch.spec
 Name: smatch
