@@ -24,6 +24,11 @@ rdma_ucm
 ib_ipoib
 EOF
 
+# Overwrite rdma-core defaults
+cat <<EOF > /etc/rdma/modules/rdma.conf
+# Deleted by mkt
+EOF
+
 # Use eth0 for the ethernet name
 ln -s /dev/null /etc/systemd/network/99-default.link
 
