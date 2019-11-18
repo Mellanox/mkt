@@ -182,8 +182,8 @@ def get_mac():
         raise ValueError("The DHCP file %r could not be parsed for host %r" %
                          (list_fn, hostname))
 
-    for host, inf in sorted(hosts.items()):
-        if not host.startswith(hostname + "-0"):
+    for host, inf in sorted(hosts.items(), reverse=True):
+        if host == hostname or host == hostname + '-ilo':
             continue
 
         # docker is used to lock the MAC addresses, other virt systems should use

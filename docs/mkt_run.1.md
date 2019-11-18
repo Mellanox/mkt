@@ -86,7 +86,8 @@ not damage the running kernel. (See **mkt modules-reload**)
 
 *--gdbserver PORT*
 :	Specify a TCP port number for accessing QEMU's GDB server, in order to
-	allow interactive debugging of the VM.
+	allow interactive debugging of the VM. Your kernel should be compiled
+	with "CONFIG_DEBUG_INFO_REDUCED=n" and "CONFIG_GDB_SCRIPTS=y".
 
 # INTERNAL OPERATION
 
