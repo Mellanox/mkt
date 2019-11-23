@@ -342,9 +342,11 @@ def have_netdev(name):
 def set_simx_network(simx):
     """Setup options to start a simx card"""
     to_simx_device = { 'cx4' : 'connectx4',
-                       'cx5' : 'connectx5',
-                       'cx6' : 'connectx6',
                        'cx4lx' : 'connectx4lx',
+                       'cx5' : 'connectx5',
+                       'cx5ex' : 'connectx5_ex',
+                       'cx6' : 'connectx6',
+                       'cx6dx' : 'connectx6_dx',
                        'cib' : 'connectib'
                        }
     subprocess.check_call(['mkdir', '-p', '/opt/simx/cfg/'])

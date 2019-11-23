@@ -120,7 +120,8 @@ def get_virt_rdma_devices():
 def get_simx_rdma_devices():
     return [
         'cx4-ib', 'cx4-eth', 'cx5-ib', 'cx5-eth',
-        'cib-ib', 'cx4lx-eth', 'cx6-ib', 'cx6-eth'
+        'cx5ex-eth', 'cib-ib', 'cx4lx-eth',
+        'cx6-ib', 'cx6-eth', 'cx6dx-eth'
     ]
 
 
