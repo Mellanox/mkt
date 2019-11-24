@@ -319,16 +319,18 @@ def set_sriov_vfs(args, idx):
     qemu_args["-device"].append('pcie-root-port,pref64-reserve=500M,slot=%d,id=pcie_port.%d' %(idx-1, idx))
     # TODO: Configure SRIOV for more than one card
     create_unit(
-            "sriov-vfs", "service", ["multi-user.target.wants"], """
+            "sriov-vfs", "service", ["custom.target.wants"], """
 [Unit]
 Before=
-After=network-online.target
+Requires=multi-user.target
+After=multi-user.target
+AllowIsolate=yes
 [Service]
 Type=oneshot
 RemainAfterExit=false
 ExecStart=/bin/bash -c \"echo {numb} > /sys/class/net/eth1/device/sriov_numvfs\"
 [Install]
-WantedBy=multi-user.target
+WantedBy=custom.target
 """.format(numb=args.num_of_vfs))
 
 def have_netdev(name):
@@ -342,9 +344,11 @@ def have_netdev(name):
 def set_simx_network(simx):
     """Setup options to start a simx card"""
     to_simx_device = { 'cx4' : 'connectx4',
-                       'cx5' : 'connectx5',
-                       'cx6' : 'connectx6',
                        'cx4lx' : 'connectx4lx',
+                       'cx5' : 'connectx5',
+                       'cx5ex' : 'connectx5_ex',
+                       'cx6' : 'connectx6',
+                       'cx6dx' : 'connectx6_dx',
                        'cib' : 'connectib'
                        }
     subprocess.check_call(['mkdir', '-p', '/opt/simx/cfg/'])
