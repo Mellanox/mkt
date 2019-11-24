@@ -319,16 +319,18 @@ def set_sriov_vfs(args, idx):
     qemu_args["-device"].append('pcie-root-port,pref64-reserve=500M,slot=%d,id=pcie_port.%d' %(idx-1, idx))
     # TODO: Configure SRIOV for more than one card
     create_unit(
-            "sriov-vfs", "service", ["multi-user.target.wants"], """
+            "sriov-vfs", "service", ["custom.target.wants"], """
 [Unit]
 Before=
-After=network-online.target
+Requires=multi-user.target
+After=multi-user.target
+AllowIsolate=yes
 [Service]
 Type=oneshot
 RemainAfterExit=false
 ExecStart=/bin/bash -c \"echo {numb} > /sys/class/net/eth1/device/sriov_numvfs\"
 [Install]
-WantedBy=multi-user.target
+WantedBy=custom.target
 """.format(numb=args.num_of_vfs))
 
 def have_netdev(name):
