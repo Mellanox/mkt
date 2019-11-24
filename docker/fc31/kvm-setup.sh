@@ -49,6 +49,19 @@ EOF
 
 systemctl enable systemd-networkd.service systemd-resolved.service
 
+# Create MKT custom target to run command as last unit
+cat <<EOF > /etc/systemd/system/custom.target
+[Unit]
+Description=MKT custom target
+Requires=multi-user.target
+After=multi-user.target
+AllowIsolate=yes
+EOF
+
+mkdir -p /etc/systemd/system/custom.target.wants
+# Set our scripts to be executed last
+ln -sf /etc/systemd/system/custom.target /etc/systemd/system/default.target
+
 # Do not use /var/log/ with journald, doesn't work with 9pfs
 rm -rf /var/log/journal
 
