@@ -290,7 +290,7 @@ def args_run(parser):
     kernel.add_argument(
         '--kernel',
         help="Path to the top of a compiled kernel source tree to boot",
-        default=section.get('kernel', None))
+        default=None)
     kernel.add_argument(
         '--kernel-rpm', help="Path to a kernel RPM to boot", default=None)
 
@@ -354,6 +354,13 @@ def cmd_run(args):
     if args.image:
         pci = utils.get_images(args.image)['pci']
         s = pci.split()
+        try:
+            args.kernel = utils.get_images(args.image)['kernel']
+        except KeyError:
+            pass
+
+    if args.kernel is None:
+        args.kernel = section.get('kernel', None)
 
     union = set(get_simx_rdma_devices()).union(
         set(get_pci_rdma_devices().keys())).union(
