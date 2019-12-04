@@ -305,11 +305,6 @@ def set_loop_network(args):
 def set_simx_log():
     """Prepare simx log file."""
 
-    # Old SimX version relies on the fact that log file exists,
-    # create that file for them
-    f = open('/logs/simx-qemu.log', 'w+')
-    f.close()
-
     subprocess.check_call(['mkdir', '-p', '/opt/simx/cfg/'])
     with open('/opt/simx/cfg/simx-qemu.cfg', 'a+') as f:
          f.write('[logger]\n')
