@@ -150,8 +150,6 @@ def cmd_setup(args):
                     os.path.join(
                         os.path.dirname(__file__), "../configs/kconfig-kvm"),
                     value + "/.config")
-                p = subprocess.Popen(["make", "olddefconfig"], cwd=value)
-                p.wait()
 
     print("Completed, PLEASE RESTART server")
 
