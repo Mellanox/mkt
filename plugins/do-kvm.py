@@ -305,21 +305,20 @@ def set_loop_network(args):
 def set_simx_log():
     """Prepare simx log file."""
 
-    # Old SimX version relies on the fact that log file exists,
-    # create that file for them
-    f = open('/logs/simx-qemu.log', 'w+')
-    f.close()
-
     subprocess.check_call(['mkdir', '-p', '/opt/simx/cfg/'])
     with open('/opt/simx/cfg/simx-qemu.cfg', 'a+') as f:
          f.write('[logger]\n')
          f.write('log_file_redirection = /logs/simx-qemu.log\n')
-
-def set_sriov_vfs(args, idx):
+def set_sriov_vfs(args, idx, mode):
     qemu_args["-device"].append('pcie-root-port,pref64-reserve=500M,slot=%d,id=pcie_port.%d' %(idx-1, idx))
     # TODO: Configure SRIOV for more than one card
+    if mode == "ib":
+        sriov_device="infiniband/`ls -1 /sys/class/infiniband/ | head -1`"
+    else:
+        sriov_device='net/eth1'
+
     create_unit(
-            "sriov-vfs", "service", ["custom.target.wants"], """
+                "sriov-vfs", "service", ["custom.target.wants"], """
 [Unit]
 Before=
 Requires=multi-user.target
@@ -328,10 +327,10 @@ AllowIsolate=yes
 [Service]
 Type=oneshot
 RemainAfterExit=false
-ExecStart=/bin/bash -c \"echo {numb} > /sys/class/net/eth1/device/sriov_numvfs\"
+ExecStart=/bin/bash -c \"echo {numb} > /sys/class/{device}/device/sriov_numvfs\"
 [Install]
 WantedBy=custom.target
-""".format(numb=args.num_of_vfs))
+""".format(numb=args.num_of_vfs, device=sriov_device))
 
 def have_netdev(name):
     try:
@@ -371,10 +370,10 @@ def set_simx_network(simx):
             else:
                 # Ethernet
                 f.write('port_type = 0x1\n')
-                if args.num_of_vfs:
-                    devargs += ',bus=pcie_port.%d' %(idx)
-                    eth_sriov = True
-                    set_sriov_vfs(args, idx)
+
+            if args.num_of_vfs:
+                devargs += ',bus=pcie_port.%d' %(idx)
+                set_sriov_vfs(args, idx, mode)
 
             if have_virbr:
                 qemu_args["-netdev"].add("bridge,br=virbr0,id=net%d" %(idx))
@@ -383,7 +382,7 @@ def set_simx_network(simx):
             qemu_args["-device"].append(devargs)
             idx = idx + 1
 
-        if eth_sriov:
+        if args.num_of_vfs:
             f.write('[adapter]\n')
             f.write('num_of_function = %s\n' % (args.num_of_vfs))
 
