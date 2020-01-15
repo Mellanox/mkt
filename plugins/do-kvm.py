@@ -283,6 +283,8 @@ def set_custom_qemu(tree):
         tree + '/fsdev/virtfs-proxy-helper', '/opt/simx/bin/virtfs-proxy-helper'])
     subprocess.check_call(['ln', '-f', '-s',
         tree + '/qemu-bridge-helper', '/opt/simx/libexec/qemu-bridge-helper'])
+    subprocess.check_call(['ln', '-f', '-s',
+        tree + '/mellanox/libmlx.so', '/opt/simx/lib/libmlx.so'])
 
 def set_bridge_network(args):
     """If a 'br0' is present then we can setup normal bridge networking"""
