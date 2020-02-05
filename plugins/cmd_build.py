@@ -49,7 +49,7 @@ def cmd_build(args):
     build.pickle['shell'] = args.run_shell
     build.pickle["passwd"] = "%s:x:%s:%s:%s:%s:/bin/bash" % (username(),
                 os.getuid(), os.getgid(), username(), os.getenv("HOME"))
-    build.pickle["group"] = "%s:x:101:" % (group())
+    build.pickle["group"] = "%s:x:%s:" % (group(), os.getgid())
     build.pickle["uid"] = int(os.getuid())
     build.pickle["gid"] = int(os.getgid())
     build.pickle["home"] = os.getenv("HOME")
