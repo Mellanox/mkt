@@ -40,6 +40,11 @@ pci = rxe-eth0
 pci = cx5-eth
 num_of_vfs = 7
 
+[simx-multi-port]
+# Simulate multiport device
+pci = cx5-eth
+num_ports = 2
+
 [custom-qemu]
 pci = cx4-ib 0000:05:00.0
 # Use precompiled version of QEMU

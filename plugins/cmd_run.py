@@ -242,6 +242,10 @@ def get_pickle(args, vm_addr):
             p["num_of_vfs"] = utils.get_images(args.image)['num_of_vfs']
         except KeyError:
             pass
+        try:
+            p["num_ports"] = utils.get_images(args.image)['num_ports']
+        except KeyError:
+            pass
 
     if args.custom_qemu:
         p["custom_qemu"] = args.custom_qemu
