@@ -359,6 +359,7 @@ def set_simx_network(simx):
         f.write('[General Device Capabilities]\n')
         f.write('driver_version = false\n')
         f.write('query_driver_version = false\n')
+        f.write('num_ports = %s\n' % (args.num_ports))
 
         idx = 1
         eth_sriov = False
@@ -467,6 +468,7 @@ def setup_from_pickle(args, pickle_params):
     args.num_of_vfs = p.get("num_of_vfs", 0)
     args.custom_qemu = p.get("custom_qemu", None)
     args.gdbserver = p.get("gdbserver", None)
+    args.num_ports = p.get("num_ports", 1)
 
 parser = argparse.ArgumentParser(
     description='Launch kvm using the filesystem from the container')
