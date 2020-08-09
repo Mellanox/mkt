@@ -19,6 +19,7 @@ RUN dnf install -y \
     libaio-devel \
     libattr-devel \
     libcap-devel \
+    libcap-ng-devel \
     libfdt-devel \
     libmnl-devel \
     libnl3-cli \

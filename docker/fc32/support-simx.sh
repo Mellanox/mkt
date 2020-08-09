@@ -1,13 +1,7 @@
 #!/bin/bash
 # ---
 # git_url: http://webdev01.mtl.labs.mlnx:8080/git/simx.git
-# git_commit: 21f3200268a84a0d104c0ac6453f6304aad58d35
-# other_files:
-#  - 0001-mlnx_infra-Disable-Wnonull-check-to-compile-on-FC31.patch
-#  - 0002-keyamp-Make-compatible-with-python-3.patch
-
-patch -p1 < /opt/0001-mlnx_infra-Disable-Wnonull-check-to-compile-on-FC31.patch
-patch -p1 < /opt/0002-keyamp-Make-compatible-with-python-3.patch
+# git_commit: e39b67e660f78fd2de6363ecf563f6cc651188ed
 
 cat <<EOF > mlx-simx.spec
 %global debug_package %{nil}
