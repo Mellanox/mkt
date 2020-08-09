@@ -350,6 +350,8 @@ def set_simx_network(simx):
                        'cx5ex' : 'connectx5_ex',
                        'cx6' : 'connectx6',
                        'cx6dx' : 'connectx6_dx',
+                       'cx6lx' : 'connectx6_lx',
+                       'cx7' : 'connectx7',
                        'cib' : 'connectib'
                        }
     subprocess.check_call(['mkdir', '-p', '/opt/simx/cfg/'])
