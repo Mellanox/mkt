@@ -32,6 +32,7 @@ RUN \
     iputils \
     kmod \
     less \
+    libpcap \
     lsof \
     man \
     nano \
