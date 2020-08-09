@@ -47,7 +47,7 @@ class DirList(object):
         res = []
         for I in sorted(self.list):
             res.append("-v")
-            res.append("%s:%s" % (I, I))
+            res.append("%s:%s:Z" % (I, I))
         return res
 
 
@@ -484,7 +484,7 @@ def cmd_run(args):
         cname = get_container_name(vm_addr)
         docker_exec(["run"] + mapdirs.as_docker_bind() + [
             "-v",
-            "%s:/plugins:ro" % (src_dir),
+            "%s:/plugins:ro,Z" % (src_dir),
             "--mount",
             "type=bind,source=%s,destination=/logs" % (utils.config.runtime_logs_dir),
             "--rm",
