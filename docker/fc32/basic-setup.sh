@@ -65,4 +65,8 @@ cat <<EOF > /etc/locale.conf
 LANG="en_CA.UTF-8"
 EOF
 
+cat <<EOF > /etc/sysctl.d/hugepages.conf
+vm.nr_hugepages=2
+EOF
+
 rpm -U /opt/rpms/*.rpm
