@@ -16,10 +16,13 @@ RUN dnf install -y \
     git-core \
     glib2-devel \
     hostname \
+    iptables-devel \
     libaio-devel \
+    linux-atm-libs-devel \
     libattr-devel \
     libcap-devel \
     libcap-ng-devel \
+    libdb-devel \
     libfdt-devel \
     libmnl-devel \
     libnl3-cli \

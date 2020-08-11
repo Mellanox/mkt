@@ -1,6 +1,7 @@
 FROM fedora:32 as rpms
 
 COPY --from=local_mkt/support_rdma_core:fc32 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
+COPY --from=local_mkt/support_iproute2:fc32 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
 COPY --from=local_mkt/support_simx:fc32 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
 
 RUN rm -f \
