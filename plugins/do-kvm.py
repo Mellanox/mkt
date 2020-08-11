@@ -318,6 +318,7 @@ def set_simx_cfg():
 
          f.write('[XRC ODP Capabilities]\n')
          f.write('send = true\n')
+         f.write('rmp = true\n')
 
 def set_sriov_vfs(args, idx, mode):
     qemu_args["-device"].append('pcie-root-port,pref64-reserve=500M,slot=%d,id=pcie_port.%d' %(idx-1, idx))
