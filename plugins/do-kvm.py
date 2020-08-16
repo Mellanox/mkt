@@ -304,13 +304,22 @@ def set_loop_network(args):
         "user,hostfwd=tcp:127.0.0.1:4444-:22"
     ])
 
-def set_simx_log():
-    """Prepare simx log file."""
+def set_simx_cfg():
+    """Prepare simx cfg file."""
 
     subprocess.check_call(['mkdir', '-p', '/opt/simx/cfg/'])
     with open('/opt/simx/cfg/simx-qemu.cfg', 'a+') as f:
          f.write('[logger]\n')
          f.write('log_file_redirection = /logs/simx-qemu.log\n')
+
+         f.write('[General Device Capabilities]\n')
+         f.write('pg = true\n')
+         f.write('ib_port_sniffer = true\n')
+
+         f.write('[XRC ODP Capabilities]\n')
+         f.write('send = true\n')
+         f.write('rmp = true\n')
+
 def set_sriov_vfs(args, idx, mode):
     qemu_args["-device"].append('pcie-root-port,pref64-reserve=500M,slot=%d,id=pcie_port.%d' %(idx-1, idx))
     # TODO: Configure SRIOV for more than one card
@@ -350,6 +359,8 @@ def set_simx_network(simx):
                        'cx5ex' : 'connectx5_ex',
                        'cx6' : 'connectx6',
                        'cx6dx' : 'connectx6_dx',
+                       'cx6lx' : 'connectx6_lx',
+                       'cx7' : 'connectx7',
                        'cib' : 'connectib'
                        }
     subprocess.check_call(['mkdir', '-p', '/opt/simx/cfg/'])
@@ -525,7 +536,7 @@ if args.virt:
 
 cmd = ["/opt/simx/bin/qemu-system-x86_64"]
 if args.simx:
-    set_simx_log()
+    set_simx_cfg()
     set_simx_network(args.simx)
 
 setup_gdbserver(args)

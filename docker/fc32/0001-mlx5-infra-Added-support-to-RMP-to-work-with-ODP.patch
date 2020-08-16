@@ -1,0 +1,358 @@
+From ce282c63cd048339f548f6176a22bec7ed7efc95 Mon Sep 17 00:00:00 2001
+From: Hasan Emar <hasane@mellanox.com>
+Date: Sun, 26 Jul 2020 17:40:09 +0300
+Subject: [PATCH 1/3] mlx5+infra: Added support to RMP to work with ODP
+
+Added support to RMP/SRQ in ODP with
+connection type = RC
+
+Signed-off-by: Hasan Emar <hasane@mellanox.com>
+Signed-off-by: Leon Romanovsky <leonro@nvidia.com>
+---
+ mellanox/mlx5/mlx5.h                  |  1 +
+ mellanox/mlx5/mlx5_cmdif_tpt.c        | 59 +++++++++++++++------------
+ mellanox/mlx5/mlx5_config_defaults.c  |  2 +-
+ mellanox/mlx5/mlx5_dataif_transport.c |  2 +-
+ mellanox/mlx5/mlx5_dataif_wqe.c       | 24 ++++++++---
+ mellanox/mlx5/mlx5_eq.c               | 20 +++++----
+ mellanox/mlx5/mlx5_eq.h               |  4 +-
+ mlnx_infra/simx-qemu.cfg              |  2 +-
+ 8 files changed, 68 insertions(+), 46 deletions(-)
+
+diff --git a/mellanox/mlx5/mlx5.h b/mellanox/mlx5/mlx5.h
+index b108efae39d5..2da677d4f22c 100644
+--- a/mellanox/mlx5/mlx5.h
++++ b/mellanox/mlx5/mlx5.h
+@@ -2051,6 +2051,7 @@ typedef struct MLX5CommonWQ {
+
+ typedef struct MLX5PageFault {
+     uint32_t wq_num;
++    uint32_t wqp_num;
+     uint8_t page_fault_type;
+     uint8_t page_fault_sub_type;
+     uint8_t page_fault_type_for_qp;
+diff --git a/mellanox/mlx5/mlx5_cmdif_tpt.c b/mellanox/mlx5/mlx5_cmdif_tpt.c
+index 889a8de0cb62..1647808e9957 100644
+--- a/mellanox/mlx5/mlx5_cmdif_tpt.c
++++ b/mellanox/mlx5/mlx5_cmdif_tpt.c
+@@ -783,6 +783,7 @@ out:
+ int mlx5_opcode_PAGE_FAULT_RESUME(MLX5State *s, const void *in_buf, void *out_buf, int in_size)
+ {
+     MLX5CommonWQ *cur_wq;
++    MLX5PageFault *page_fault_ctx;
+     uint32_t token = MLX5_GET(page_fault_resume_in, in_buf, token);
+     uint32_t page_fault_type = MLX5_GET(page_fault_resume_in, in_buf, page_fault_type);
+     uint32_t wq_num = MLX5_GET(page_fault_resume_in, in_buf, wq_number);
+@@ -805,6 +806,7 @@ int mlx5_opcode_PAGE_FAULT_RESUME(MLX5State *s, const void *in_buf, void *out_bu
+         token = wq_num;
+         wq_num = s->page_fault_arr[token].wq_num;
+     }
++    page_fault_ctx = &s->page_fault_arr[token];
+
+     if (!mlx5_bitmap_is_set(s->page_fault_bitmap, token)) {
+         MLX_LOG_ERR(CMD, "PAGE_FAULT_RESUME: token 0x%x doesn't exist\n", token);
+@@ -812,52 +814,57 @@ int mlx5_opcode_PAGE_FAULT_RESUME(MLX5State *s, const void *in_buf, void *out_bu
+         goto out;
+     }
+
+-    if (page_fault_type != s->page_fault_arr[token].page_fault_type) {
++    if (page_fault_type != page_fault_ctx->page_fault_type) {
+         MLX_LOG_ERR(CMD, "PAGE_FAULT_RESUME: page fault type 0x%x doesn't match input page_fault_type 0x%x\n",
+-                    s->page_fault_arr[token].page_fault_type, page_fault_type);
++                    page_fault_ctx->page_fault_type, page_fault_type);
+         cmd_status = MLX5_CMD_STAT_BAD_PARAM_ERR;
+         goto out;
+     }
+
+-    if ((page_fault_type != MLX5_PAGE_FAULT_TYPE_RDMA_READ) &&
+-        (page_fault_type != MLX5_PAGE_FAULT_TYPE_RDMA_WRITE) &&
+-        (wq_num != s->page_fault_arr[token].wq_num)) {
+-        MLX_LOG_ERR(CMD, "PAGE_FAULT_RESUME: wq_num 0x%x doesn't match input wq_num 0x%x\n",
+-                    s->page_fault_arr[token].wq_num, wq_num);
+-        cmd_status = MLX5_CMD_STAT_BAD_PARAM_ERR;
++    if (MLX5_GET(page_fault_resume_in, in_buf, error)) {
++        MLX_LOG_FATAL(CMD, "PAGE_FAULT_RESUME: error in fixing page fault is not supported yet\n");
+         goto out;
+     }
+
+     switch (page_fault_type) {
+     case MLX5_PAGE_FAULT_TYPE_RMP:
+-        MLX_LOG_ERR(CMD, "Error, RMP page fault isn't supported yet\n");
+-        cmd_status = MLX5_CMD_STAT_BAD_PARAM_ERR;
+-        goto out;
++        MLX_ASSERT_CMPINT(page_fault_ctx->page_fault_sub_type, ==, MLX5_PAGE_FAULT_EVENT_SUBTYPE_WQE_PAGE_FAULT);
++        if (mlx5_verify_cmd_resource_exist(s->common_wqp_bitmap, wq_num) != MLX5_CMD_STAT_OK) {
++            MLX_LOG_ERR(EQ, "RMP: resource %s number 0x%x doesn't exist, page fault event not triggered\n", s->common_wqp_bitmap->name, wq_num);
++            cmd_status = MLX5_CMD_STAT_BAD_PARAM_ERR;
++            goto out;
++        }
++        if (wq_num != page_fault_ctx->wqp_num) {
++            MLX_LOG_ERR(CMD, "PAGE_FAULT_RESUME: wq_num 0x%x doesn't match input wq_num 0x%x\n",
++                        page_fault_ctx->wqp_num, wq_num);
++            cmd_status = MLX5_CMD_STAT_BAD_PARAM_ERR;
++            goto out;
++        }
++        break;
+
+     case MLX5_PAGE_FAULT_TYPE_REQUESTER_QP_WQE_ON_SEND_OR_WRITE:
+     case MLX5_PAGE_FAULT_TYPE_RESPONDER_QP_RECEIVE_WQE:
+     /* fall through */
+     case MLX5_PAGE_FAULT_TYPE_REQUESTER_QP_WQE_ON_READ_OR_ATOMIC:
+-        MLX_ASSERT_CMPINT(s->page_fault_arr[token].page_fault_sub_type, ==, MLX5_PAGE_FAULT_EVENT_SUBTYPE_WQE_PAGE_FAULT);
++        MLX_ASSERT_CMPINT(page_fault_ctx->page_fault_sub_type, ==, MLX5_PAGE_FAULT_EVENT_SUBTYPE_WQE_PAGE_FAULT);
+         if (mlx5_verify_cmd_resource_exist(s->common_wq_bitmap, wq_num) != MLX5_CMD_STAT_OK) {
+             MLX_LOG_ERR(CMD, "PAGE_FAULT_RESUME: resource %s number 0x%x doesn't exist\n",
+                         s->common_wq_bitmap->name, wq_num);
+             cmd_status = MLX5_CMD_STAT_BAD_PARAM_ERR;
+             goto out;
+         }
+-        cur_wq = &s->common_wq_arr[wq_num];
+-        if (MLX5_GET(page_fault_resume_in, in_buf, error)) {
+-            MLX_LOG_DBG(CMD, "PAGE_FAULT_RESUME: failed to solve page fault, QP 0x%x moved to state error\n", wq_num);
+-            // todo: add support when error is true
+-            MLX_LOG_FATAL(CMD, "PAGE_FAULT_RESUME: error in fixing page fault is not supported yet\n");
++        if (wq_num != page_fault_ctx->wq_num) {
++            MLX_LOG_ERR(CMD, "PAGE_FAULT_RESUME: wq_num 0x%x doesn't match input wq_num 0x%x\n",
++                        page_fault_ctx->wq_num, wq_num);
++            cmd_status = MLX5_CMD_STAT_BAD_PARAM_ERR;
+             goto out;
+         }
+         break;
+
+     case MLX5_PAGE_FAULT_TYPE_RDMA_READ:
+     case MLX5_PAGE_FAULT_TYPE_RDMA_WRITE:
+-        MLX_ASSERT_CMPINT(s->page_fault_arr[token].page_fault_sub_type, ==, MLX5_PAGE_FAULT_EVENT_SUBTYPE_RDMA_PAGE_FAULT);
+-        wq_num = s->page_fault_arr[token].wq_num;
++        MLX_ASSERT_CMPINT(page_fault_ctx->page_fault_sub_type, ==, MLX5_PAGE_FAULT_EVENT_SUBTYPE_RDMA_PAGE_FAULT);
++        wq_num = page_fault_ctx->wq_num;
+         if (mlx5_verify_cmd_resource_exist(s->common_wq_bitmap, wq_num) != MLX5_CMD_STAT_OK) {
+             MLX_LOG_ERR(CMD, "PAGE_FAULT_RESUME: resource %s number 0x%x doesn't exist\n", s->common_wq_bitmap->name, wq_num);
+             cmd_status = MLX5_CMD_STAT_BAD_PARAM_ERR;
+@@ -872,13 +879,13 @@ int mlx5_opcode_PAGE_FAULT_RESUME(MLX5State *s, const void *in_buf, void *out_bu
+     }
+
+     /* model changes */
+-    switch (s->page_fault_arr[token].page_fault_sub_type) {
++    switch (page_fault_ctx->page_fault_sub_type) {
+     case MLX5_PAGE_FAULT_EVENT_SUBTYPE_RDMA_PAGE_FAULT:
+         switch (page_fault_type) {
+         case MLX5_PAGE_FAULT_TYPE_RDMA_READ:
+         case MLX5_PAGE_FAULT_TYPE_RDMA_WRITE:
+             cur_wq = &s->common_wq_arr[wq_num];
+-            cur_wq->odp.cur_page_faults_types &= (~s->page_fault_arr[token].page_fault_type_for_qp);
++            cur_wq->odp.cur_page_faults_types &= (~page_fault_ctx->page_fault_type_for_qp);
+             mlx5_bitmap_put(s->page_fault_bitmap, token);
+             break;
+
+@@ -892,16 +899,14 @@ int mlx5_opcode_PAGE_FAULT_RESUME(MLX5State *s, const void *in_buf, void *out_bu
+     case MLX5_PAGE_FAULT_EVENT_SUBTYPE_WQE_PAGE_FAULT:
+         switch (page_fault_type) {
+         case MLX5_PAGE_FAULT_TYPE_RMP:
+-            MLX_LOG_ERR(CMD, "Error, RMP page fault isn't supported yet\n");
+-            cmd_status = MLX5_CMD_STAT_BAD_PARAM_ERR;
+-            goto out;
++            wq_num = page_fault_ctx->wq_num;
+
++        /* fall through */
+         case MLX5_PAGE_FAULT_TYPE_REQUESTER_QP_WQE_ON_SEND_OR_WRITE:
+         case MLX5_PAGE_FAULT_TYPE_RESPONDER_QP_RECEIVE_WQE:
+-        /* fall through */
+         case MLX5_PAGE_FAULT_TYPE_REQUESTER_QP_WQE_ON_READ_OR_ATOMIC:
+             cur_wq = &s->common_wq_arr[wq_num];
+-            cur_wq->odp.cur_page_faults_types &= (~s->page_fault_arr[token].page_fault_type_for_qp);
++            cur_wq->odp.cur_page_faults_types &= (~page_fault_ctx->page_fault_type_for_qp);
+             break;
+
+         default:
+@@ -913,7 +918,7 @@ int mlx5_opcode_PAGE_FAULT_RESUME(MLX5State *s, const void *in_buf, void *out_bu
+         break;
+
+     default:
+-        MLX_LOG_ERR(CMD, "PAGE_FAULT_RESUME: page_fault_sub_type: 0x%x is not supported yet\n", s->page_fault_arr[token].page_fault_sub_type);
++        MLX_LOG_ERR(CMD, "PAGE_FAULT_RESUME: page_fault_sub_type: 0x%x is not supported yet\n", page_fault_ctx->page_fault_sub_type);
+         cmd_status = MLX5_CMD_STAT_BAD_PARAM_ERR;
+         goto out;
+     }
+diff --git a/mellanox/mlx5/mlx5_config_defaults.c b/mellanox/mlx5/mlx5_config_defaults.c
+index c8595d40f5d1..022b6c97a5a8 100644
+--- a/mellanox/mlx5/mlx5_config_defaults.c
++++ b/mellanox/mlx5/mlx5_config_defaults.c
+@@ -393,7 +393,7 @@ static const MLX5Configuration mlx5_config_defaults = {
+         .write = true,
+         .read = false,
+         .atomic = false,
+-        .rmp = false,
++        .rmp = true,
+     },
+
+     /* UC ODP Capabilities */
+diff --git a/mellanox/mlx5/mlx5_dataif_transport.c b/mellanox/mlx5/mlx5_dataif_transport.c
+index 199373db971d..87f0fc16f439 100644
+--- a/mellanox/mlx5/mlx5_dataif_transport.c
++++ b/mellanox/mlx5/mlx5_dataif_transport.c
+@@ -2216,7 +2216,7 @@ static int mlx5_handle_receiver_psn(MLX5State *s, uint32_t dest_qp, MLX5ReceiveP
+     MLX5ReceiveWQContext *recv_wq_context = &dest_wq->recv_wq_context;
+     bool is_reliable_qp = mlx5_is_reliable_qp(s, dest_qp);
+
+-    MLX_LOG_DBG(WQ, "Dest QP 0x%x: Started handling receive packet for PSN 0x%x\n", current_psn);
++    MLX_LOG_DBG(WQ, "Dest QP 0x%x: Started handling receive packet for PSN 0x%x\n", dest_qp, current_psn);
+
+     if ((!(ib_packet_opcode_att[packet_opcode] & MLX5_IB_ACK_PACKET_OPCODE)) && (dest_wq->recv_wq_context.psn != current_psn)) {
+         if (source_qp_type == MLX5_QPC_ST_UC) {
+diff --git a/mellanox/mlx5/mlx5_dataif_wqe.c b/mellanox/mlx5/mlx5_dataif_wqe.c
+index ba6443a124af..f820d4e476c4 100644
+--- a/mellanox/mlx5/mlx5_dataif_wqe.c
++++ b/mellanox/mlx5/mlx5_dataif_wqe.c
+@@ -7043,7 +7043,8 @@ static int mlx5_create_packet_payload(MLX5State *s, MLX5DsCtx *ds_ctx, void *pay
+
+                         if (wqe_opcode_att[opcode] & (MLX5_OPER_SEND | MLX5_OPER_RDMA_WRITE)) {
+                             mlx5_eq_generate_wqe_associated_page_fault_event(s, *payload_copied_data, mlx5_common_wq_get_sq_hw_counter(s, qp_num), payload_size,
+-                                                                             MLX5_PAGE_FAULT_TYPE_REQUESTER_QP_WQE_ON_SEND_OR_WRITE, qp_num, MLX5_QP_REQUESTER_READ_PAGE_FAULT);
++                                                                             MLX5_PAGE_FAULT_TYPE_REQUESTER_QP_WQE_ON_SEND_OR_WRITE,
++                                                                             qp_num, MLX5_QP_REQUESTER_READ_PAGE_FAULT, UINT32_MAX);
+                         } else {
+                             MLX_LOG_ERR(WQ, "ODP is not supported yet for operations with opcode 0x%x\n", opcode);
+                             goto out;
+@@ -12067,8 +12068,7 @@ static void mlx5_dec_hw_counter(MLX5State *s, uint32_t qp_num, uint32_t xrc_srqn
+     case MLX5_COMMON_WQ_QP:
+         if (cur_wq->qp.rq_type == MLX5_QPC_RQ_TYPE_SRQ_RMP_XRC_SRQ_XRQ) {
+             actual_srqn_rmpn = mlx5_get_xrcn_srqn_rmpn(s, qp_num, xrc_srqn);
+-            MLX_ASSERT_MSG(0, WQ, "Decrementing HW counter for SRQ_RMP_XRC_SRQ_XRQ 0x%x is not supported yet\n", actual_srqn_rmpn);
+-            goto out;
++            MLX_LOG_DBG(WQ, "Decrementing HW counter for SRQ_RMP_XRC_SRQ_XRQ 0x%x \n", actual_srqn_rmpn);
+         }
+         break;
+
+@@ -12454,16 +12454,28 @@ int mlx5_write_data_in_receive_wqe(MLX5State *s, uint32_t qp_num, unsigned int n
+             MLX5CommonWQ *cur_wq = MLX5_GET_POINTER_TO_WQ_ELEMENT(s, qp_num);
+
+             if (cur_wq->odp.page_fault) {
++                uint8_t decrease_counter = 0;
++
+                 MLX_LOG_DBG(WQ, "Receive QP 0x%x: Page fault while trying to write data to DS[%d] that points to M_KEY 0x%x with address 0x%"PRIx64"\n",
+                             qp_num, i, m_key_idx, cur_addr);
+
+                 MLX_ASSERT_CMPINT(ret, ==, MLX5_COMPLETION_WITH_ERROR_CQE_SYNDROME_LOCAL_PROTECTION_ERROR);
++                if (!cur_wq->odp.wqe_consumed) {
++                    decrease_counter = 1;
++                }
+                 mlx5_dec_hw_counter(s, qp_num, xrc_srqn);
+
+                 if (cur_wq->wq_type == MLX5_COMMON_WQ_QP) {
+-                    mlx5_eq_generate_wqe_associated_page_fault_event(s, data_buf_offset, mlx5_common_wq_get_rq_hw_counter(s, qp_num, xrc_srqn),
+-                                                                     bytes_to_write, MLX5_PAGE_FAULT_TYPE_RESPONDER_QP_RECEIVE_WQE,
+-                                                                     qp_num, MLX5_QP_RESPONDER_WRITE_PAGE_FAULT);
++                    uint8_t page_fault_type = MLX5_PAGE_FAULT_TYPE_RESPONDER_QP_RECEIVE_WQE;
++                    uint32_t actual_srqn_rmpn = UINT32_MAX;
++
++                    if (cur_wq->qp.rq_type == MLX5_QPC_RQ_TYPE_SRQ_RMP_XRC_SRQ_XRQ) {
++                        page_fault_type = MLX5_PAGE_FAULT_TYPE_RMP;
++                        actual_srqn_rmpn = mlx5_get_xrcn_srqn_rmpn(s, qp_num, xrc_srqn);
++                    }
++                    mlx5_eq_generate_wqe_associated_page_fault_event(s, data_buf_offset, mlx5_common_wq_get_rq_hw_counter(s, qp_num, xrc_srqn) - decrease_counter,
++                                                                     bytes_to_write, page_fault_type,
++                                                                     qp_num, MLX5_QP_RESPONDER_WRITE_PAGE_FAULT, actual_srqn_rmpn);
+                 } else {
+                     MLX_ASSERT_MSG(0, WQ, "WQ type 0x%x, not support ODP yet\n", cur_wq->wq_type);
+                 }
+diff --git a/mellanox/mlx5/mlx5_eq.c b/mellanox/mlx5/mlx5_eq.c
+index 8a756af92564..30fe80b97d2f 100644
+--- a/mellanox/mlx5/mlx5_eq.c
++++ b/mellanox/mlx5/mlx5_eq.c
+@@ -541,11 +541,11 @@ void mlx5_eq_generate_rdma_page_fault_event(MLX5State *s, uint32_t bytes_committ
+     MLX5_SET(rdma_page_fault_event, event_data, page_fault_type, page_fault_type);
+
+     mlx5_eq_generate_page_fault_event(s, MLX5_PAGE_FAULT_EVENT_SUBTYPE_RDMA_PAGE_FAULT, event_data, sizeof(event_data),
+-                                      page_fault_type, qp_num, new_page_fault_type_for_qp);
++                                      page_fault_type, qp_num, new_page_fault_type_for_qp, UINT32_MAX);
+ }
+
+ void mlx5_eq_generate_wqe_associated_page_fault_event(MLX5State *s, uint32_t bytes_committed, uint16_t wqe_index, uint16_t len,
+-                                                      uint8_t page_fault_type, uint32_t wq_number, uint8_t new_page_fault_type_for_qp)
++                                                      uint8_t page_fault_type, uint32_t wq_number, uint8_t new_page_fault_type_for_qp, uint32_t wqp_num)
+ {
+     uint8_t event_data[MLX5_ST_SZ_BYTES(wqe_associated_page_fault_event)];
+
+@@ -558,11 +558,11 @@ void mlx5_eq_generate_wqe_associated_page_fault_event(MLX5State *s, uint32_t byt
+     MLX5_SET(wqe_associated_page_fault_event, event_data, wq_number, wq_number);
+
+     mlx5_eq_generate_page_fault_event(s, MLX5_PAGE_FAULT_EVENT_SUBTYPE_WQE_PAGE_FAULT, event_data, sizeof(event_data), page_fault_type,
+-                                      wq_number, new_page_fault_type_for_qp);
++                                      wq_number, new_page_fault_type_for_qp, wqp_num);
+ }
+
+ void mlx5_eq_generate_page_fault_event(MLX5State *s, uint8_t event_sub_type, void *event_data, size_t event_data_size, uint8_t page_fault_type,
+-                                       uint32_t wq_number, uint8_t new_page_fault_type_for_qp)
++                                       uint32_t wq_number, uint8_t new_page_fault_type_for_qp, uint32_t wqp_num)
+ {
+     uint32_t page_fault_token;
+
+@@ -570,8 +570,11 @@ void mlx5_eq_generate_page_fault_event(MLX5State *s, uint8_t event_sub_type, voi
+
+     switch (page_fault_type) {
+     case MLX5_PAGE_FAULT_TYPE_RMP:
+-        MLX_LOG_ERR(EQ, "Error, RMP page fault isn't supported yet\n");
+-        goto out;
++        if (mlx5_verify_cmd_resource_exist(s->common_wqp_bitmap, wqp_num) != MLX5_CMD_STAT_OK) {
++            MLX_LOG_ERR(EQ, "RMP: resource %s number 0x%x doesn't exist, page fault event not triggered\n", s->common_wqp_bitmap->name, wqp_num);
++            goto out;
++        }
++        break;
+
+     case MLX5_PAGE_FAULT_TYPE_REQUESTER_QP_WQE_ON_SEND_OR_WRITE:
+     case MLX5_PAGE_FAULT_TYPE_RESPONDER_QP_RECEIVE_WQE:
+@@ -606,15 +609,16 @@ void mlx5_eq_generate_page_fault_event(MLX5State *s, uint8_t event_sub_type, voi
+     s->page_fault_arr[page_fault_token].page_fault_sub_type = event_sub_type;
+     s->page_fault_arr[page_fault_token].page_fault_type_for_qp = new_page_fault_type_for_qp;
+     s->page_fault_arr[page_fault_token].wq_num = wq_number;
++    s->page_fault_arr[page_fault_token].wqp_num = wqp_num;
+
+     switch (event_sub_type) {
+     case MLX5_PAGE_FAULT_EVENT_SUBTYPE_WQE_PAGE_FAULT:
+         MLX5_SET(wqe_associated_page_fault_event, event_data, token, page_fault_token);
+         switch (page_fault_type) {
+         case MLX5_PAGE_FAULT_TYPE_RMP:
+-            MLX_LOG_ERR(CMD, "Error, RMP page fault isn't supported yet\n");
+-            goto out;
++            MLX5_SET(wqe_associated_page_fault_event, event_data, wq_number, wqp_num);
+
++        /* fall through */
+         case MLX5_PAGE_FAULT_TYPE_REQUESTER_QP_WQE_ON_SEND_OR_WRITE:
+         case MLX5_PAGE_FAULT_TYPE_RESPONDER_QP_RECEIVE_WQE:
+         case MLX5_PAGE_FAULT_TYPE_REQUESTER_QP_WQE_ON_READ_OR_ATOMIC:
+diff --git a/mellanox/mlx5/mlx5_eq.h b/mellanox/mlx5/mlx5_eq.h
+index a6b2d60515fe..01771a164904 100644
+--- a/mellanox/mlx5/mlx5_eq.h
++++ b/mellanox/mlx5/mlx5_eq.h
+@@ -30,13 +30,13 @@ void mlx5_eq_generate_dct_event(MLX5State *s, uint32_t dct_number, int event_typ
+ void mlx5_eq_generate_xrq_error_event(MLX5State *s, uint32_t xrq_number, uint8_t type, uint32_t qpn_or_backend_controller_id_or_xrq_error_handle);
+ void mlx5_eq_generate_wqe_associated_page_fault_event(MLX5State *s, uint32_t bytes_committed, uint16_t wqe_index, uint16_t len,
+                                                       uint8_t page_fault_type, uint32_t wq_number,
+-                                                      uint8_t new_page_fault_type_for_qp);
++                                                      uint8_t new_page_fault_type_for_qp, uint32_t wqp_num);
+ void mlx5_eq_generate_rdma_page_fault_event(MLX5State *s, uint32_t bytes_committed, uint32_t r_key, uint16_t packet_len,
+                                             uint32_t rdma_op_len, uint64_t rdma_va, uint8_t page_fault_type,
+                                             uint8_t new_page_fault_type_for_qp, uint32_t qp_num);
+ void mlx5_eq_generate_page_fault_event(MLX5State *s, uint8_t event_sub_type, void *event_data, size_t event_data_size,
+                                        uint8_t page_fault_type, uint32_t wq_number,
+-                                       uint8_t new_page_fault_type_for_qp);
++                                       uint8_t new_page_fault_type_for_qp, uint32_t wqp_num);
+ void mlx5_eq_generate_esw_functions_changed_event(MLX5State *s);
+ void mlx5_eq_generate_object_changed_event(MLX5State *s, uint16_t obj_type, uint32_t obj_id);
+ void mlx5_eq_generate_fpga_error_event(MLX5State *s, uint8_t syndrome);
+diff --git a/mlnx_infra/simx-qemu.cfg b/mlnx_infra/simx-qemu.cfg
+index 49054a55b372..998176a5cbc5 100644
+--- a/mlnx_infra/simx-qemu.cfg
++++ b/mlnx_infra/simx-qemu.cfg
+@@ -5052,7 +5052,7 @@
+ #atomic = false
+
+ # If set, receive on RMP is supported
+-#rmp = false
++#rmp = true
+
+ #######################################
+ [UC ODP Capabilities]
+--
+2.26.2
+

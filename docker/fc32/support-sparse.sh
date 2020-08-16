@@ -1,7 +1,7 @@
 #!/bin/bash
 # ---
 # git_url: git://git.kernel.org/pub/scm/devel/sparse/sparse.git
-# git_commit: fdc1539d3c42e114c90805cde8cfabd132cc7944
+# git_commit: e1578773182e8f69c3a0cd8add8dfbe7561a8240
 
 cat <<EOF > sparse.spec
 Name: sparse
@@ -52,6 +52,7 @@ make clean
 
 %files
 %doc LICENSE README FAQ
+%{_bindir}/semind
 %{_bindir}/sparse
 %{_bindir}/sparse-llvm
 %{_bindir}/sparsec

@@ -1,11 +1,7 @@
 #!/bin/bash
 # ---
 # git_url: git://repo.or.cz/smatch.git
-# git_commit: 773e0c191fc861c1adce9688d0f459d199da5f44
-# other_files:
-#   - 0001-Explicitly-use-python3-to-solve-rpmbuild-error.patch
-
-patch -p1 < /opt/0001*.patch
+# git_commit: 45287ffa01728675d52228aee767c9b884ae644b
 
 cat <<EOF > smatch.spec
 Name: smatch

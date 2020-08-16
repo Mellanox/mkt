@@ -47,7 +47,7 @@ class DirList(object):
         res = []
         for I in sorted(self.list):
             res.append("-v")
-            res.append("%s:%s" % (I, I))
+            res.append("%s:%s:Z" % (I, I))
         return res
 
 
@@ -121,7 +121,8 @@ def get_simx_rdma_devices():
     return [
         'cx4-ib', 'cx4-eth', 'cx5-ib', 'cx5-eth',
         'cx5ex-eth', 'cib-ib', 'cx4lx-eth',
-        'cx6-ib', 'cx6-eth', 'cx6dx-eth'
+        'cx6-ib', 'cx6-eth', 'cx6dx-eth', 'cx6lx-eth',
+        'cx7-ib', 'cx7-eth'
     ]
 
 
@@ -484,7 +485,7 @@ def cmd_run(args):
         cname = get_container_name(vm_addr)
         docker_exec(["run"] + mapdirs.as_docker_bind() + [
             "-v",
-            "%s:/plugins:ro" % (src_dir),
+            "%s:/plugins:ro,Z" % (src_dir),
             "--mount",
             "type=bind,source=%s,destination=/logs" % (utils.config.runtime_logs_dir),
             "--rm",
