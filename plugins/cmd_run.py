@@ -451,6 +451,7 @@ def cmd_run(args):
         do_kvm_args = ["/bin/bash"]
     else:
         do_kvm_args = ["python3", "/plugins/do-kvm.py"]
+#        do_kvm_args = ["python3", "/plugins/do-test.py"]
         if vm_addr.ip:
             # Open network for QEMU, relevant for bridged mode only
             iprule = ["FORWARD", "-m", "physdev", "--physdev-is-bridged", "-j", "ACCEPT"]
@@ -486,7 +487,6 @@ def cmd_run(args):
     else:
         cname = get_container_name(vm_addr)
         print (mapdirs.as_docker_bind())
-#        sys.exit(0)
         docker_exec(["run"] + mapdirs.as_docker_bind() + [
             "-v",
             "%s:/plugins:ro,Z" % (src_dir),
