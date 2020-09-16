@@ -407,11 +407,13 @@ def cmd_run(args):
         mapdirs.add(os.path.dirname(args.kernel_rpm))
         args.kernel = None
     else:
+        print (args.kernel)
         args.kernel = os.path.realpath(args.kernel)
         if not os.path.isdir(args.kernel):
             raise ValueError("Kernel path %r is not a directory/does not exist"
                              % (args.kernel))
         mapdirs.add(args.kernel)
+        print (mapdirs)
 
     if args.image:
         try:
@@ -483,6 +485,8 @@ def cmd_run(args):
         subprocess.call(["ssh", "root@%s" % (get_host_name(cname))])
     else:
         cname = get_container_name(vm_addr)
+        print (mapdirs.as_docker_bind())
+#        sys.exit(0)
         docker_exec(["run"] + mapdirs.as_docker_bind() + [
             "-v",
             "%s:/plugins:ro,Z" % (src_dir),

@@ -66,7 +66,10 @@ def remove_mounts():
 def is_passable_mount(v):
     if v[2] == "nfs" or v[2] == "nfs4":
         return True
+    if v[1].startswith("/images"):
+        return True
     if not v[0].startswith("/"):
+        print ("NOT START WITH")
         return False
     if v[1] == "/lab_tools":
         return False
@@ -106,7 +109,9 @@ def setup_fs():
     # Copy over local bind mounts, eg from docker -v
     cnt = 0
     for dfn, v in get_mtab().items():
+        print (v)
         if not is_passable_mount(v):
+            print ("NOT PASSABLE")
             continue
 
         qemu_args["-fsdev"].add(
