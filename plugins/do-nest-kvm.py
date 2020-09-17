@@ -35,6 +35,8 @@ else:
 cmd = ["/opt/simx/bin/qemu-system-x86_64"]
 mkt.set_simx_nested(qargs)
 
+mkt.set_vfio_dev(qargs, "01:00.1")
+
 #setup_gdbserver(args)
 
 for k, v in sorted(qargs.items()):
@@ -49,4 +51,8 @@ for k, v in sorted(qargs.items()):
 
 with open('/mnt/self2/logs/qemu.cmdline', 'w+') as f:
     f.write(" ".join(cmd))
+
+#cmd = ["/opt/simx/bin/qemu-system-x86_64", '-smp', 'cores=2', '-m', '1G', '-nographic',
+#        '-serial', 'mon:stdio', '-cpu', 'host', '-enable-kvm', '/images/artemp/src/kernel/Debian_check_qemu/debian_wheezy_amd64_standard.qcow2']
+
 os.execvp(cmd[0], cmd)

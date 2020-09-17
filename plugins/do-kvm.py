@@ -405,6 +405,7 @@ def set_virt_devices(args):
 
 def set_vfio(args):
     """Pass a VFIO owned PCI device through to the guest"""
+    qemu_args["-device"].append("intel-iommu,intremap=on")
     for bdf in args.vfio:
         qemu_args["-device"].append("vfio-pci,host=%s" % (bdf))
 
@@ -498,7 +499,7 @@ qemu_args = {
     "-enable-kvm": None,
     # Escape sequence is ctrl-a c q
     "-nographic": None,
-    "-machine": "q35",
+    "-machine": "q35,kernel-irqchip=split",
     "-cpu": "host",
     "-vga": "none",
     "-no-reboot": None,

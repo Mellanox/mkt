@@ -148,7 +148,7 @@ def prepare_rootfs(qemu_args, path):
     subprocess.run(cmd, shell=True, check=True)
 
     print ("Bind static portions of the rootfs")
-    bind_dirs = ["bin", "boot", "etc", "home", "lib", "lib64", "opt", "sbin", "usr", "images", "labhome", "plugins" ]
+    bind_dirs = ["bin", "boot", "etc", "home", "lib", "lib64", "opt", "sbin", "usr", "images", "plugins" ] #"labhome", 
     for d in bind_dirs:
         subprocess.check_call(["mount", "--bind", "/" + d, path + "/" + d])
 
@@ -187,5 +187,5 @@ def set_kernel_nested(qemu_args, tree):
  mds=off mitigations=off'
     })
 
-
-
+def set_vfio_dev(qemu_args, devid):
+    qemu_args["-device"].append("vfio-pci,host=" + devid)
