@@ -94,6 +94,7 @@ def set_def_qemu_args():
         "-net": [],
         "-netdev": set(),
         "-device": ["virtio-rng-pci", "virtio-balloon-pci"],
+        "-fsdev": [],
 
         # Newer FC28 qemu has a version of SeaBIOS with serial console (1.11)
         # support that clears the console and disables line wrapping, see
@@ -142,13 +143,13 @@ def prepare_rootfs(qemu_args, path):
 
     print ("Create " + path)
     os.makedirs(path)
-    
+
     print ("Recreate '/' structure in " + path)
     cmd = "for i in `ls -1 /`; do mkdir " + path + "/$i; done"
     subprocess.run(cmd, shell=True, check=True)
 
     print ("Bind static portions of the rootfs")
-    bind_dirs = ["bin", "boot", "etc", "home", "lib", "lib64", "opt", "sbin", "usr", "images", "plugins" ] #"labhome", 
+    bind_dirs = ["bin", "boot", "home", "lib", "lib64", "opt", "sbin", "usr", "images", "images/artemp/src/kernel/", "plugins" ] #"labhome", 
     for d in bind_dirs:
         subprocess.check_call(["mount", "--bind", "/" + d, path + "/" + d])
 
@@ -156,12 +157,16 @@ def prepare_rootfs(qemu_args, path):
     cmd = "cd /var; find . -type d -exec mkdir -p -- " + path + "/var/{} \;"
     subprocess.run(cmd, shell=True, check=True)
 
+    print ("Copy '/etc' content to " + path + "/etc/")
+    cmd = "cp -R /etc/* " + path + "/etc"
+    subprocess.run(cmd, shell=True, check=True)
+    print ("Remove unneeded mounts in " + path + "/etc/systemd/system/local-fs.target.{wants,requires}/")
+    cmd = "rm " + path + "/etc/systemd/system/local-fs.target.{wants,requires}/*"
+    subprocess.run(cmd, shell=True, check=True)
+
     # Setup plan9 virtfs
-    qemu_args["-fsdev"] = {
-        "local,id=host_fs,security_model=passthrough,path=%s" % (path)
-    }
-    qemu_args["-device"].append(
-        "virtio-9p-pci,fsdev=host_fs,mount_tag=/dev/root")
+    qemu_args["-fsdev"].append("local,id=host_fs,security_model=passthrough,path=%s" % (path))
+    qemu_args["-device"].append("virtio-9p-pci,fsdev=host_fs,mount_tag=/dev/root")
 
 def set_simx_nested(qemu_args):
     # Override current SimX config
