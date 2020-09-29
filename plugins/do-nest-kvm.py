@@ -35,9 +35,13 @@ else:
 cmd = ["/opt/simx/bin/qemu-system-x86_64"]
 mkt.set_simx_nested(qargs)
 
-mkt.set_vfio_dev(qargs, "01:00.1")
-
-#setup_gdbserver(args)
+try:
+    with open('/tmp/vfio.id', 'r') as f:
+        t = f.read().strip()
+        print ('VFIO: setup passthrough for %s' % (t))
+        mkt.set_vfio_dev(qargs, t)
+except Exception as error:
+        print ('Skip VFIO passthrough setup')
 
 for k, v in sorted(qargs.items()):
     if isinstance(v, set) or isinstance(v, list):
@@ -55,4 +59,5 @@ with open('/mnt/self2/logs/qemu.cmdline', 'w+') as f:
 #cmd = ["/opt/simx/bin/qemu-system-x86_64", '-smp', 'cores=2', '-m', '1G', '-nographic',
 #        '-serial', 'mon:stdio', '-cpu', 'host', '-enable-kvm', '/images/artemp/src/kernel/Debian_check_qemu/debian_wheezy_amd64_standard.qcow2']
 
+print (cmd)
 os.execvp(cmd[0], cmd)

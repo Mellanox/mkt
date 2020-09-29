@@ -26,6 +26,7 @@ mkdir -p %{buildroot}/etc/qemu-kvm/
 ln -s /etc/qemu/bridge.conf %{buildroot}/etc/qemu-kvm/bridge.conf
 mkdir -p %{buildroot}/opt/simx/lib/
 cp mellanox/libml*.so %{buildroot}/opt/simx/lib/
+cp ./mlnx_infra/bridge-{start,stop}.sh  %{buildroot}/opt/simx/bin/
 
 %files
 /opt/simx/*

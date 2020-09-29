@@ -91,7 +91,7 @@ def set_def_qemu_args():
         "-no-reboot": None,
         "-nodefaults": None,
         "-m": "1G", #str( int(float(args.mem) / 2)),
-        "-net": [],
+        "-net": [ "nic,model=virtio,macaddr=52:54:8a:aa:09:f5", "user,hostfwd=tcp::1807-:24" ],
         "-netdev": set(),
         "-device": ["virtio-rng-pci", "virtio-balloon-pci"],
         "-fsdev": [],
