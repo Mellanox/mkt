@@ -58,8 +58,9 @@ RUN \
     strace \
     sudo \
     tcpdump \
-    passwd.x86_64 \
-    nmap-ncat.x86_64 \
+    passwd \
+    nmap-ncat \
+    e2fsprogs \
     udev \
     unzip \
     valgrind \

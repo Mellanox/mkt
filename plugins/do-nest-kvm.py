@@ -23,14 +23,17 @@ args = mkt.input_from_pickle()
 qargs = mkt.set_def_qemu_args()
 print (args)
 
-mkt.prepare_rootfs(qargs, "/mnt/self2")
+if (args.sr):
+    print ("Suspend/Resume capable execution requested")
+
+if args.sr:
+    mkt.prepare_rootfs_sr(qargs, "/mnt/self2", "/images/artemp/src/kernel/0nested_image/nested_image.qcow2")
+else:
+    mkt.prepare_rootfs(qargs, "/mnt/self2")
 
 mkt.set_console(qargs)
 
-if args.kernel_rpm:
-    mkt.set_kernel_rpm(qargs, args.kernel_rpm)
-else:
-    mkt.set_kernel_nested(qargs, args.kernel)
+mkt.set_kernel_nested(qargs, args.kernel, args.sr)
 
 cmd = ["/opt/simx/bin/qemu-system-x86_64"]
 mkt.set_simx_nested(qargs)
@@ -52,9 +55,6 @@ for k, v in sorted(qargs.items()):
         cmd.append(k)
         if v:
             cmd.append(v)
-
-with open('/mnt/self2/logs/qemu.cmdline', 'w+') as f:
-    f.write(" ".join(cmd))
 
 #cmd = ["/opt/simx/bin/qemu-system-x86_64", '-smp', 'cores=2', '-m', '1G', '-nographic',
 #        '-serial', 'mon:stdio', '-cpu', 'host', '-enable-kvm', '/images/artemp/src/kernel/Debian_check_qemu/debian_wheezy_amd64_standard.qcow2']

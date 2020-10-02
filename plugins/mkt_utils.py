@@ -47,27 +47,6 @@ def set_console(qemu_args):
         "virtconsole,chardev=stdio"
     ])
 
-
-def set_kernel_rpm(quemu_args, src):
-    """Setup a kernel from a compiled kernel RPM"""
-    print("Extracting RPM %r" % (src))
-    fns = subprocess.check_output(
-        ["rpm2cpio %s | cpio -idmv" % (shlex.quote(src))], shell=True, cwd="/", stderr=subprocess.STDOUT)
-    for ln in fns.splitlines():
-        if ln.startswith(b"./boot/vmlinuz-"):
-            vmlinuz = ln[1:]
-            break
-    else:
-        raise ValueError("Could not find vmlinux in the RPM %r" % (src))
-
-    qemu_args.update({
-        "-kernel":
-        vmlinuz,
-        "-append":
-        'root=/dev/root rw ignore_loglevel rootfstype=9p rootflags=trans=virtio earlyprintk=serial,ttyS0,115200 console=hvc0'
-    })
-
-
 # =========================================================
 # NOTE: New functions derived from those in do-kvm
 # =========================================================
@@ -120,6 +99,11 @@ def input_from_pickle():
 
     parser = argparse.ArgumentParser(
         description='Launch QEMU using a copy of the the filesystem from the container')
+    parser.add_argument(
+        '--sr',
+        action="store_true",
+        default=False,
+        help="Request Suspendable QEMU")
     args = parser.parse_args()
 
     print (p)
@@ -131,6 +115,18 @@ def input_from_pickle():
     args.mem = p.get("mem", "500M")
     print (args)
     return args
+
+def l2_fix_l1_mounts(path):
+    print ("Remove unneeded mounts")
+    cmd = "/bin/rm -f " + path + "/etc/systemd/system/local-fs.target.{wants,requires}/*"
+    print (" -> " + cmd)
+    subprocess.run(cmd, shell=True, check=True)
+    cmd = "/bin/rm -f " + path + "/etc/systemd/system/custom.target.wants/sriov\\\\x2dvfs.service"
+    print (" -> " + cmd)
+    subprocess.run(cmd, shell=True, check=True)
+    cmd = "/bin/rm -f " + path + "/etc/systemd/system/*mount"
+    print (" -> " + cmd)
+    subprocess.run(cmd, shell=True, check=True)
 
 def prepare_rootfs(qemu_args, path):
 
@@ -160,13 +156,81 @@ def prepare_rootfs(qemu_args, path):
     print ("Copy '/etc' content to " + path + "/etc/")
     cmd = "cp -R /etc/* " + path + "/etc"
     subprocess.run(cmd, shell=True, check=True)
-    print ("Remove unneeded mounts in " + path + "/etc/systemd/system/local-fs.target.{wants,requires}/")
-    cmd = "rm " + path + "/etc/systemd/system/local-fs.target.{wants,requires}/*"
-    subprocess.run(cmd, shell=True, check=True)
+
+    l2_fix_l1_mounts(path)
 
     # Setup plan9 virtfs
     qemu_args["-fsdev"].append("local,id=host_fs,security_model=passthrough,path=%s" % (path))
     qemu_args["-device"].append("virtio-9p-pci,fsdev=host_fs,mount_tag=/dev/root")
+
+def prepare_rootfs_sr(qemu_args, path, image_path):
+
+    # Cleanup the mount directory
+    print ("Unmount everything under " + path)
+    clean_mounts(path)
+    print ("qemu-nbd -d /dev/nbd0")
+    subprocess.run("/opt/simx/bin/qemu-nbd -d /dev/nbd0", shell=True, check=True)
+
+    if os.path.isdir(path):
+        print ("Remove existing content of " + path)
+        subprocess.check_call(["rm", "-Rf", path])
+
+    print ("Create " + path)
+    os.makedirs(path)
+
+
+    # Prepare image
+    # Ensure the directory is there
+    subprocess.run("mkdir -p `dirname " + image_path +"`" , shell=True, check=True)
+
+    subprocess.run("modprobe nbd max_part=8", shell=True, check=True)
+    
+    if not os.path.isfile(image_path):
+        print ("Initialize image (one-time operation)")
+        # Create image
+        subprocess.run("/opt/simx/bin/qemu-img create -f qcow2 " + image_path + " 10G", shell=True, check=True)
+        subprocess.run("/opt/simx/bin/qemu-nbd -c /dev/nbd0 " + image_path, shell=True, check=True)
+        subprocess.run("mkfs.ext3 /dev/nbd0", shell=True, check=True)
+        subprocess.run("mount /dev/nbd0 " + path, shell=True, check=True)
+
+        # Populate the rootfs
+        print ("Recreate '/' structure in " + path)
+        cmd = "for i in `ls -1 /`; do mkdir -p " + path + "/$i; done"
+        subprocess.run(cmd, shell=True, check=True)
+
+        print ("Copy basic files to the rootfs")
+        base_dirs = ["bin", "boot", "lib", "lib64", "opt", "sbin", "usr", "plugins", "var", "etc" ]
+        for d in base_dirs:
+            cmd = "cp -Rfa /" + d + "/* " + path + "/" + d + "/"
+            print (" ->  " + cmd)
+            subprocess.run(cmd, shell=True, check=True)
+        print(" -> Done")
+
+        l2_fix_l1_mounts(path)
+        
+    else:
+        print ("Mount existing image " + image_path + " to " + path)
+        subprocess.run("/opt/simx/bin/qemu-nbd -c /dev/nbd0 " + image_path, shell=True, check=True)
+        subprocess.run("mount /dev/nbd0 " + path, shell=True, check=True)
+
+    print ("Update volatile files in the rootfs")
+    update_dirs = ["lib/modules", "plugins" ]
+    for d in update_dirs:
+        cmd = "/bin/rm -Rf " + path + "/" + d + "/*"
+        print (" ->  " + cmd)
+        subprocess.run(cmd, shell=True, check=True)
+        cmd = "cp -Rfa /" + d + "/* " + path + "/" + d + "/"
+        print (" ->  " + cmd)
+        subprocess.run(cmd, shell=True, check=True)
+    print(" -> Done")
+
+
+    print ("umount " + path)
+    subprocess.check_call(["umount", path ])
+    print ("qemu-nbd -d /dev/nbd0")
+    subprocess.run("/opt/simx/bin/qemu-nbd -d /dev/nbd0", shell=True, check=True)
+    
+    qemu_args["-drive"] = { "if=virtio,format=qcow2,file=" + image_path}
 
 def set_simx_nested(qemu_args):
     # Override current SimX config
@@ -180,16 +244,22 @@ def set_simx_nested(qemu_args):
         f.write('driver_version = false\n')
         f.write('query_driver_version = false\n')
 
-def set_kernel_nested(qemu_args, tree):
+def set_kernel_nested(qemu_args, tree, want_sr):
+
+    if (want_sr) :
+        root_args = "root=/dev/vda rootfstype=ext3"
+    else:
+        root_args = "root=/dev/root rootfstype=9p rootflags=trans=virtio "
+
     qemu_args.update({
         "-kernel":
         os.path.join(tree, "arch/x86/boot/bzImage"),
         # to debug:  systemd.journald.forward_to_console=1 systemd.log_level=debug
         # Change and enable debug-shell.service to use /dev/console
         "-append":
-        'root=/dev/root rw ignore_loglevel rootfstype=9p rootflags=trans=virtio earlyprintk=serial,ttyS0,115200 \
- console=hvc0 noibrs noibpb nopti nospectre_v2  nospectre_v1 l1tf=off nospec_store_bypass_disable no_stf_barrier \
- mds=off mitigations=off'
+        root_args +' rw ignore_loglevel earlyprintk=serial,ttyS0,115200 \
+        console=hvc0 noibrs noibpb nopti nospectre_v2  nospectre_v1 l1tf=off nospec_store_bypass_disable no_stf_barrier \
+        mds=off mitigations=off'
     })
 
 def set_vfio_dev(qemu_args, devid):
