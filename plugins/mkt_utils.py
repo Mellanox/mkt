@@ -109,6 +109,11 @@ def input_from_pickle():
         action="store_true",
         default=False,
         help="Request a custom SR-enabled QEMU")
+    parser.add_argument(
+        '--mtty',
+        action="store_true",
+        default=False,
+        help="Setup MTTY demo driver")
     args = parser.parse_args()
 
     print (p)
@@ -252,6 +257,10 @@ def set_simx_nested(qemu_args):
 def set_kernel_nested(qemu_args, tree, want_sr):
 
     if (want_sr) :
+        # To enable Suspend/Resume and live Migration
+        subprocess.check_call(['modprobe', '-r', 'kvm_intel'])
+        subprocess.check_call(['modprobe', 'kvm_intel', 'nested=0'])
+        # Setup kernel args
         root_args = "root=/dev/vda rootfstype=ext3"
     else:
         root_args = "root=/dev/root rootfstype=9p rootflags=trans=virtio "
@@ -269,3 +278,15 @@ def set_kernel_nested(qemu_args, tree, want_sr):
 
 def set_vfio_dev(qemu_args, devid):
     qemu_args["-device"].append("vfio-pci,host=" + devid)
+
+def set_mtty(qargs):
+    mtty_base="/sys/devices/virtual/mtty/mtty"
+    mtty_create= mtty_base + "/mdev_supported_types/mtty-2/create"
+    mtty_dev="/sys/bus/mdev/devices/83b8f4f2-509f-382f-3c1e-e6bfe0fa1001"
+    if not os.path.isdir(mtty_dev):
+        if not os.path.isdir(mtty_base):
+            cmd="modprobe mtty"
+            subprocess.run(cmd, shell=True, check=True)
+        with open(mtty_create, "w") as F:
+            F.write("83b8f4f2-509f-382f-3c1e-e6bfe0fa1001")
+    qargs["-device"].append("vfio-pci,sysfsdev=" + mtty_dev)

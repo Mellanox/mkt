@@ -1,7 +1,7 @@
 #!/bin/bash
 # ---
 # git_url: git@github.com:artpol84/qemu.git
-# git_commit: 1b5064289df4aba221c8b3e0f27594b41921b704
+# git_commit: 0261e73224a48e99b2dabb065437ae21b3e08944
 # git_modules: yes
 
 cat <<EOF > mlx-qemu.spec

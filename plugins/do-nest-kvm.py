@@ -35,6 +35,9 @@ mkt.set_console(qargs)
 
 mkt.set_kernel_nested(qargs, args.kernel, args.sr)
 
+if args.mtty:
+    mkt.set_mtty(qargs)
+
 if (args.sr_qemu):
     cmd = ["/opt/qemu-sr/bin/qemu-system-x86_64"]
 else:
