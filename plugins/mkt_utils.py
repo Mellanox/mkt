@@ -104,6 +104,11 @@ def input_from_pickle():
         action="store_true",
         default=False,
         help="Request Suspendable QEMU")
+    parser.add_argument(
+        '--sr_qemu',
+        action="store_true",
+        default=False,
+        help="Request a custom SR-enabled QEMU")
     args = parser.parse_args()
 
     print (p)

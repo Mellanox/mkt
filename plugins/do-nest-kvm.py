@@ -35,7 +35,12 @@ mkt.set_console(qargs)
 
 mkt.set_kernel_nested(qargs, args.kernel, args.sr)
 
-cmd = ["/opt/simx/bin/qemu-system-x86_64"]
+if (args.sr_qemu):
+    cmd = ["/opt/qemu-sr/bin/qemu-system-x86_64"]
+else:
+    cmd = ["/opt/simx/bin/qemu-system-x86_64"]
+
+
 mkt.set_simx_nested(qargs)
 
 try:
