@@ -229,7 +229,7 @@ def prepare_rootfs_sr(qemu_args, path, image_path):
         cmd = "/bin/rm -Rf " + path + "/" + d + "/*"
         print (" ->  " + cmd)
         subprocess.run(cmd, shell=True, check=True)
-        cmd = "cp -Rfa /" + d + "/* " + path + "/" + d + "/"
+        cmd = "cp -RL /" + d + "/* " + path + "/" + d + "/"
         print (" ->  " + cmd)
         subprocess.run(cmd, shell=True, check=True)
     print(" -> Done")
