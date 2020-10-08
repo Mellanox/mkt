@@ -81,7 +81,7 @@ def set_def_qemu_args():
         #
         # This is really annoying, disable it by telling SeaBIOS to use a bogus
         # serial port for its output.
-        "-fw_cfg": ["etc/sercon-port,string=2"],
+        "-fw_cfg": ["opt/sercon-port,string=2"],
         "-smp": "%s" % int( multiprocessing.cpu_count() / 2)
     }
     return qemu_args

@@ -57,4 +57,8 @@ RUN dnf install -y \
     uuid-devel \
     valgrind-devel \
     zlib-devel \
+    lzo-devel \
+    snappy-devel \
+    cyrus-sasl-devel \
+    libpng-devel \
     && dnf clean dbcache packages

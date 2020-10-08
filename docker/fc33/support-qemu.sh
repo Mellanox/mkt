@@ -1,7 +1,8 @@
 #!/bin/bash
 # ---
 # git_url: git@github.com:artpol84/qemu.git
-# git_commit: 0261e73224a48e99b2dabb065437ae21b3e08944
+# bkp_git_commit: 0261e73224a48e99b2dabb065437ae21b3e08944
+# git_commit: 16d97a001da
 # git_modules: yes
 
 cat <<EOF > mlx-qemu.spec
@@ -17,47 +18,52 @@ License:        Proprietary
 
 
 %build
-ls
 ./configure \
-    --prefix=/opt/qemu-sr \
-    '--block-drv-ro-whitelist=vmdk,vhdx,vpc' \
-	'--block-drv-rw-whitelist=qcow,qcow2,raw,file,host_device,nbd,iscsi,vvfat' \
-	'--disable-brlapi' \
-	'--disable-capstone' \
-	'--disable-curl' \
-	'--disable-curses' \
-	'--disable-debug-tcg' \
-	'--disable-docs' \
-	'--disable-guest-agent' \
-	'--disable-glusterfs' \
-	'--disable-gtk' \
-	'--disable-libusb' \
-	'--disable-live-block-migration' \
-	'--disable-nettle' \
-	'--disable-qom-cast-debug' \
-	'--disable-rdma' \
-	'--disable-replication' \
-	'--disable-sparse' \
-	'--disable-smartcard' \
-	'--disable-sdl' \
-	'--disable-strip' \
-	'--disable-tools' \
-	'--disable-vde' \
-	'--disable-vhost-scsi' \
-	'--disable-vnc-jpeg' \
-	'--disable-vnc-png' \
-	'--disable-vnc-sasl' \
-	'--disable-xen' \
-	'--enable-fdt' \
-	'--enable-kvm' \
-	'--enable-linux-aio' \
-	'--enable-seccomp' \
-	'--enable-spice' \
-	'--enable-trace-backend=dtrace' \
-	'--enable-usb-redir' \
-	'--enable-vnc' \
+        --prefix=/opt/qemu-sr \
+        --disable-strip \
+        --disable-qom-cast-debug \
+        --extra-ldflags="-pie -Wl,-z,relro -Wl,-z,now" \
+        --extra-cflags="-fPIE -DPIE" \
+        --enable-trace-backends=simple,dtrace \
+        --with-trace-file=/var/log/traces \
+        --enable-werror \
+        --disable-xen \
+        --disable-virtfs \
+        --enable-kvm \
+        --enable-libusb \
+        --enable-spice \
+        --enable-seccomp \
+        --disable-fdt \
+        --disable-docs \
+        --disable-sdl \
+        --disable-debug-tcg \
+        --disable-sparse \
+        --disable-brlapi \
+        --disable-vde \
+        --disable-curses \
+        --disable-curl \
+        --enable-vnc-sasl \
+        --enable-linux-aio \
+        --enable-lzo \
+        --enable-snappy \
+        --enable-usb-redir \
+        --enable-vnc-png \
+        --disable-vnc-jpeg \
+        --disable-vhost-scsi \
+        --target-list=x86_64-softmmu \
+        --block-drv-rw-whitelist=qcow2,raw,file,host_device,blkdebug,nbd,iscsi,gluster,rbd \
+        --block-drv-ro-whitelist=vmdk,vhdx,vpc \
+        --enable-debug-info \
 
-#	'--enable-virtfs' \
+
+#        --enable-debug
+
+#        --audio-drv-list=alsa \
+#        --enable-rbd \
+#        --disable-bluez \
+#        --enable-glusterfs \
+
+./scripts/git-submodule.sh update
 
 make %{?_smp_mflags}
 

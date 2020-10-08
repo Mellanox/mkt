@@ -105,15 +105,17 @@ class SupportImage(object):
             except subprocess.CalledProcessError:
                 shutil.rmtree(self.git_dir)
 
-        with in_directory(self.git_dir):
-            self.git_id = git_commit_id(git_ref, fail_is_none=True)
-            if self.git_id is None:
-                git_call(["fetch", "--tags", git_url])
+        if not self.git_modules:
+            with in_directory(self.git_dir):
+                self.git_id = git_commit_id(git_ref, fail_is_none=True)
+                if self.git_id is None:
+                    git_call(["fetch", "--tags", git_url])
+                    self.git_id = git_commit_id(git_ref)
+        else:
+            with in_directory(self.git_dir):
+                git_call(["fetch"])
                 self.git_id = git_commit_id(git_ref)
-
-        with in_directory(self.git_dir):
-            if self.git_modules:
-                git_call(["checkout", "-b", "work",  self.git_id ])
+                git_call(["checkout", self.git_id ])
                 git_call(["submodule", "update", "--init", "--recursive"])
 
 
@@ -181,7 +183,8 @@ class SupportImage(object):
             else:
                 subprocess.check_call([
                     "tar", "--create", "--mtime=Jan 1 2010", "--file", self.tarfn,
-                    "--exclude", ".git", "--transform", "s|^|opt/src/|", "."])
+                    "--transform", "s|^|opt/src/|", "."])
+#                    "--exclude", ".git", "--transform", "s|^|opt/src/|", "."])
 
     def _setup_nfs(self, dfn):
         for nfs_fn, inf in self.spec.get("nfs_files", {}).items():
