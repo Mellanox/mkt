@@ -1,8 +1,7 @@
-FROM fedora:32 as rpms
+FROM fedora:33 as rpms
 
-COPY --from=local_mkt/support_rdma_core:fc32 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
-COPY --from=local_mkt/support_iproute2:fc32 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
-COPY --from=local_mkt/support_simx:fc32 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
+COPY --from=local_mkt/support_rdma_core:fc33 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
+COPY --from=local_mkt/support_simx:fc33 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
 
 RUN rm -f \
    /opt/rpms/*debug*.rpm \
@@ -10,7 +9,7 @@ RUN rm -f \
    /opt/rpms/*devel*.rpm \
    /opt/rpms/*iwpmd*.rpm
 
-FROM fedora:32
+FROM fedora:33
 
 # Static files are done before installing to avoid prompting
 ADD ./sudoers /etc/sudoers.d/local
@@ -33,7 +32,9 @@ RUN \
     iputils \
     kmod \
     less \
+    libasan \
     libpcap \
+    libubsan \
     lsof \
     man \
     nano \

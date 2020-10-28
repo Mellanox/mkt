@@ -1,0 +1,32 @@
+From b20d6146ec637e46744eadbfb468582b92ec1eb6 Mon Sep 17 00:00:00 2001
+From: Leon Romanovsky <leonro@nvidia.com>
+Date: Wed, 28 Oct 2020 16:36:42 +0200
+Subject: [PATCH] redhat: Provide ninja directory
+
+-- Build files have been written to: /opt/src/x86_64-redhat-linux-gnu
++ ninja-build -v -j16
+ninja: error: loading 'build.ninja': No such file or directory
+
+Signed-off-by: Leon Romanovsky <leonro@nvidia.com>
+---
+ redhat/rdma-core.spec | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/redhat/rdma-core.spec b/redhat/rdma-core.spec
+index 1c3e4be0..817dc208 100644
+--- a/redhat/rdma-core.spec
++++ b/redhat/rdma-core.spec
+@@ -66,8 +66,8 @@ Conflicts: infiniband-diags <= 1.6.7
+ # Ninja was introduced in FC23
+ BuildRequires: ninja-build
+ %define CMAKE_FLAGS -GNinja
+-%define make_jobs ninja-build -v %{?_smp_mflags}
+-%define cmake_install DESTDIR=%{buildroot} ninja-build install
++%define make_jobs ninja-build  -C %{_vpath_builddir} -v %{?_smp_mflags}
++%define cmake_install DESTDIR=%{buildroot} ninja-build  -C %{_vpath_builddir}  install
+ %else
+ # Fallback to make otherwise
+ BuildRequires: make
+-- 
+2.28.0
+
