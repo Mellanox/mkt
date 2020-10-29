@@ -1,0 +1,31 @@
+From f608d32e21ffffc9a28cdc5a949a47f05e7e00e8 Mon Sep 17 00:00:00 2001
+From: Leon Romanovsky <leonro@nvidia.com>
+Date: Wed, 28 Oct 2020 16:31:52 +0200
+Subject: [PATCH] build: Disable LTO for FC33 builds
+
+Signed-off-by: Leon Romanovsky <leonro@nvidia.com>
+---
+ redhat/rdma-core.spec | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/redhat/rdma-core.spec b/redhat/rdma-core.spec
+index ec0c63d1..1c3e4be0 100644
+--- a/redhat/rdma-core.spec
++++ b/redhat/rdma-core.spec
+@@ -274,6 +274,13 @@ easy, object-oriented access to IB verbs.
+ %setup
+ 
+ %build
++# This package uses top level ASM constructs which are incompatible with LTO.
++# Top level ASMs are often used to implement symbol versioning.  gcc-10
++# introduces a new mechanism for symbol versioning which works with LTO.
++# Converting packages to use that mechanism instead of toplevel ASMs is
++# recommended.
++# Disable LTO
++%define _lto_cflags %{nil}
+ 
+ # New RPM defines _rundir, usually as /run
+ %if 0%{?_rundir:1}
+-- 
+2.28.0
+

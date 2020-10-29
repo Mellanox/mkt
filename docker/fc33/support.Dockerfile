@@ -1,4 +1,4 @@
-FROM fedora:32
+FROM fedora:33
 
 RUN dnf install -y \
     bc \
@@ -42,7 +42,6 @@ RUN dnf install -y \
     pixman-devel \
     pkg-config \
     pkgconfig \
-    pulseaudio \
     python \
     python3-Cython \
     python3-devel \

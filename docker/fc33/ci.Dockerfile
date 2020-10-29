@@ -1,8 +1,7 @@
-FROM harbor.mellanox.com/mkt/build:fc32
+FROM harbor.mellanox.com/mkt/build:fc33
 
-COPY --from=local_mkt/support_sparse:fc32 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
-COPY --from=local_mkt/support_smatch:fc32 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
-COPY --from=local_mkt/support_llvm:fc32 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
+COPY --from=local_mkt/support_sparse:fc33 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
+COPY --from=local_mkt/support_smatch:fc33 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
 
 RUN \
     echo Israel/Jerusalem > /etc/timezone && \
@@ -15,6 +14,7 @@ RUN \
     'perl(bigint)' \
     python-ply \
     python-GitPython \
+    clang \
     && dnf clean dbcache packages
 
 RUN rpm -U /opt/rpms/*.rpm

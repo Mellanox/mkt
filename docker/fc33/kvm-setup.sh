@@ -23,7 +23,6 @@ ib_umad
 rdma_ucm
 ib_ipoib
 EOF
-
 # Overwrite rdma-core defaults
 cat <<EOF > /etc/rdma/modules/rdma.conf
 # Deleted by mkt
@@ -34,7 +33,20 @@ ln -s /dev/null /etc/systemd/network/99-default.link
 
 # Enable networkd
 mkdir -p /etc/systemd/network
-cat <<EOF > /etc/systemd/network/00-kvm.network
+CNT=0
+while [  $CNT -lt 10 ]; do
+cat <<EOF > /etc/systemd/network/0$CNT-ib.network
+[Match]
+Name=ib$CNT
+Type=infiniband
+
+[Network]
+Address=192.168.100.1$CNT/24
+EOF
+	let CNT=CNT+1
+done
+
+cat <<EOF > /etc/systemd/network/10-kvm.network
 [Match]
 Virtualization=kvm
 
@@ -69,13 +81,7 @@ rm -rf /var/log/journal
 systemctl disable dnf-makecache.timer
 systemctl disable ldconfig.service
 systemctl mask ldconfig.service
-systemctl disable pulseaudio.service
-systemctl mask pulseaudio.service
 /sbin/ldconfig -X
-
-# Do not use old rdma-core in FC
-systemctl disable rdma.service
-systemctl mask rdma.service
 
 #sed -i -e 's/tty9/hvc0/g' /lib/systemd/system/debug-shell.service
 #systemctl enable debug-shell.service

@@ -1,15 +1,7 @@
 #!/bin/bash
 # ---
 # git_url: http://webdev01.mtl.labs.mlnx:8080/git/simx.git
-# git_commit: e39b67e660f78fd2de6363ecf563f6cc651188ed
-# other_files:
-#   - 0001-mlx5-infra-Added-support-to-RMP-to-work-with-ODP.patch
-#   - 0002-mlx5-infra-Added-support-to-RDMA-READ-with-ODP.patch
-#   - 0003-mlx5-infra-Added-support-to-ODP-in-UD.patch
-
-patch -p1 < /opt/0001*.patch
-patch -p1 < /opt/0002*.patch
-patch -p1 < /opt/0003*.patch
+# git_commit: 9f601e894e3ac74795a8990c0349ea36059004c9
 
 cat <<EOF > mlx-simx.spec
 %global debug_package %{nil}
