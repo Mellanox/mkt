@@ -23,7 +23,6 @@ ib_umad
 rdma_ucm
 ib_ipoib
 EOF
-
 # Overwrite rdma-core defaults
 cat <<EOF > /etc/rdma/modules/rdma.conf
 # Deleted by mkt
@@ -34,7 +33,20 @@ ln -s /dev/null /etc/systemd/network/99-default.link
 
 # Enable networkd
 mkdir -p /etc/systemd/network
-cat <<EOF > /etc/systemd/network/00-kvm.network
+CNT=0
+while [  $CNT -lt 10 ]; do
+cat <<EOF > /etc/systemd/network/0$CNT-ib.network
+[Match]
+Name=ib$CNT
+Type=infiniband
+
+[Network]
+Address=192.168.100.1$CNT/24
+EOF
+	let CNT=CNT+1
+done
+
+cat <<EOF > /etc/systemd/network/10-kvm.network
 [Match]
 Virtualization=kvm
 
