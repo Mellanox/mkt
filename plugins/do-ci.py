@@ -118,7 +118,7 @@ def smatch_and_sparse(args, tool):
         print_filtered_output(args, out)
 
 def clang(args):
-    base_cmd = ["make", "-j", str(args.num_jobs), "-s", "CC=/opt/llvm/bin/clang"]
+    base_cmd = ["make", "-j", str(args.num_jobs), "-s", "CC=clang"]
     subprocess.call(base_cmd + ["clean"])
     subprocess.call(base_cmd + ["allyesconfig"])
     cmd = base_cmd + args.dirlist
