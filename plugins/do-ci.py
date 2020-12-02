@@ -125,7 +125,7 @@ def clang(args):
     subprocess.call(cmd);
 
 def checkpatch(args):
-    cmd = ["%s/scripts/checkpatch.pl" %(args.checkpatch_root_dir), "-q", "--no-summary", "-g", args.rev]
+    cmd = ["%s/scripts/checkpatch.pl" %(args.checkpatch_root_dir), "-q", "--no-summary", "-g", args.rev, "--max-line-length=80"]
     if args.project != "kernel":
         cmd += ["--no-tree", "--ignore", "PREFER_KERNEL_TYPES,FILE_PATH_CHANGES,EXECUTE_PERMISSIONS,USE_NEGATIVE_ERRNO,CONST_STRUCT"]
 

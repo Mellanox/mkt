@@ -15,6 +15,7 @@ RUN dnf install -y \
     gcc-c++ \
     git-core \
     glib2-devel \
+    glibc-devel.i686 \
     hostname \
     iptables-devel \
     libaio-devel \

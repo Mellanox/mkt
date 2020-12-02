@@ -42,7 +42,6 @@ RUN \
     openssh-server \
     opensm \
     pciutils \
-    perftest \
     'perl(File::Basename)' \
     'perl(File::Path)' \
     'perl(Getopt::Long)' \
