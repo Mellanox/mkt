@@ -407,11 +407,13 @@ def cmd_run(args):
         mapdirs.add(os.path.dirname(args.kernel_rpm))
         args.kernel = None
     else:
+        print (args.kernel)
         args.kernel = os.path.realpath(args.kernel)
         if not os.path.isdir(args.kernel):
             raise ValueError("Kernel path %r is not a directory/does not exist"
                              % (args.kernel))
         mapdirs.add(args.kernel)
+        print (mapdirs)
 
     if args.image:
         try:
@@ -449,6 +451,7 @@ def cmd_run(args):
         do_kvm_args = ["/bin/bash"]
     else:
         do_kvm_args = ["python3", "/plugins/do-kvm.py"]
+#        do_kvm_args = ["python3", "/plugins/do-test.py"]
         if vm_addr.ip:
             # Open network for QEMU, relevant for bridged mode only
             iprule = ["FORWARD", "-m", "physdev", "--physdev-is-bridged", "-j", "ACCEPT"]
@@ -483,6 +486,7 @@ def cmd_run(args):
         subprocess.call(["ssh", "root@%s" % (get_host_name(cname))])
     else:
         cname = get_container_name(vm_addr)
+        print (mapdirs.as_docker_bind())
         docker_exec(["run"] + mapdirs.as_docker_bind() + [
             "-v",
             "%s:/plugins:ro,Z" % (src_dir),

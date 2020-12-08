@@ -79,9 +79,14 @@ if args.project and args.kernel:
     subprocess.check_output(['make', 'headers_install',
         'INSTALL_HDR_PATH=/usr'], cwd=args.kernel)
 
+if not os.path.isdir('/ccache/artemp'):
+    subprocess.check_output(['mkdir', '/ccache/artemp'])
+
+subprocess.check_output(['chmod', '0777', '/ccache/artemp'])
+
 switch_to_user(args)
 if os.path.isdir('/ccache'):
-    os.environ['CCACHE_DIR'] = '/ccache'
+    os.environ['CCACHE_DIR'] = '/ccache/artemp/'
 
 if args.shell:
     os.execvp('/bin/bash', ['/bin/bash'])

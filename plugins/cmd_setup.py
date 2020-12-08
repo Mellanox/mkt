@@ -74,6 +74,7 @@ def cmd_setup(args):
             'ubuntu' : '16',
             'rhel' : '8',
             'redhat' : '8',
+            'centos' : '8',
     }
 
     # Python API stability is dissaster

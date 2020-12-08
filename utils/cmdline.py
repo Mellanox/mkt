@@ -27,7 +27,7 @@ def get_cache_fn(fn):
     an impact on the operation of mkt - at worst it will run slower."""
     global cache_dir
     if cache_dir is None:
-        cache_dir = os.path.expanduser("~/.cache/mellanox/mkt/")
+        cache_dir = os.path.expanduser("/global/home/users/artemp/scratch/.cache/mellanox/mkt/")
         # In MTL network, user home directories are located on /labhome
         # and doesn't have enough space to build cache efficiently.
         # Do nasty hack and replace labhome with swgwork

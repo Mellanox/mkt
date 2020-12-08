@@ -66,7 +66,10 @@ def remove_mounts():
 def is_passable_mount(v):
     if v[2] == "nfs" or v[2] == "nfs4":
         return True
+    if v[1].startswith("/images"):
+        return True
     if not v[0].startswith("/"):
+        print ("NOT START WITH")
         return False
     if v[1] == "/lab_tools":
         return False
@@ -106,7 +109,9 @@ def setup_fs():
     # Copy over local bind mounts, eg from docker -v
     cnt = 0
     for dfn, v in get_mtab().items():
+        print (v)
         if not is_passable_mount(v):
+            print ("NOT PASSABLE")
             continue
 
         qemu_args["-fsdev"].add(
@@ -400,6 +405,7 @@ def set_virt_devices(args):
 
 def set_vfio(args):
     """Pass a VFIO owned PCI device through to the guest"""
+    qemu_args["-device"].append("intel-iommu,intremap=on")
     for bdf in args.vfio:
         qemu_args["-device"].append("vfio-pci,host=%s" % (bdf))
 
@@ -459,6 +465,11 @@ def setup_from_pickle(args, pickle_params):
     write_once("/etc/group", "{group}:x:{gid}:\n".format(**p))
     write_once("/etc/sudoers", "{user} ALL=(ALL) NOPASSWD:ALL\n".format(**p))
 
+    pickle_path = "/etc/mkt_settings.pickle"
+    subprocess.check_output(["touch", pickle_path])
+    with open(pickle_path, "wb") as F:
+        pickle.dump(p, F)
+
     setup_console(p["user"])
 
     args.kernel = p.get("kernel", None)
@@ -488,7 +499,7 @@ qemu_args = {
     "-enable-kvm": None,
     # Escape sequence is ctrl-a c q
     "-nographic": None,
-    "-machine": "q35",
+    "-machine": "q35,kernel-irqchip=split",
     "-cpu": "host",
     "-vga": "none",
     "-no-reboot": None,
@@ -551,4 +562,6 @@ if args.boot_script:
 
 with open('/logs/qemu.cmdline', 'w+') as f:
     f.write(" ".join(cmd))
+
+
 os.execvp(cmd[0], cmd)

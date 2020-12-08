@@ -78,6 +78,9 @@ class SupportImage(object):
                 raise ValueError("Bad script %r, mising trailer" % (script))
         import yaml
         self.spec = yaml.safe_load(b"".join(text))
+        self.git_modules = False
+        if ("git_modules" in self.spec):
+            self.git_modules = True
 
     def _fetch_git(self):
         """Make sure that the required commit ID is available under ~/.cache/ for
@@ -95,17 +98,26 @@ class SupportImage(object):
             self.git_dir = self.git_dir + ".git"
         if not os.path.exists(self.git_dir):
             try:
-                git_call(["clone", "--bare", git_url, self.git_dir])
+                cmd = ["clone"]
+                if not self.git_modules:
+                    cmd += ["--bare"]
+                git_call(cmd + [git_url, self.git_dir])
             except subprocess.CalledProcessError:
                 shutil.rmtree(self.git_dir)
 
-        with in_directory(self.git_dir):
-            self.git_id = git_commit_id(git_ref, fail_is_none=True)
-            if self.git_id is not None:
-                return
+        if not self.git_modules:
+            with in_directory(self.git_dir):
+                self.git_id = git_commit_id(git_ref, fail_is_none=True)
+                if self.git_id is None:
+                    git_call(["fetch", "--tags", git_url])
+                    self.git_id = git_commit_id(git_ref)
+        else:
+            with in_directory(self.git_dir):
+                git_call(["fetch"])
+                self.git_id = git_commit_id(git_ref)
+                git_call(["checkout", self.git_id ])
+                git_call(["submodule", "update", "--init", "--recursive"])
 
-            git_call(["fetch", "--tags", git_url])
-            self.git_id = git_commit_id(git_ref)
 
     def _fetch_nfs(self):
         """This is very annoying but we need some files from NFS. If the system is on
@@ -163,10 +175,16 @@ class SupportImage(object):
 
     def _setup_git(self, dfn):
         with in_directory(self.git_dir):
-            git_call([
-                "archive", "--format=tar", "--prefix", "opt/src/", "-o",
-                self.tarfn, self.git_id
-            ])
+            if not self.git_modules:
+                git_call([
+                    "archive", "--format=tar", "--prefix", "opt/src/", "-o",
+                    self.tarfn, self.git_id
+                ])
+            else:
+                subprocess.check_call([
+                    "tar", "--create", "--mtime=Jan 1 2010", "--file", self.tarfn,
+                    "--transform", "s|^|opt/src/|", "."])
+#                    "--exclude", ".git", "--transform", "s|^|opt/src/|", "."])
 
     def _setup_nfs(self, dfn):
         for nfs_fn, inf in self.spec.get("nfs_files", {}).items():

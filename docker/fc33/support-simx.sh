@@ -16,7 +16,9 @@ License:        Proprietary
 From simx.git
 
 %build
-./mlnx_infra/config.status.mlnx --target=x86 --prefix=/opt/simx
+cat ./mlnx_infra/config.status.mlnx | grep -v '\-\-disable\-tools' > ./mlnx_infra/config.status.mlnx.new
+chmod +x ./mlnx_infra/config.status.mlnx.new
+./mlnx_infra/config.status.mlnx.new --target=x86 --prefix=/opt/simx
 make %{?_smp_mflags}
 make %{?_smp_mflags} -C mellanox/
 
@@ -26,6 +28,7 @@ mkdir -p %{buildroot}/etc/qemu-kvm/
 ln -s /etc/qemu/bridge.conf %{buildroot}/etc/qemu-kvm/bridge.conf
 mkdir -p %{buildroot}/opt/simx/lib/
 cp mellanox/libml*.so %{buildroot}/opt/simx/lib/
+cp ./mlnx_infra/bridge-{start,stop}.sh  %{buildroot}/opt/simx/bin/
 
 %files
 /opt/simx/*
