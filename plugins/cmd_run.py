@@ -233,7 +233,8 @@ def get_pickle(args, vm_addr):
         mem += len(p["simx"])
     if args.virt:
         p["virt"] = sorted(args.virt)
-    p["mem"] = str(mem) + 'G'
+#    p["mem"] = str(mem) + '8G'
+    p["mem"] = '8G'
 
     if args.boot_script:
         p["boot_script"] = args.boot_script

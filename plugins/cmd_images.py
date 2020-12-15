@@ -107,6 +107,7 @@ class SupportImage(object):
 
         if not self.git_modules:
             with in_directory(self.git_dir):
+                print(self.git_dir)
                 self.git_id = git_commit_id(git_ref, fail_is_none=True)
                 if self.git_id is None:
                     git_call(["fetch", "--tags", git_url])

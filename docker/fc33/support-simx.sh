@@ -1,7 +1,9 @@
 #!/bin/bash
 # ---
-# git_url: http://webdev01.mtl.labs.mlnx:8080/git/simx.git
-# git_commit: 9f601e894e3ac74795a8990c0349ea36059004c9
+# git_url: /global/home/users/artemp/scratch/SOFTWARE/simx.git
+# git_commit: 022bedab1
+# old_git_commit: 7032d67e5
+# old_git_commit: 9f601e894e3ac74795a8990c0349ea36059004c9
 
 cat <<EOF > mlx-simx.spec
 %global debug_package %{nil}
@@ -36,3 +38,6 @@ cp ./mlnx_infra/bridge-{start,stop}.sh  %{buildroot}/opt/simx/bin/
 EOF
 
 rpmbuild --build-in-place -bb mlx-simx.spec
+
+cd /opt/
+tar -czvf simx-src.tar.gz src

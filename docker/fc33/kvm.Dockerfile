@@ -4,12 +4,6 @@ COPY --from=local_mkt/support_rdma_core:fc33 /root/rpmbuild/RPMS/x86_64/*.rpm /o
 COPY --from=local_mkt/support_simx:fc33 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
 COPY --from=local_mkt/support_qemu:fc33 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
 
-RUN rm -f \
-   /opt/rpms/*debug*.rpm \
-   /opt/rpms/*ibacm*.rpm \
-   /opt/rpms/*devel*.rpm \
-   /opt/rpms/*iwpmd*.rpm
-
 FROM fedora:33
 
 # Static files are done before installing to avoid prompting
@@ -66,6 +60,37 @@ RUN \
     unzip \
     valgrind \
     wget \
+    bc \
+    binutils \
+    bison \
+    ccache \
+    cmake \
+    ctags \
+    elfutils-devel \
+    elfutils-libelf-devel \
+    findutils \
+    flex \
+    gcc \
+    gcc-c++ \
+    git-core \
+    glib2-devel \
+    hostname \
+    iptables-devel \
+    libaio-devel \
+    linux-atm-libs-devel \
+    libattr-devel \
+    libcap-devel \
+    libcap-ng-devel \
+    libdb-devel \
+    libfdt-devel \
+    libmnl-devel \
+    libnl3-cli \
+    libnl3-devel \
+    libseccomp-devel \
+    libudev-devel \
+    libusb-devel \
+    libxml2-devel \
+    llvm-devel \
     && dnf clean dbcache packages
 
 COPY --from=rpms /opt/rpms /opt/rpms
@@ -74,4 +99,12 @@ ADD sshd_config ssh_host_rsa_key /etc/ssh/
 
 ADD basic-setup.sh kvm-setup.sh /root/
 
-RUN /root/basic-setup.sh && /root/kvm-setup.sh
+RUN /root/basic-setup.sh
+#RUN /root/basic-setup_rpm.sh
+RUN /root/kvm-setup.sh
+
+RUN ls /opt
+COPY --from=local_mkt/support_simx:fc33 /opt/simx-src.tar.gz /opt/
+RUN ls /opt
+RUN cd /opt && tar -xzvf simx-src.tar.gz
+RUN ls /opt
