@@ -133,8 +133,12 @@ def checkpatch(args):
         cmd += ["--ignore", "GERRIT_CHANGE_ID,FILE_PATH_CHANGES"]
     subprocess.call(cmd);
 
-def warnings(args):
+def warnings(args, arch=None):
     base_cmd = ["make", "-j", str(args.num_jobs), "-s"]
+    # Default arch is x64
+    if arch is not None:
+        base_cmd = base_cmd + ["ARCH=%s" %(arch)]
+
     subprocess.call(base_cmd + ["clean"])
     subprocess.call(base_cmd + ["allyesconfig"])
     cmd = base_cmd + ["W=1"] + args.dirlist
@@ -199,6 +203,7 @@ def kernel_ci(args):
             smatch_and_sparse(args, "sparse")
         if args.warnings:
             warnings(args)
+            warnings(args, "i386")
         if args.smatch:
             smatch_and_sparse(args, "smatch")
         if args.clang:
