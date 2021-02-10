@@ -59,11 +59,9 @@ def build_dirlist(args):
         # Let's do smart guess and try to check subsystems,
         # which we are changing most of the time.
         dirlist.add("drivers/infiniband/")
-        dirlist.add("lib/")
         dirlist.add("drivers/net/ethernet/mellanox/")
         dirlist.add("net/")
         dirlist.add("drivers/nvme/")
-        dirlist.add("mm/")
         args.filter_by_diff = True
 
     args.dirlist = list(dirlist)
@@ -156,11 +154,6 @@ def warnings(args, arch=None):
         if line.startswith("scripts") or line == '':
             # Fixup to https://lore.kernel.org/lkml/1521810279-6282-3-git-send-email-yamada.masahiro@socionext.com/
             continue
-        if args.show_all is False:
-            f = ['warning: Function parameter or member',
-                 'warning: Excess function parameter']
-            if any(x in line for x in f):
-                continue
         print(line)
     for line in no.stderr.split('\n'):
         if line in yes.stderr.split('\n'):
