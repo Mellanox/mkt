@@ -450,6 +450,16 @@ def setup_gdbserver(args):
     if args.gdbserver:
         qemu_args['-gdb'] = 'tcp::%d' % args.gdbserver
 
+def setup_test_script(args):
+    fn = '/usr/local/bin/test-mkt.sh'
+    with open(fn, "w") as F:
+        F.write("#!/bin/bash\n\n")
+        F.write(args.test + "\n")
+
+    st = os.stat(fn)
+    os.chmod(fn, st.st_mode | stat.S_IEXEC)
+    shutil.chown(fn, args.user, args.group)
+
 def setup_from_pickle(args, pickle_params):
     """The script that invokes docker passes in some more detailed parameters
     about the environment in a pickle and we adjust the configuration
@@ -477,6 +487,7 @@ def setup_from_pickle(args, pickle_params):
     args.custom_qemu = p.get("custom_qemu", None)
     args.gdbserver = p.get("gdbserver", None)
     args.num_ports = p.get("num_ports", 1)
+    args.test = p.get("test", None)
 
 parser = argparse.ArgumentParser(
     description='Launch kvm using the filesystem from the container')
@@ -485,6 +496,9 @@ args = parser.parse_args()
 pickle_data = os.environ.get("KVM_PICKLE")
 if pickle_data:
     setup_from_pickle(args, pickle_data)
+
+if args.test:
+    setup_test_script(args)
 
 qemu_args = {
     "-enable-kvm": None,

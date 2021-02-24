@@ -18,6 +18,7 @@ cmd_modules = {
     "cmd_modules",
     "cmd_run",
     "cmd_setup",
+    "cmd_test",
 }
 
 if __name__ == "__main__":

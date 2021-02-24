@@ -239,12 +239,17 @@ def get_pickle(args, vm_addr):
         p["boot_script"] = args.boot_script
 
     if args.image:
+        img = utils.get_images(args.image)
         try:
-            p["num_of_vfs"] = utils.get_images(args.image)['num_of_vfs']
+            p["num_of_vfs"] = img['num_of_vfs']
         except KeyError:
             pass
         try:
-            p["num_ports"] = utils.get_images(args.image)['num_ports']
+            p["num_ports"] = img['num_ports']
+        except KeyError:
+            pass
+        try:
+            p["test"] = img['test']
         except KeyError:
             pass
 
