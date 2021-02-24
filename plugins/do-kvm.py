@@ -312,6 +312,8 @@ def set_simx_cfg():
          f.write('[logger]\n')
          f.write('log_file_redirection = /logs/simx-qemu.log\n')
 
+         f.write('[General]\n')
+         f.write('fill_reserved_with_random_data_cmds = false\n')
          f.write('[General Device Capabilities]\n')
          f.write('ib_port_sniffer = true\n')
 
