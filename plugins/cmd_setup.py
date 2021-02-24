@@ -74,6 +74,7 @@ def cmd_setup(args):
             'ubuntu' : '16',
             'rhel' : '8',
             'redhat' : '8',
+            'centos' : '8',
     }
 
     # Python API stability is dissaster
@@ -93,7 +94,7 @@ def cmd_setup(args):
 
     if args.installs:
         setuphv = utils.get_internal_fn('scripts/')
-        if distro_id == 'redhat':
+        if distro_id in ['redhat', 'centos']:
             distro_id = 'rhel'
         setuphv += 'setup-hv.' + distro_id
         subprocess.check_call(setuphv)

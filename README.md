@@ -17,6 +17,7 @@ Minimal host OSes are
 Fedora 26
 Ubuntu 16.04
 RedHat 8
+CentOS 8
 ```
 
 # Documentation
