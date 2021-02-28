@@ -259,6 +259,8 @@ def get_pickle(args, vm_addr):
     if args.gdbserver:
         p["gdbserver"] = args.gdbserver
 
+    p["nested"] = args.nested
+
     return base64.b64encode(pickle.dumps(p)).decode()
 
 def validate_and_set_boot(args):
@@ -342,6 +344,11 @@ def args_run(parser):
         type=int,
         help="TCP port for QEMU's GDB server",
         default=None)
+    parser.add_argument(
+        '--nested',
+        action="store_true",
+        default=False,
+        help="Configure the QEMU boot to support nested VFIO mode")
 
 def cmd_run(args):
     """Run a system image container inside KVM"""
