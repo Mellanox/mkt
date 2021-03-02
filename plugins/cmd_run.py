@@ -290,6 +290,14 @@ def validate_and_set_boot(args):
 
     return args.boot_script
 
+def have_netdev(name):
+    try:
+        subprocess.check_output(
+            ["ip", "link", "show", "dev", name], stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError:
+        return False;
+    return True;
+
 def args_run(parser):
     section = utils.load_config_file()
     parser.add_argument(
@@ -476,23 +484,23 @@ def cmd_run(args):
         os.path.abspath(inspect.getfile(inspect.currentframe())))
 
     ssh = False
-    if args.pci:
-        # chack if we have container running with bound PCI device to it
-        # sudo docker ps --filter "label=pci" --format "{{.Names}}"
-        # sudo docker inspect --format='{{.Config.Labels.pci}}' mkt_run_nps-server-14-015
-        cont = docker_get_containers(label="pci")
-        for c in cont:
-            c = c.decode()[1:-1]
-            cpci = docker_output(["inspect", "--format", '"{{.Config.Labels.pci}}"', c])
-            cpci = cpci.decode()[2:-2].split(', ')
-            cpci = [x[1:-1] for x in cpci]
-            common = set(cpci).intersection(set(args.pci))
-            if common:
-                ssh = True;
-                cname = c;
-
+    # chack if we have container running with bound PCI device to it
+    # sudo docker ps --filter "label=pci" --format "{{.Names}}"
+    # sudo docker inspect --format='{{.Config.Hostname}}' mkt_run_nps-server-14-015
+    cont = docker_get_containers(label="pci")
+    for c in cont:
+        c = c.decode()[1:-1]
+        cpci = docker_output(["inspect", "--format", '"{{.Config.Hostname}}"', c])
+        if cpci:
+            ssh = True;
+            cname = c;
+            break
     if ssh:
-        subprocess.call(["ssh", "root@%s" % (get_host_name(cname))])
+        if have_netdev("br0"):
+            cmd = ["ssh", "root@%s" % (get_host_name(cname))]
+        else:
+            cmd = ["ssh", "-p", "4444", "root@localhost"]
+        subprocess.call(cmd)
     else:
         cname = get_container_name(vm_addr)
         docker_exec(["run"] + mapdirs.as_docker_bind() + [
