@@ -491,8 +491,8 @@ def setup_from_pickle(args, pickle_params):
     accordingly"""
     p = pickle.loads(base64.b64decode(pickle_params))
     write_once("/etc/passwd",
-               "{user}:x:{uid}:{gid}:,,,:{home}:{shell}\n".format(**p))
-    write_once("/etc/shadow", "{user}:x:17486:0:99999:7:::\n".format(**p))
+               "{user}:x:{uid}:{gid}::{home}:/bin/bash\n".format(**p))
+    write_once("/etc/shadow", "{user}::17486:0:99999:7:::\n".format(**p))
     write_once("/etc/group", "{group}:x:{gid}:\n".format(**p))
     write_once("/etc/sudoers", "{user} ALL=(ALL) NOPASSWD:ALL\n".format(**p))
 

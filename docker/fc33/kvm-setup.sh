@@ -1,6 +1,13 @@
 #!/bin/bash
 set -e
 
+cp /etc/pam.d/sshd /etc/pam.d/sshd.original
+cat <<EOF > /etc/pam.d/sshd
+auth       required     pam_permit.so
+EOF
+cat /etc/pam.d/sshd.original >> /etc/pam.d/sshd
+rm -rf /etc/pam.d/sshd.original
+
 # sshd on the normal port
 cat <<EOF > /etc/systemd/system/sshd.socket
 [Socket]

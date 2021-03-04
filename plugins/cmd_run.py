@@ -214,7 +214,6 @@ def get_pickle(args, vm_addr):
         "uid": usr.pw_uid,
         "gid": usr.pw_gid,
         "home": usr.pw_dir,
-        "shell": usr.pw_shell,
         "vm_addr": vm_addr._asdict(),
     }
 
@@ -496,10 +495,11 @@ def cmd_run(args):
             cname = c;
             break
     if ssh:
+        usr = pwd.getpwuid(os.getuid())
         if have_netdev("br0"):
-            cmd = ["ssh", "root@%s" % (get_host_name(cname))]
+            cmd = ["ssh", "%s@%s" % (usr.pw_name, get_host_name(cname))]
         else:
-            cmd = ["ssh", "-p", "4444", "root@localhost"]
+            cmd = ["ssh", "-p", "4444", "%s@localhost" % (usr.pw_name)]
         subprocess.call(cmd)
     else:
         cname = get_container_name(vm_addr)
