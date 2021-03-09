@@ -184,6 +184,20 @@ def set_console():
     ])
 
 
+def setup_nested_env(args):
+    machine = "q35"
+
+    if args.nested:
+        qemu_args["-device"].extend([
+            "intel-iommu,intremap=on"
+        ])
+
+        machine += ",kernel-irqchip=split"
+
+    qemu_args.update({
+        "-machine": machine,
+    })
+
 def set_kernel(tree):
     """Use a compiled kernel tree as the boot kernel. This directly boots the
     bzimage in that tree and configures the KVM root filesystem to have a
@@ -241,6 +255,14 @@ def set_kernel(tree):
     os.symlink(bzimage, "/boot/vmlinuz-%s" % (ver))
 
     subprocess.check_call(["depmod", "-a", ver])
+    cmdline = 'root=/dev/root rw ignore_loglevel rootfstype=9p \
+rootflags=trans=virtio earlyprintk=serial,ttyS0,115200 \
+console=hvc0 noibrs noibpb nopti nospectre_v2 nospectre_v1\
+l1tf=off nospec_store_bypass_disable no_stf_barrier \
+mds=off mitigations=off'
+
+    if args.nested:
+        cmdline += ' intel_iommu=on'
 
     qemu_args.update({
         "-kernel":
@@ -248,9 +270,7 @@ def set_kernel(tree):
         # to debug:  systemd.journald.forward_to_console=1 systemd.log_level=debug
         # Change and enable debug-shell.service to use /dev/console
         "-append":
-        'root=/dev/root rw ignore_loglevel rootfstype=9p rootflags=trans=virtio earlyprintk=serial,ttyS0,115200 \
- console=hvc0 noibrs noibpb nopti nospectre_v2  nospectre_v1 l1tf=off nospec_store_bypass_disable no_stf_barrier \
- mds=off mitigations=off'
+        cmdline
     })
 
 
@@ -266,11 +286,16 @@ def set_kernel_rpm(src):
     else:
         raise ValueError("Could not find vmlinux in the RPM %r" % (src))
 
+    cmdline = 'root=/dev/root rw ignore_loglevel rootfstype=9p \
+rootflags=trans=virtio earlyprintk=serial,ttyS0,115200 console=hvc0'
+    if args.nested:
+        cmdline += ' intel_iommu=on'
+
     qemu_args.update({
         "-kernel":
         vmlinuz,
         "-append":
-        'root=/dev/root rw ignore_loglevel rootfstype=9p rootflags=trans=virtio earlyprintk=serial,ttyS0,115200 console=hvc0'
+        cmdline
     })
 
 def set_custom_qemu(tree):
@@ -466,8 +491,8 @@ def setup_from_pickle(args, pickle_params):
     accordingly"""
     p = pickle.loads(base64.b64decode(pickle_params))
     write_once("/etc/passwd",
-               "{user}:x:{uid}:{gid}:,,,:{home}:{shell}\n".format(**p))
-    write_once("/etc/shadow", "{user}:x:17486:0:99999:7:::\n".format(**p))
+               "{user}:x:{uid}:{gid}::{home}:/bin/bash\n".format(**p))
+    write_once("/etc/shadow", "{user}::17486:0:99999:7:::\n".format(**p))
     write_once("/etc/group", "{group}:x:{gid}:\n".format(**p))
     write_once("/etc/sudoers", "{user} ALL=(ALL) NOPASSWD:ALL\n".format(**p))
 
@@ -488,6 +513,7 @@ def setup_from_pickle(args, pickle_params):
     args.gdbserver = p.get("gdbserver", None)
     args.num_ports = p.get("num_ports", 1)
     args.test = p.get("test", None)
+    args.nested = p.get("nested", False)
 
 parser = argparse.ArgumentParser(
     description='Launch kvm using the filesystem from the container')
@@ -504,7 +530,6 @@ qemu_args = {
     "-enable-kvm": None,
     # Escape sequence is ctrl-a c q
     "-nographic": None,
-    "-machine": "q35",
     "-cpu": "host",
     "-vga": "none",
     "-no-reboot": None,
@@ -527,6 +552,7 @@ qemu_args = {
 remove_mounts()
 set_console()
 setup_fs()
+setup_nested_env(args)
 
 if args.kernel_rpm:
     set_kernel_rpm(args.kernel_rpm)
