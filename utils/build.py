@@ -67,6 +67,7 @@ project_marks = {
         "rdma": "iproute2",
         "kernel": "kernel",
         "mlnx_infra": "simx",
+        "libflex-io": "flexio",
 }
 
 def build_list():

@@ -29,6 +29,12 @@ def make_rdma_core(args):
         return
     subprocess.call(['./build.sh'])
 
+def make_flexio(args):
+    if args.clean:
+        subprocess.check_output(['rm', '-rf', 'build'])
+        return
+    subprocess.call(['./build.sh'])
+
 def make_simx(args):
     if args.clean:
         subprocess.check_output(['make', 'distclean'])
@@ -97,3 +103,5 @@ if args.project == "rdma-core":
     make_rdma_core(args)
 if args.project == "simx":
     make_simx(args)
+if args.project == "flexio":
+    make_flexio(args)

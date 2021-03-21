@@ -47,6 +47,7 @@ RUN dnf install -y \
     python3-Cython \
     python3-devel \
     python3-docutils \
+    rdma-core-devel \
     rpm-build \
     spice-protocol \
     spice-server-devel \
