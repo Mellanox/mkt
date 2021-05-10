@@ -1,7 +1,7 @@
 #!/bin/bash
 # ---
 # git_url: git://repo.or.cz/smatch.git
-# git_commit: 16ab906d2127037df023a6ce014e4a4c5e60e6db
+# git_commit: 9bb66fa2d7c73b3338a27fd6b38d7d509b2a1c1b
 
 cat <<EOF > smatch.spec
 Name: smatch

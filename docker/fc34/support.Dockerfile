@@ -1,4 +1,4 @@
-FROM fedora:33
+FROM fedora:34
 
 RUN dnf install -y \
     bc \
@@ -31,6 +31,7 @@ RUN dnf install -y \
     libseccomp-devel \
     libudev-devel \
     libusb-devel \
+    libuuid-devel \
     libxml2-devel \
     llvm-devel \
     make \

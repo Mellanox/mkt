@@ -593,4 +593,6 @@ if args.boot_script:
 
 with open('/logs/qemu.cmdline', 'w+') as f:
     f.write(" ".join(cmd))
+
+subprocess.call(["rm", "-rf", "/.dockerenv"])
 os.execvp(cmd[0], cmd)
