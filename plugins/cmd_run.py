@@ -414,7 +414,7 @@ def cmd_run(args):
     if args.pci:
         subprocess.check_call([
             "sudo", sys.executable,
-            os.path.join(os.path.dirname(__file__), "/vfio.py")
+            os.path.join(os.path.dirname(__file__), "vfio.py")
         ] + ["--pci=%s" % (I) for I in args.pci])
 
     mapdirs = DirList()
