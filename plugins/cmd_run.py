@@ -55,8 +55,14 @@ def match_modalias(modalias):
     """Detect Mellanox devices that we want to pass through"""
     # Fom /lib/modules/4.18.rc1/modules.alias
     matches = [
+        "pci:v000015B3d0000A2DCsv*sd*bc*sc*i*",
+        "pci:v000015B3d0000A2D6sv*sd*bc*sc*i*",
         "pci:v000015B3d0000A2D3sv*sd*bc*sc*i*",
         "pci:v000015B3d0000A2D2sv*sd*bc*sc*i*",
+        "pci:v000015B3d00001021sv*sd*bc*sc*i*",
+        "pci:v000015B3d0000101Fsv*sd*bc*sc*i*",
+        "pci:v000015B3d0000101Esv*sd*bc*sc*i*",
+        "pci:v000015B3d0000101Dsv*sd*bc*sc*i*",
         "pci:v000015B3d0000101Csv*sd*bc*sc*i*",
         "pci:v000015B3d0000101Bsv*sd*bc*sc*i*",
         "pci:v000015B3d0000101Asv*sd*bc*sc*i*",
