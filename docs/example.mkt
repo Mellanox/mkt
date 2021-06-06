@@ -51,3 +51,9 @@ num_ports = 2
 pci = cx4-ib 0000:05:00.0
 # Use precompiled version of QEMU
 custom_qemu = true
+
+[nested-vm]
+pci = cx4-ib
+# List of PCIs that will be forwarded to nested VM
+# This needs to be PCI BOF that as it is written in parent VM
+nested_pci = 0000:05:00.0

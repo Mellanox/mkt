@@ -245,6 +245,12 @@ def get_pickle(args, vm_addr):
         mem += len(p["simx"])
     if args.virt:
         p["virt"] = sorted(args.virt)
+
+    if args.nested_pci:
+        p["nested_pci"] = sorted(args.nested_pci)
+        # Add extra 1G for second QEMU instance
+        mem += 1 + 2 * len(p["nested_pci"])
+
     p["mem"] = str(mem) + 'G'
 
     if args.boot_script:
@@ -270,8 +276,6 @@ def get_pickle(args, vm_addr):
 
     if args.gdbserver:
         p["gdbserver"] = args.gdbserver
-
-    p["nested"] = args.nested
 
     return base64.b64encode(pickle.dumps(p)).decode()
 
@@ -327,6 +331,11 @@ def setup_devices(args):
         pci = utils.get_images(args.image)['pci']
         s = pci.split()
 
+    if args.inside_mkt:
+        with open('/etc/mkt.conf', 'r') as f:
+            args.pci = f.readline().split()
+        return
+
     union = set(get_simx_rdma_devices()).union(
         set(get_pci_rdma_devices().keys())).union(
         set(get_virt_rdma_devices()))
@@ -346,7 +355,17 @@ def setup_devices(args):
     if len(args.simx) > 5:
         exit("SimX doesn't support more than 5 devices")
 
+    if args.image:
+        try:
+            args.nested_pci = utils.get_images(args.image)['nested_pci'].split()
+        except KeyError:
+            args.nested_pci = []
+
 def find_image(args, section):
+    if args.inside_mkt:
+        # we don't support different image from the parent VM for now.
+        return
+
     # We have three possible options to execute:
     # 1. "mkt run" without request to specific image. We will try to find
     #    default one
@@ -421,6 +440,18 @@ def try_to_ssh():
 
     return False
 
+def is_inside_mkt():
+    modules = "/lib/modules/"
+    inside_mkt = False
+    for f in os.listdir(modules):
+        if os.path.exists("%s%s/modules/mkt_module_data.pickle" %(modules, f)):
+            inside_mkt = True
+
+    if inside_mkt and not os.path.exists("/etc/mkt.conf"):
+        exit("Please run nested VM with nested_pci set in configuration file")
+
+    return inside_mkt
+
 def args_run(parser):
     section = utils.load_config_file()
     parser.add_argument(
@@ -476,10 +507,11 @@ def args_run(parser):
         help="TCP port for QEMU's GDB server",
         default=None)
     parser.add_argument(
-        '--nested',
-        action="store_true",
-        default=False,
-        help="Configure the QEMU boot to support nested VFIO mode")
+        '--nested_pci',
+        metavar='NESTED_PCI',
+        action="append",
+        default=[],
+        help="Provide PCI list for the nested VM")
 
 def cmd_run(args):
     """Run a system image container inside KVM"""
@@ -489,9 +521,13 @@ def cmd_run(args):
     from . import cmd_images
     section = utils.load_config_file()
 
+    args.inside_mkt = is_inside_mkt()
     find_image(args, section)
     setup_devices(args)
     do_bind_pci(args)
+    if (args.inside_mkt):
+        return
+
     set_kernel(args, section)
     set_custom_qemu(args)
     set_boot_script(args)

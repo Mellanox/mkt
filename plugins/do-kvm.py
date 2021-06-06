@@ -187,7 +187,7 @@ def set_console():
 def setup_nested_env(args):
     machine = "q35"
 
-    if args.nested:
+    if args.nested_pci:
         qemu_args["-device"].extend([
             "intel-iommu,intremap=on"
         ])
@@ -261,7 +261,7 @@ console=hvc0 noibrs noibpb nopti nospectre_v2 nospectre_v1\
 l1tf=off nospec_store_bypass_disable no_stf_barrier \
 mds=off mitigations=off'
 
-    if args.nested:
+    if args.nested_pci:
         cmdline += ' intel_iommu=on'
 
     qemu_args.update({
@@ -288,7 +288,7 @@ def set_kernel_rpm(src):
 
     cmdline = 'root=/dev/root rw ignore_loglevel rootfstype=9p \
 rootflags=trans=virtio earlyprintk=serial,ttyS0,115200 console=hvc0'
-    if args.nested:
+    if args.nested_pci:
         cmdline += ' intel_iommu=on'
 
     qemu_args.update({
@@ -513,7 +513,10 @@ def setup_from_pickle(args, pickle_params):
     args.gdbserver = p.get("gdbserver", None)
     args.num_ports = p.get("num_ports", 1)
     args.test = p.get("test", None)
-    args.nested = p.get("nested", False)
+    args.nested_pci = p.get("nested_pci", [])
+    if args.nested_pci:
+        with open('/etc/mkt.conf', "w") as f:
+            f.write(' '.join(args.nested_pci) + '\n')
 
 parser = argparse.ArgumentParser(
     description='Launch kvm using the filesystem from the container')
