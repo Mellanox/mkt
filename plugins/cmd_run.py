@@ -21,6 +21,31 @@ from . import cmd_images
 
 VM_Addr = collections.namedtuple("VM_Addr", "hostname ip mac")
 
+def build_dirlist(args, section):
+    mapdirs = DirList()
+    if args.kernel_rpm:
+        mapdirs.add(os.path.dirname(args.kernel_rpm))
+
+    if args.kernel:
+        mapdirs.add(args.kernel)
+
+    if args.custom_qemu:
+        mapdirs.add(args.custom_qemu)
+
+    usr = pwd.getpwuid(os.getuid())
+    args.dir.append(usr.pw_dir)
+    if 'dir' in section:
+        args.dir += section['dir'].split()
+    args.dir = list(set(args.dir))
+
+    for I in args.dir:
+        mapdirs.add(I)
+
+    if args.boot_script:
+        mapdirs.add(os.path.dirname(args.boot_script))
+
+    return mapdirs
+
 def match_modalias(modalias):
     """Detect Mellanox devices that we want to pass through"""
     # Fom /lib/modules/4.18.rc1/modules.alias
@@ -180,6 +205,18 @@ def get_mac():
     raise ValueError("The DHCP file %r could not be parsed for host %r" %
                      (list_fn, hostname))
 
+def configure_firewall(vm_addr):
+    if vm_addr.ip:
+        # Open network for QEMU, relevant for bridged mode only
+        iprule = ["FORWARD", "-m", "physdev", "--physdev-is-bridged", "-j", "ACCEPT"]
+        # First delete old rule
+        subprocess.call(["sudo", "iptables", "-D"] + iprule,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL)
+        subprocess.call(["sudo", "iptables", "-I"] + iprule,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL)
+
 
 def get_pickle(args, vm_addr):
     usr = pwd.getpwuid(os.getuid())
@@ -238,9 +275,10 @@ def get_pickle(args, vm_addr):
 
     return base64.b64encode(pickle.dumps(p)).decode()
 
-def validate_and_set_boot(args):
+def set_boot_script(args):
+    args.boot_script = None
     if not args.image:
-        return None
+        return
 
     if not args.boot_script:
         try:
@@ -249,7 +287,7 @@ def validate_and_set_boot(args):
             pass
 
     if not args.boot_script:
-        return None
+        return
 
     try:
         executable = stat.S_IXUSR & os.stat(args.boot_script)[stat.ST_MODE]
@@ -263,7 +301,97 @@ def validate_and_set_boot(args):
         if not f.readline().startswith("#!"):
             exit("Missing shebang in the first line of boot script. Exiting ...")
 
-    return args.boot_script
+    return
+
+def set_custom_qemu(args):
+    args.custom_qemu = None
+    if args.image:
+        try:
+            if utils.get_images(args.image)['custom_qemu'] != "true":
+                raise KeyError
+            args.custom_qemu = section.get('simx', None)
+        except KeyError:
+            return
+
+    if args.custom_qemu is None:
+        return
+
+    args.custom_qemu = os.path.realpath(args.custom_qemu)
+    if not os.path.isdir(args.custom_qemu):
+        raise ValueError("SimX path %r is not a directory/does not exist"
+                % (args.custom_qemu))
+
+def setup_devices(args):
+    s = set()
+    if args.image:
+        pci = utils.get_images(args.image)['pci']
+        s = pci.split()
+
+    union = set(get_simx_rdma_devices()).union(
+        set(get_pci_rdma_devices().keys())).union(
+        set(get_virt_rdma_devices()))
+
+    if not set(s).issubset(union):
+        # It is possible only for config files, because we sanitized
+        # input to ensure that valid data is supplied.
+        exit(
+            "There is an error in configuration file, PCI, SIMX or VIRT devices don't exists."
+        )
+
+    args.pci += set(s).intersection(set(get_pci_rdma_devices().keys()))
+    args.virt += set(s).intersection(set(get_virt_rdma_devices()))
+    b = args.pci + args.virt
+    args.simx += [item for item in s if item not in b]
+
+    if len(args.simx) > 5:
+        exit("SimX doesn't support more than 5 devices")
+
+def find_image(args, section):
+    # We have three possible options to execute:
+    # 1. "mkt run" without request to specific image. We will try to find
+    #    default one
+    # 2. "mkt run --pci ..." or "mkt run --simx ...". We won't use default
+    #    image but add supplied PCIs and SimX devices.
+    # 3. "mkt run image_name --pci ..." or "mkt run image_name --simx ...". We
+    #    will add those PCIs and SimX devices to the container.
+    if not args.pci and not args.simx:
+        if not args.image:
+            args.image =  section.get('image', None)
+
+def set_kernel(args, section):
+    if args.image:
+        try:
+            args.kernel = utils.get_images(args.image)['kernel']
+        except KeyError:
+            pass
+
+    if args.kernel is None:
+        args.kernel = section.get('kernel', None)
+
+    if not args.kernel and not args.kernel_rpm:
+        exit(
+            "Must specify a linux kernel with --kernel, or a config file default"
+        )
+
+    if args.kernel_rpm is not None:
+        args.kernel_rpm = os.path.realpath(args.kernel_rpm)
+        if not os.path.isfile(args.kernel_rpm):
+            raise ValueError(
+                "Kernel RPM %r does not exist" % (args.kernel_rpm))
+        args.kernel = None
+    else:
+        args.kernel = os.path.realpath(args.kernel)
+        if not os.path.isdir(args.kernel):
+            raise ValueError("Kernel path %r is not a directory/does not exist"
+                             % (args.kernel))
+
+def do_bind_pci(args):
+    # Invoke ourself as root to manipulate sysfs
+    if args.pci:
+        subprocess.check_call([
+            "sudo", sys.executable,
+            os.path.join(os.path.dirname(__file__), "vfio.py")
+        ] + ["--pci=%s" % (I) for I in args.pci])
 
 def have_netdev(name):
     try:
@@ -272,6 +400,26 @@ def have_netdev(name):
     except subprocess.CalledProcessError:
         return False;
     return True;
+
+def try_to_ssh():
+    # chack if we have container running with bound PCI device to it
+    # sudo docker ps --filter "label=pci" --format "{{.Names}}"
+    # sudo docker inspect --format='{{.Config.Hostname}}' mkt_run_nps-server-14-015
+    cont = docker_get_containers(label="pci")
+    for c in cont:
+        c = c.decode()[1:-1]
+        cpci = docker_output(["inspect", "--format", '"{{.Config.Hostname}}"', c])
+        if cpci:
+            cname = c;
+            usr = pwd.getpwuid(os.getuid())
+            if have_netdev("br0"):
+                cmd = ["ssh", "%s@%s" % (usr.pw_name, get_host_name(cname))]
+            else:
+                cmd = ["ssh", "-p", "4444", "%s@localhost" % (usr.pw_name)]
+            subprocess.call(cmd)
+            return True
+
+    return False
 
 def args_run(parser):
     section = utils.load_config_file()
@@ -335,166 +483,49 @@ def args_run(parser):
 
 def cmd_run(args):
     """Run a system image container inside KVM"""
+    if (try_to_ssh()):
+        return;
+
     from . import cmd_images
     section = utils.load_config_file()
-    docker_os = section.get('os', cmd_images.default_os)
 
-    # We have three possible options to execute:
-    # 1. "mkt run" without request to specific image. We will try to find
-    #    default one
-    # 2. "mkt run --pci ..." or "mkt run --simx ...". We won't use default
-    #    image but add supplied PCIs and SimX devices.
-    # 3. "mkt run image_name --pci ..." or "mkt run image_name --simx ...". We
-    #    will add those PCIs and SimX devices to the container.
-    s = set()
-    if not args.pci and not args.simx:
-        if not args.image:
-            args.image = section.get('image', None)
+    find_image(args, section)
+    setup_devices(args)
+    do_bind_pci(args)
+    set_kernel(args, section)
+    set_custom_qemu(args)
+    set_boot_script(args)
 
-    if args.image:
-        pci = utils.get_images(args.image)['pci']
-        s = pci.split()
-        try:
-            args.kernel = utils.get_images(args.image)['kernel']
-        except KeyError:
-            pass
-
-    if args.kernel is None:
-        args.kernel = section.get('kernel', None)
-
-    union = set(get_simx_rdma_devices()).union(
-        set(get_pci_rdma_devices().keys())).union(
-        set(get_virt_rdma_devices()))
-
-    if not set(s).issubset(union):
-        # It is possible only for config files, because we sanitized
-        # input to ensure that valid data is supplied.
-        exit(
-            "There is an error in configuration file, PCI, SIMX or VIRT devices don't exists."
-        )
-
-    args.pci += set(s).intersection(set(get_pci_rdma_devices().keys()))
-    args.virt += set(s).intersection(set(get_virt_rdma_devices()))
-    b = args.pci + args.virt
-    args.simx += [item for item in s if item not in b]
-
-    if len(args.simx) > 5:
-        exit("SimX doesn't support more than 5 devices")
-
-    if not args.kernel and not args.kernel_rpm:
-        exit(
-            "Must specify a linux kernel with --kernel, or a config file default"
-        )
-
-    # Invoke ourself as root to manipulate sysfs
-    if args.pci:
-        subprocess.check_call([
-            "sudo", sys.executable,
-            os.path.join(os.path.dirname(__file__), "vfio.py")
-        ] + ["--pci=%s" % (I) for I in args.pci])
-
-    mapdirs = utils.DirList()
-    if args.kernel_rpm is not None:
-        args.kernel_rpm = os.path.realpath(args.kernel_rpm)
-        if not os.path.isfile(args.kernel_rpm):
-            raise ValueError(
-                "Kernel RPM %r does not exist" % (args.kernel_rpm))
-        mapdirs.add(os.path.dirname(args.kernel_rpm))
-        args.kernel = None
-    else:
-        args.kernel = os.path.realpath(args.kernel)
-        if not os.path.isdir(args.kernel):
-            raise ValueError("Kernel path %r is not a directory/does not exist"
-                             % (args.kernel))
-        mapdirs.add(args.kernel)
-
-    if args.image:
-        try:
-            if utils.get_images(args.image)['custom_qemu'] != "true":
-                raise KeyError
-            args.custom_qemu = section.get('simx', None)
-        except KeyError:
-            args.custom_qemu = None
-    else:
-        args.custom_qemu = None
-
-    if args.custom_qemu:
-        args.custom_qemu = os.path.realpath(args.custom_qemu)
-        if not os.path.isdir(args.custom_qemu):
-            raise ValueError("SimX path %r is not a directory/does not exist"
-                             % (args.custom_qemu))
-        mapdirs.add(args.custom_qemu)
-
-    usr = pwd.getpwuid(os.getuid())
-    args.dir.append(usr.pw_dir)
-    if 'dir' in section:
-        args.dir += section['dir'].split()
-    args.dir = list(set(args.dir))
-
-    for I in args.dir:
-        mapdirs.add(I)
-
-    args.boot_script = validate_and_set_boot(args)
-    if args.boot_script:
-        mapdirs.add(os.path.dirname(args.boot_script))
-
+    mapdirs = build_dirlist(args, section)
     vm_addr = get_mac()
 
     if args.run_shell:
         do_kvm_args = ["/bin/bash"]
     else:
         do_kvm_args = ["python3", "/plugins/do-kvm.py"]
-        if vm_addr.ip:
-            # Open network for QEMU, relevant for bridged mode only
-            iprule = ["FORWARD", "-m", "physdev", "--physdev-is-bridged", "-j", "ACCEPT"]
-            # First delete old rule
-            subprocess.call(["sudo", "iptables", "-D"] + iprule,
-                            stdout=subprocess.DEVNULL,
-                            stderr=subprocess.DEVNULL)
-            subprocess.call(["sudo", "iptables", "-I"] + iprule,
-                            stdout=subprocess.DEVNULL,
-                            stderr=subprocess.DEVNULL)
+        configure_firewall(vm_addr);
 
     src_dir = os.path.dirname(
         os.path.abspath(inspect.getfile(inspect.currentframe())))
 
-    ssh = False
-    # chack if we have container running with bound PCI device to it
-    # sudo docker ps --filter "label=pci" --format "{{.Names}}"
-    # sudo docker inspect --format='{{.Config.Hostname}}' mkt_run_nps-server-14-015
-    cont = docker_get_containers(label="pci")
-    for c in cont:
-        c = c.decode()[1:-1]
-        cpci = docker_output(["inspect", "--format", '"{{.Config.Hostname}}"', c])
-        if cpci:
-            ssh = True;
-            cname = c;
-            break
-    if ssh:
-        usr = pwd.getpwuid(os.getuid())
-        if have_netdev("br0"):
-            cmd = ["ssh", "%s@%s" % (usr.pw_name, get_host_name(cname))]
-        else:
-            cmd = ["ssh", "-p", "4444", "%s@localhost" % (usr.pw_name)]
-        subprocess.call(cmd)
-    else:
-        cname = get_container_name(vm_addr)
-        docker_exec(["run"] + mapdirs.as_docker_bind() + [
-            "-v",
-            "%s:/plugins:ro,Z" % (src_dir),
-            "--mount",
-            "type=bind,source=%s,destination=/logs" % (utils.config.runtime_logs_dir),
-            "--rm",
-            "--net=host",
-            "--privileged",
-            "--name=%s" % (cname),
-            "--tty",
-            "-l",
-            "pci=%s" % (args.pci),
-            "--hostname",
-            vm_addr.hostname,
-            "-e",
-            "KVM_PICKLE=%s" % (get_pickle(args, vm_addr)),
-            "--interactive",
-            make_image_name("kvm", docker_os),
-        ] + do_kvm_args)
+    docker_os = section.get('os', cmd_images.default_os)
+    cname = get_container_name(vm_addr)
+    docker_exec(["run"] + mapdirs.as_docker_bind() + [
+        "-v",
+       "%s:/plugins:ro,Z" % (src_dir),
+       "--mount",
+       "type=bind,source=%s,destination=/logs" % (utils.config.runtime_logs_dir),
+       "--rm",
+       "--net=host",
+       "--privileged",
+       "--name=%s" % (cname),
+       "--tty",
+       "-l",
+       "pci=%s" % (args.pci),
+       "--hostname",
+       vm_addr.hostname,
+       "-e",
+       "KVM_PICKLE=%s" % (get_pickle(args, vm_addr)),
+       "--interactive",
+       make_image_name("kvm", docker_os),
+    ] + do_kvm_args)

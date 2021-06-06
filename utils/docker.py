@@ -53,6 +53,11 @@ def docker_output(args, mode=None):
 
 
 def docker_get_containers(label):
+    import shutil
+
+    if shutil.which("docker") is None:
+        return []
+
     containers = docker_output(
         ["ps", "--format", '"{{.Names}}"', "--filter",
          "label=%s" % (label)], mode="lines")
