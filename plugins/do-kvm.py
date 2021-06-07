@@ -38,7 +38,7 @@ def create_mount(dfn):
     mtab = {I for I in get_mtab().keys() if I.startswith(dfn)}
     while mtab:
         for I in sorted(mtab, reverse=True):
-            subprocess.check_call(["umount", I])
+            subprocess.check_call(["sudo", "umount", I])
         mtab = {I for I in get_mtab().keys() if I.startswith(dfn)}
 
 
@@ -66,9 +66,15 @@ def remove_mounts():
 def is_passable_mount(v):
     if v[2] == "nfs" or v[2] == "nfs4":
         return True
+    if v[0].startswith("bind"):
+        return True
     if not v[0].startswith("/"):
         return False
     if v[1] == "/lab_tools":
+        return False
+    if v[1] == "/mnt/self":
+        return False
+    if v[0] == "/dev/root":
         return False
     return True
 
@@ -88,13 +94,13 @@ def create_unit(unescaped_name, ext, links, text):
             pass
 
 
-def setup_fs():
+def setup_fs(args):
     """Prepare the root filesystem for KVM under /mnt/self - this is simply our /
     without all the virtual filesystems docker creates"""
     # Mount / into /mnt/self to get rid of all virtual filesystems
     mnt = "/mnt/self"
     create_mount(mnt)
-    subprocess.check_call(["mount", "--bind", "/", mnt])
+    subprocess.check_call(["sudo", "mount", "--bind", "/", mnt])
 
     # Setup plan9 virtfs
     qemu_args["-fsdev"] = {
@@ -104,16 +110,23 @@ def setup_fs():
         "virtio-9p-pci,fsdev=host_fs,mount_tag=/dev/root")
 
     # Copy over local bind mounts, eg from docker -v
+    # For nexted VM, this cnt value is not relevant and overloaded
     cnt = 0
     for dfn, v in get_mtab().items():
         if not is_passable_mount(v):
             continue
 
+        if args.inside_mkt and v[0].startswith("bind"):
+            cnt = int(v[0].split("bind")[1])
+
         qemu_args["-fsdev"].add(
-            "local,id=host_bind_fs%u,security_model=passthrough,path=%s" %
+            "local,id=host_bind_fs%u,security_model=passthrough,path=%s,multidevs=remap" %
             (cnt, dfn))
         qemu_args["-device"].append(
             "virtio-9p-pci,fsdev=host_bind_fs%u,mount_tag=bind%u" % (cnt, cnt))
+
+        if args.inside_mkt:
+            continue
 
         create_unit(
             dfn, "mount", ["local-fs.target.wants"], """
@@ -169,7 +182,7 @@ def terminal_size():
     return tw, th
 
 
-def set_console():
+def set_console(args):
     """stdin is multiplexed onto three things, the monitor, the serial port and
     hvc0 (virtconsole).  The boot starts showing the serial port and switches
     to hvc0 when the first output happens there. 'Ctrl-a c' will rotate
@@ -198,71 +211,76 @@ def setup_nested_env(args):
         "-machine": machine,
     })
 
-def set_kernel(tree):
+def set_kernel(args):
     """Use a compiled kernel tree as the boot kernel. This directly boots the
     bzimage in that tree and configures the KVM root filesystem to have a
     /lib/modules directory with symlinks back to the source tree. /boot/ is
     also setup in the usual way with symlinks."""
-    bzimage = os.path.join(tree, "arch/x86/boot/bzImage")
-    ver = get_ip_tag(
-        subprocess.check_output(["file", bzimage]).decode(), "version")
 
-    mdir = "/lib/modules/%s" % (ver)
-    if os.path.isdir(mdir):
-        shutil.rmtree(mdir)
-    os.makedirs(mdir)
-
-    files = subprocess.check_output([
-        "find", tree, "-name", "modules.builtin", "-or", "-name",
-        "modules.order", "-or", "-name", "*.ko"
-    ]).split()
-    files = [I.decode() for I in files]
-
-    # Do not want to run 'make modules_install' so make these by hand..
-    with open(os.path.join(mdir, "modules.builtin"), "wt") as out:
-        for I in files:
-            if I.endswith("modules.builtin"):
-                with open(I) as F:
-                    out.write(F.read())
-
-    with open(os.path.join(mdir, "modules.order"), "wt") as out:
-        for I in files:
-            if I.endswith("modules.builtin"):
-                with open(I) as F:
-                    out.write(F.read())
-
-    # Symlink modules
-    mdir = os.path.join(mdir, "modules")
-    if not os.path.isdir(mdir):
-        os.makedirs(mdir)
-    fn_info = {}
-    for I in files:
-        if I.endswith(".ko"):
-            bn = os.path.basename(I)
-            os.symlink(I, os.path.join(mdir, bn))
-            st = os.stat(I)
-            fn_info[bn] = {"size": st[stat.ST_SIZE],
-                           "mtime": st[stat.ST_MTIME]}
-    with open(os.path.join(mdir, "mkt_module_data.pickle"), "wb") as out:
-        pickle.dump(fn_info, out)
-
-    if os.path.isdir("/boot"):
-        shutil.rmtree("/boot")
-    os.makedirs("/boot")
-
-    os.symlink(os.path.join(tree, "System.map"), "/boot/System.map-%s" % (ver))
-    os.symlink(os.path.join(tree, ".config"), "/boot/config-%s" % (ver))
-    os.symlink(bzimage, "/boot/vmlinuz-%s" % (ver))
-
-    subprocess.check_call(["depmod", "-a", ver])
-    cmdline = 'root=/dev/root rw ignore_loglevel rootfstype=9p \
-rootflags=trans=virtio earlyprintk=serial,ttyS0,115200 \
-console=hvc0 noibrs noibpb nopti nospectre_v2 nospectre_v1\
+    tree = args.kernel
+    cmdline = 'root=/dev/root rw \
+ignore_loglevel \
+rootfstype=9p rootflags=trans=virtio \
+earlyprintk=serial,ttyS0,115200 console=hvc0 \
+noibrs noibpb nopti nospectre_v2 nospectre_v1 \
 l1tf=off nospec_store_bypass_disable no_stf_barrier \
 mds=off mitigations=off'
 
-    if args.nested_pci:
-        cmdline += ' intel_iommu=on'
+    if not args.inside_mkt:
+        bzimage = os.path.join(tree, "arch/x86/boot/bzImage")
+        ver = get_ip_tag(
+            subprocess.check_output(["file", bzimage]).decode(), "version")
+
+        mdir = "/lib/modules/%s" % (ver)
+        if os.path.isdir(mdir):
+            shutil.rmtree(mdir)
+        os.makedirs(mdir)
+
+        files = subprocess.check_output([
+            "find", tree, "-name", "modules.builtin", "-or", "-name",
+            "modules.order", "-or", "-name", "*.ko"
+        ]).split()
+        files = [I.decode() for I in files]
+
+        # Do not want to run 'make modules_install' so make these by hand..
+        with open(os.path.join(mdir, "modules.builtin"), "wt") as out:
+            for I in files:
+                if I.endswith("modules.builtin"):
+                    with open(I) as F:
+                        out.write(F.read())
+
+        with open(os.path.join(mdir, "modules.order"), "wt") as out:
+            for I in files:
+                if I.endswith("modules.builtin"):
+                    with open(I) as F:
+                        out.write(F.read())
+
+        # Symlink modules
+        mdir = os.path.join(mdir, "modules")
+        if not os.path.isdir(mdir):
+            os.makedirs(mdir)
+        fn_info = {}
+        for I in files:
+            if I.endswith(".ko"):
+                bn = os.path.basename(I)
+                os.symlink(I, os.path.join(mdir, bn))
+                st = os.stat(I)
+                fn_info[bn] = {"size": st[stat.ST_SIZE],
+                               "mtime": st[stat.ST_MTIME]}
+        with open(os.path.join(mdir, "mkt_module_data.pickle"), "wb") as out:
+            pickle.dump(fn_info, out)
+
+        if os.path.isdir("/boot"):
+            shutil.rmtree("/boot")
+        os.makedirs("/boot")
+
+        os.symlink(os.path.join(tree, "System.map"), "/boot/System.map-%s" % (ver))
+        os.symlink(os.path.join(tree, ".config"), "/boot/config-%s" % (ver))
+        os.symlink(bzimage, "/boot/vmlinuz-%s" % (ver))
+
+        subprocess.check_call(["depmod", "-a", ver])
+        if args.nested_pci:
+            cmdline += ' intel_iommu=on'
 
     qemu_args.update({
         "-kernel":
@@ -274,8 +292,13 @@ mds=off mitigations=off'
     })
 
 
-def set_kernel_rpm(src):
+def set_kernel_rpm(args):
     """Setup a kernel from a compiled kernel RPM"""
+
+    if args.inside_mkt:
+        raise ValueError("RPM boot is not supported in nested VM")
+
+    src = args.kernel_rpm
     print("Extracting RPM %r" % (src))
     fns = subprocess.check_output(
         ["rpm2cpio %s | cpio -idmv" % (shlex.quote(src))], shell=True, cwd="/", stderr=subprocess.STDOUT)
@@ -329,6 +352,8 @@ def set_loop_network(args):
         "user,hostfwd=tcp:127.0.0.1:4444-:22"
     ])
 
+    qemu_args["-append"] += " systemd.hostname=%s" %(args.vm_addr.hostname);
+
 def set_simx_cfg():
     """Prepare simx cfg file."""
 
@@ -368,7 +393,7 @@ WantedBy=custom.target
 def have_netdev(name):
     try:
         subprocess.check_output(
-            ["ip", "link", "show", "dev", name], stderr=subprocess.STDOUT)
+            ["/usr/sbin/ip", "link", "show", "dev", name], stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError:
         return False;
     return True;
@@ -421,9 +446,6 @@ def set_simx_network(simx):
         if args.num_of_vfs:
             f.write('[adapter]\n')
             f.write('num_of_function = %s\n' % (args.num_of_vfs))
-
-def set_virt_devices(args):
-    qemu_args["-append"] += " modules_load=rdma_rxe";
 
 def set_vfio(args):
     """Pass a VFIO owned PCI device through to the guest"""
@@ -490,13 +512,15 @@ def setup_from_pickle(args, pickle_params):
     about the environment in a pickle and we adjust the configuration
     accordingly"""
     p = pickle.loads(base64.b64decode(pickle_params))
-    write_once("/etc/passwd",
-               "{user}:x:{uid}:{gid}::{home}:/bin/bash\n".format(**p))
-    write_once("/etc/shadow", "{user}::17486:0:99999:7:::\n".format(**p))
-    write_once("/etc/group", "{group}:x:{gid}:\n".format(**p))
-    write_once("/etc/sudoers", "{user} ALL=(ALL) NOPASSWD:ALL\n".format(**p))
+    args.inside_mkt = p.get("inside_mkt", False);
+    if not args.inside_mkt:
+        write_once("/etc/passwd",
+                   "{user}:x:{uid}:{gid}::{home}:/bin/bash\n".format(**p))
+        write_once("/etc/shadow", "{user}::17486:0:99999:7:::\n".format(**p))
+        write_once("/etc/group", "{group}:x:{gid}:\n".format(**p))
+        write_once("/etc/sudoers", "{user} ALL=(ALL) NOPASSWD:ALL\n".format(**p))
 
-    setup_console(p["user"])
+        setup_console(p["user"])
 
     args.kernel = p.get("kernel", None)
     args.kernel_rpm = p.get("kernel_rpm", None)
@@ -517,6 +541,7 @@ def setup_from_pickle(args, pickle_params):
     if args.nested_pci:
         with open('/etc/mkt.conf', "w") as f:
             f.write(' '.join(args.nested_pci) + '\n')
+    args.inside_mkt = p.get("inside_mkt", False);
 
 parser = argparse.ArgumentParser(
     description='Launch kvm using the filesystem from the container')
@@ -530,37 +555,40 @@ if args.test:
     setup_test_script(args)
 
 qemu_args = {
-    "-enable-kvm": None,
-    # Escape sequence is ctrl-a c q
-    "-nographic": None,
-    "-cpu": "host",
-    "-vga": "none",
-    "-no-reboot": None,
-    "-nodefaults": None,
-    "-m": args.mem,
-    "-net": [],
-    "-netdev": set(),
-    "-device": ["virtio-rng-pci", "virtio-balloon-pci"],
+        "-enable-kvm": None,
+        # Escape sequence is ctrl-a c q
+        "-nographic": None,
+        "-cpu": "host",
+        "-vga": "none",
+        "-no-reboot": None,
+        "-nodefaults": None,
+        "-m": args.mem,
+        "-net": [],
+        "-netdev": set(),
 
-    # Newer FC28 qemu has a version of SeaBIOS with serial console (1.11)
-    # support that clears the console and disables line wrapping, see
-    # https://mail.coreboot.org/pipermail/seabios/2017-September/011792.html
-    #
-    # This is really annoying, disable it by telling SeaBIOS to use a bogus
-    # serial port for its output.
-    "-fw_cfg": ["etc/sercon-port,string=2"],
-    "-smp": "%s" % (multiprocessing.cpu_count())
-}
+        # Newer FC28 qemu has a version of SeaBIOS with serial console (1.11)
+        # support that clears the console and disables line wrapping, see
+        # https://mail.coreboot.org/pipermail/seabios/2017-September/011792.html
+        #
+        # This is really annoying, disable it by telling SeaBIOS to use a bogus
+        # serial port for its output.
+        "-fw_cfg": ["etc/sercon-port,string=2"],
+        "-smp": "%s" % (multiprocessing.cpu_count()),
+        "-device": ["virtio-rng-pci", "virtio-balloon-pci"]
+    }
 
-remove_mounts()
-set_console()
-setup_fs()
+set_console(args)
+
+if not args.inside_mkt:
+    remove_mounts()
+
+setup_fs(args)
 setup_nested_env(args)
 
 if args.kernel_rpm:
-    set_kernel_rpm(args.kernel_rpm)
+    set_kernel_rpm(args)
 else:
-    set_kernel(args.kernel)
+    set_kernel(args)
 
 if args.custom_qemu:
     set_custom_qemu(args.custom_qemu)
@@ -570,11 +598,14 @@ if have_netdev("br0"):
 else:
     set_loop_network(args)
 
-set_vfio(args)
-if args.virt:
-    set_virt_devices(args)
+if not args.inside_mkt:
+    set_vfio(args)
 
-cmd = ["/opt/simx/bin/qemu-system-x86_64"]
+cmd = []
+if args.inside_mkt:
+    cmd = ["sudo"]
+cmd += ["/opt/simx/bin/qemu-system-x86_64"]
+
 if args.simx:
     set_simx_cfg()
     set_simx_network(args.simx)
@@ -594,8 +625,9 @@ for k, v in sorted(qemu_args.items()):
 if args.boot_script:
     setup_login_script(args)
 
-with open('/logs/qemu.cmdline', 'w+') as f:
-    f.write(" ".join(cmd))
+if not args.inside_mkt:
+    with open('/logs/qemu.cmdline', 'w+') as f:
+        f.write(" ".join(cmd))
 
 subprocess.call(["rm", "-rf", "/.dockerenv"])
 os.execvp(cmd[0], cmd)
