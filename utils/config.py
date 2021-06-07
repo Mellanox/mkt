@@ -6,10 +6,15 @@ import configparser
 import pwd
 import grp
 
+host = socket.gethostname()
 config_f = os.path.expanduser(
-    "~/.config/mellanox/mkt/hv-%s.mkt" % (socket.gethostname()))
-config = configparser.ConfigParser(allow_no_value=True)
+    "~/.config/mellanox/mkt/hv-%s.mkt" % (host))
+if not os.path.isfile(config_f):
+    # Let's try to set config from parent VM, maybe we are in nested VM
+    config_f = os.path.expanduser(
+        "~/.config/mellanox/mkt/hv-%s.mkt" % ('-'.join(host.split('-')[:-1])))
 
+config = configparser.ConfigParser(allow_no_value=True)
 
 def username():
     return pwd.getpwuid(os.getuid())[0]
