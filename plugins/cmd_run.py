@@ -185,20 +185,22 @@ def get_host_name(cname):
     """Return the host name of the docker container"""
     return cname[8:]
 
-def random_mac():
+def random_mac(args):
     random.seed()
     a = random.randint(0, 255)
     b = random.randint(0, 255)
     c = random.randint(0, 255)
     d = random.randint(0, 255)
     mac = "52:54:%02x:%02x:%02x:%02x" % (a, b, c, d)
+    if args.inside_mkt:
+        return VM_Addr(mac=mac, ip=None, hostname=socket.gethostname() + "-l2")
+
     return VM_Addr(mac=mac, ip=None, hostname=socket.gethostname() + "-vm")
 
-
-def get_mac():
+def get_mac(args):
     list_fn = "/.autodirect/LIT/SCRIPTS/DHCPD/list.html"
     if not os.path.isfile(list_fn):
-        return random_mac()
+        return random_mac(args)
 
     # The file is very big and python is very slow, use grep to find the
     # relevant entries.
@@ -280,6 +282,8 @@ def get_pickle(args, vm_addr):
         p["nested_pci"] = sorted(args.nested_pci)
         # Add extra 1G for second QEMU instance
         mem += 1 + 2 * len(p["nested_pci"])
+
+    p["inside_mkt"] = args.inside_mkt
 
     p["mem"] = str(mem) + 'G'
 
@@ -450,7 +454,19 @@ def have_netdev(name):
         return False;
     return True;
 
-def try_to_ssh():
+def try_to_ssh(args):
+    usr = pwd.getpwuid(os.getuid())
+    if args.inside_mkt:
+        try:
+            subprocess.check_output(
+                ["/usr/bin/pgrep", "qemu-system-"], stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError:
+            return False;
+
+        cmd = ["ssh", "-p", "4444", "%s@localhost" % (usr.pw_name)]
+        subprocess.call(cmd)
+        return True
+
     # chack if we have container running with bound PCI device to it
     # sudo docker ps --filter "label=pci" --format "{{.Names}}"
     # sudo docker inspect --format='{{.Config.Hostname}}' mkt_run_nps-server-14-015
@@ -460,7 +476,6 @@ def try_to_ssh():
         cpci = docker_output(["inspect", "--format", '"{{.Config.Hostname}}"', c])
         if cpci:
             cname = c;
-            usr = pwd.getpwuid(os.getuid())
             if have_netdev("br0"):
                 cmd = ["ssh", "%s@%s" % (usr.pw_name, get_host_name(cname))]
             else:
@@ -542,31 +557,38 @@ def args_run(parser):
 def cmd_run(args):
     """Run a system image container inside KVM"""
 
-    if (try_to_ssh()):
+    args.inside_mkt = is_inside_mkt()
+    if (try_to_ssh(args)):
         return;
 
     from . import cmd_images
     section = utils.load_config_file()
 
-    args.inside_mkt = is_inside_mkt()
     find_image(args, section)
     setup_devices(args)
     do_bind_pci(args)
-    if (args.inside_mkt):
-        return
-
     set_kernel(args, section)
     set_custom_qemu(args)
     set_boot_script(args)
 
     mapdirs = build_dirlist(args, section)
-    vm_addr = get_mac()
+    vm_addr = get_mac(args)
+
+    if not args.run_shell and not args.inside_mkt:
+        # Open ports so docker instance will be able
+        # to communicate with external network.
+        configure_firewall(vm_addr);
+
+    pickle = get_pickle(args, vm_addr)
 
     if args.run_shell:
         do_kvm_args = ["/bin/bash"]
     else:
         do_kvm_args = ["python3", "/plugins/do-kvm.py"]
-        configure_firewall(vm_addr);
+
+    if args.inside_mkt:
+        subprocess.call(do_kvm_args, env={"KVM_PICKLE": pickle})
+        return
 
     src_dir = os.path.dirname(
         os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -588,7 +610,7 @@ def cmd_run(args):
        "--hostname",
        vm_addr.hostname,
        "-e",
-       "KVM_PICKLE=%s" % (get_pickle(args, vm_addr)),
+       "KVM_PICKLE=%s" % (pickle),
        "--interactive",
        make_image_name("kvm", docker_os),
     ] + do_kvm_args)
