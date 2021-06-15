@@ -28,6 +28,8 @@ def args_build(parser):
         action="store_true",
         default=False,
         help="Install kernel headers (used in custom build target)")
+    parser.add_argument(
+        '--dir', action="append", help="Other paths to map", default=[])
 
 def cmd_build(args):
     """Smart build."""
@@ -42,9 +44,13 @@ def cmd_build(args):
     build = Build(args.project)
 
     recipe_dir = None
+    mapdirs = utils.DirList()
+    for I in args.dir:
+        mapdirs.add(I)
+
     if args.build_recipe is not None:
         args.build_recipe = os.path.realpath(args.build_recipe)
-        recipe_dir = os.path.dirname(args.build_recipe)
+        mapdirs.add(os.path.dirname(args.build_recipe))
 
     build.pickle['shell'] = args.run_shell
     build.pickle["passwd"] = "%s:x:%s:%s:%s:%s:/bin/bash" % (username(),
@@ -60,4 +66,4 @@ def cmd_build(args):
         build.pickle['kernel'] = section.get('kernel', None)
 
     do_cmd = ["python3", "/plugins/do-build.py"]
-    docker_exec(["run"] + build.run_build_cmd(cmd_images.default_os, recipe_dir) + do_cmd)
+    docker_exec(["run"] + build.run_build_cmd(cmd_images.default_os, mapdirs) + do_cmd)

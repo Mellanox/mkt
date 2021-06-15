@@ -32,7 +32,7 @@ class Build(object):
 
         return base64.b64encode(pickle.dumps(self.pickle)).decode()
 
-    def _run_cmd(self, supos, build_recipe, image_name):
+    def _run_cmd(self, supos, image_name, mapdirs=[], rw=False):
         ccache = section.get('ccache', None)
         docker_os = section.get('os', supos)
         cmd = ["--rm", "-v", self.src + ":" + self.src + ":rw,Z", "-it"]
@@ -41,18 +41,18 @@ class Build(object):
                        os.path.abspath(inspect.getfile(inspect.currentframe()) + "/../"))
         cmd += ["-v", "%s/plugins/:/plugins:ro,Z" %(src_dir)]
 
-        if build_recipe:
-            cmd += ["-v", "%s:%s:ro,Z" % (build_recipe, build_recipe)]
+        if mapdirs:
+            cmd += mapdirs.as_docker_bind(rw)
         if ccache:
             cmd += ["-v", ccache + ":/ccache:Z"]
 
         return cmd + ["-w", self.src, make_image_name(image_name, docker_os)]
 
-    def run_build_cmd(self, supos, build_recipe=None):
+    def run_build_cmd(self, supos, mapdirs=[]):
         cmd = ["-e", "BUILD_PICKLE=%s" % (self._get_pickle())]
         cmd += ["-v", "%s:%s:ro,Z" %(os.getenv("HOME"), os.getenv("HOME"))]
 
-        return cmd + self._run_cmd(supos, build_recipe, "build")
+        return cmd + self._run_cmd(supos, "build", mapdirs, True)
 
     def run_ci_cmd(self, supos):
         cmd = ["--tmpfs", "/build:rw,exec,nosuid,mode=755,size=10G"]
@@ -60,7 +60,7 @@ class Build(object):
         if self.pickle["src"] != self.pickle["checkpatch_root_dir"]:
             cmd += ["-v", "%s:%s:ro,Z" %(self.pickle["checkpatch_root_dir"], self.pickle["checkpatch_root_dir"])]
 
-        return cmd + self._run_cmd(supos, None, "ci")
+        return cmd + self._run_cmd(supos, "ci")
 
 project_marks = {
         "libibverbs": "rdma-core",
