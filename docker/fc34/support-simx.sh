@@ -1,7 +1,7 @@
 #!/bin/bash
 # ---
-# git_url: http://l-gerrit.mtl.labs.mlnx:8080/simx
-# git_commit: 41f602dc05b3c115b176ac3f7869e8bd390cbd92
+# git_url: /global/home/users/ztiffany/test/simx
+# git_commit: 3f3c2c9338f3bbb73cf3bd298152e020e394086f
 
 cat <<EOF > mlx-simx.spec
 %global debug_package %{nil}
@@ -18,7 +18,7 @@ From simx.git
 %build
 ./mlnx_infra/config.status.mlnx --target=x86 --prefix=/opt/simx
 make %{?_smp_mflags}
-make %{?_smp_mflags} -C mellanox/
+make %{?_smp_mflags} -C mellanox/ SIMX_PROJECT=mlx5
 
 #%install
 make DESTDIR=%{buildroot} install

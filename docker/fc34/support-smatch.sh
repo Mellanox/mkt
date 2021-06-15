@@ -1,7 +1,7 @@
 #!/bin/bash
 # ---
-# git_url: git://repo.or.cz/smatch.git
-# git_commit: 9bb66fa2d7c73b3338a27fd6b38d7d509b2a1c1b
+# git_url: /global/home/users/artemp/scratch/.cache/mellanox/mkt/smatch.git
+# git_commit: 72c21a144a812cadbe349801da1b24bc331af256
 
 cat <<EOF > smatch.spec
 Name: smatch

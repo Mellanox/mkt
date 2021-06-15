@@ -59,4 +59,7 @@ RUN dnf install -y \
     uuid-devel \
     valgrind-devel \
     zlib-devel \
+    autoconf \
+    automake \
+    libtool \
     && dnf clean dbcache packages

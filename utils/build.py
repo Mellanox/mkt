@@ -67,6 +67,7 @@ project_marks = {
         "rdma": "iproute2",
         "kernel": "kernel",
         "mlnx_infra": "simx",
+        "rdmo-app": "rdmo-app",
 }
 
 def build_list():
@@ -78,6 +79,7 @@ def set_args_project(args, section):
 
     # "custom" project can't be sensed and must be provided explicitly
     for key, value in project_marks.items():
+        print("comparing {} and {}".format(key, args.project))
         if os.path.isdir(key):
             args.project = value
 

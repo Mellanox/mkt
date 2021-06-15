@@ -1,7 +1,7 @@
 #!/bin/bash
 # ---
-# git_url: git://git.kernel.org/pub/scm/devel/sparse/sparse.git
-# git_commit: 8af2432923486c753ab52cae70b94ee684121080
+# git_url: /global/home/users/artemp/scratch/.cache/mellanox/mkt/sparse.git
+# git_commit: 49c98aa3ed1b315ed2f4fbe44271ecd5bdd9cbc7
 
 cat <<EOF > sparse.spec
 Name: sparse
