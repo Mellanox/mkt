@@ -16,40 +16,10 @@ import collections
 import random
 from utils.docker import *
 from utils.cmdline import *
+from utils.dirs import *
 from . import cmd_images
 
 VM_Addr = collections.namedtuple("VM_Addr", "hostname ip mac")
-
-class DirList(object):
-    def __init__(self):
-        self.list = set()
-
-    def add(self, dfn):
-        """Maintain a list of directories such that there are no subdirectories of
-        other elements in the list."""
-        if isinstance(dfn, bytes):
-            dfn = dfn.decode()
-        while dfn[-1] == '/':
-            dfn = dfn[:-1]
-
-        dfn = os.path.realpath(dfn)
-
-        torm = set()
-        for I in self.list:
-            if dfn.startswith(I):
-                return
-            if I.startswith(dfn):
-                torm.add(I)
-        self.list.difference_update(torm)
-        self.list.add(dfn)
-
-    def as_docker_bind(self):
-        res = []
-        for I in sorted(self.list):
-            res.append("-v")
-            res.append("%s:%s:Z" % (I, I))
-        return res
-
 
 def match_modalias(modalias):
     """Detect Mellanox devices that we want to pass through"""
@@ -423,7 +393,7 @@ def cmd_run(args):
             os.path.join(os.path.dirname(__file__), "vfio.py")
         ] + ["--pci=%s" % (I) for I in args.pci])
 
-    mapdirs = DirList()
+    mapdirs = utils.DirList()
     if args.kernel_rpm is not None:
         args.kernel_rpm = os.path.realpath(args.kernel_rpm)
         if not os.path.isfile(args.kernel_rpm):
