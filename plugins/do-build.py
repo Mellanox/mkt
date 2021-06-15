@@ -42,6 +42,12 @@ def make_simx(args):
 
     subprocess.call(cmd + ['-j%d' %(args.num_jobs)])
 
+def make_rdmo_app(args):
+    if args.clean:
+        subprocess.check_output(['rm', '-rf', 'build'])
+        return
+    subprocess.call(['./build.sh'])
+
 def switch_to_user(args):
     with open("/etc/passwd","a") as F:
         F.write(args.passwd + "\n");
@@ -79,9 +85,13 @@ if args.project and args.kernel:
     subprocess.check_output(['make', 'headers_install',
         'INSTALL_HDR_PATH=/usr'], cwd=args.kernel)
 
+if not os.path.isdir('/images/ztiffany/ccache'):
+    subprocess.check_output(['mkdir', '/images/ztiffany/ccache'])
+    subprocess.check_output(['chmod', '0777', '/images/ztiffany/ccache'])
+
 switch_to_user(args)
-if os.path.isdir('/ccache'):
-    os.environ['CCACHE_DIR'] = '/ccache'
+if os.path.isdir('/images/ztiffany/ccache'):
+    os.environ['CCACHE_DIR'] = '/images/ztiffany/ccache'
 
 if args.shell:
     os.execvp('/bin/bash', ['/bin/bash'])
@@ -97,3 +107,5 @@ if args.project == "rdma-core":
     make_rdma_core(args)
 if args.project == "simx":
     make_simx(args)
+if args.project == "rdmo-app":
+    make_rdmo_app(args)

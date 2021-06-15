@@ -61,6 +61,14 @@ RUN \
     unzip \
     valgrind \
     wget \
+    autoconf \
+    automake \
+    libtool \
+    g++ \
+    vim \
+    iperf \
+    crash \
+    zstd \
     && dnf clean dbcache packages
 
 COPY --from=rpms /opt/rpms /opt/rpms
@@ -69,4 +77,6 @@ ADD sshd_config ssh_host_rsa_key /etc/ssh/
 
 ADD basic-setup.sh kvm-setup.sh /root/
 
-RUN /root/basic-setup.sh && /root/kvm-setup.sh
+RUN /root/basic-setup.sh
+
+RUN /root/kvm-setup.sh
