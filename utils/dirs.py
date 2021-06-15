@@ -25,9 +25,12 @@ class DirList(object):
         self.list.difference_update(torm)
         self.list.add(dfn)
 
-    def as_docker_bind(self):
+    def as_docker_bind(self, rw=False):
         res = []
         for I in sorted(self.list):
             res.append("-v")
-            res.append("%s:%s:Z" % (I, I))
+            if rw:
+                res.append("%s:%s:rw,Z" % (I, I))
+            else:
+                res.append("%s:%s:Z" % (I, I))
         return res
