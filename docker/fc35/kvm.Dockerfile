@@ -1,7 +1,7 @@
-FROM fedora:34 as rpms
+FROM fedora:35 as rpms
 
-COPY --from=local_mkt/support_rdma_core:fc34 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
-COPY --from=local_mkt/support_simx:fc34 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
+COPY --from=local_mkt/support_rdma_core:fc35 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
+COPY --from=local_mkt/support_simx:fc35 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
 
 RUN rm -f \
    /opt/rpms/*debug*.rpm \
@@ -9,7 +9,7 @@ RUN rm -f \
    /opt/rpms/*devel*.rpm \
    /opt/rpms/*iwpmd*.rpm
 
-FROM fedora:34
+FROM fedora:35
 
 # Static files are done before installing to avoid prompting
 ADD ./sudoers /etc/sudoers.d/local
