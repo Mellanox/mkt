@@ -1,7 +1,11 @@
 #!/bin/bash
 # ---
 # git_url: http://l-gerrit.mtl.labs.mlnx:8080/simx
-# git_commit: 1af4eec8ea187a4727bf1821ffcdab0c276a7d3b
+# git_commit: 070998838203c06a760321fae6bd0fe8d7eaaa96
+# other_files:
+#  - 0001-build-Don-t-install-files-that-we-are-not-interested.patch
+
+patch -p1 < /opt/0001-*.patch
 
 cat <<EOF > mlx-simx.spec
 %global debug_package %{nil}

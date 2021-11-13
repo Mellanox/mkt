@@ -80,7 +80,7 @@ rebuilding things have have had their inputs change.
 Support packages are described by a shell script with instructions to build
 the OS.  The **mkt** support code fetches the source code from a GIT
 repository and provides it to that shell script inside a docker container
-environment. See *docker/fc34/support-simx.sh* for an example
+environment. See *docker/fc35/support-simx.sh* for an example
 
 ## KVM DOCKER IMAGE
 
