@@ -27,6 +27,7 @@ RUN \
     file \
     gdb \
     git-core \
+    glibc-langpack-en \
     infiniband-diags \
     iproute \
     iputils \
