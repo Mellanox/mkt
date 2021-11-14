@@ -342,14 +342,12 @@ def set_bridge_network(args):
 
 
 def set_loop_network(args):
-    """Simple network that forwards our localhost port 4444 to the kvm's ssh
-    port"""
+    """Simple network that forwards our localhost port to the kvm's ssh port"""
     print(
-        "No br0 bridge found, using NAT networking, connected to port localhost:4444 for ssh"
-    )
+        "No br0 bridge found, using NAT networking, connected to port localhost:%s for ssh" % (args.port))
     qemu_args["-net"].extend([
         "nic,model=virtio,macaddr=%s" % (args.vm_addr.mac),
-        "user,hostfwd=tcp:127.0.0.1:4444-:22"
+        "user,hostfwd=tcp:127.0.0.1:%s-:22" % (args.port)
     ])
 
     qemu_args["-append"] += " systemd.hostname=%s" %(args.vm_addr.hostname);
@@ -542,6 +540,7 @@ def setup_from_pickle(args, pickle_params):
         with open('/etc/mkt.conf', "w") as f:
             f.write(' '.join(args.nested_pci) + '\n')
     args.inside_mkt = p.get("inside_mkt", False);
+    args.port = p.get("port", 4444);
 
 parser = argparse.ArgumentParser(
     description='Launch kvm using the filesystem from the container')

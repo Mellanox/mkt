@@ -147,9 +147,9 @@ def get_pci_rdma_devices():
     return devices
 
 
-def get_container_name(vm_addr):
+def get_container_name(args, vm_addr):
     """Return the name of the docker container to use for this VM"""
-    return "mkt_run_%s" % (vm_addr.hostname)
+    return "mkt_run_%s_%s" % (args.image, vm_addr.hostname)
 
 def get_host_name(cname):
     """Return the host name of the docker container"""
@@ -194,7 +194,7 @@ def get_mac(args):
         # docker is used to lock the MAC addresses, other virt systems should use
         # numbers at the end of the sorted range to try to avoid conflicting here.
         vm_addr = VM_Addr(ip=inf[0], mac=inf[1], hostname=host)
-        cname = get_container_name(vm_addr)
+        cname = get_container_name(args, vm_addr)
         status = docker_output([
             "ps", "-a", "-q", "--filter",
             "name=%s" % (cname), "--format", "{{.Status}}"
@@ -219,6 +219,13 @@ def configure_firewall(vm_addr):
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL)
 
+def get_free_port(host='127.0.0.1'):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind((host, 0))
+    port = sock.getsockname()[1]
+    sock.close()
+
+    return port
 
 def get_pickle(args, vm_addr):
     usr = pwd.getpwuid(os.getuid())
@@ -280,6 +287,8 @@ def get_pickle(args, vm_addr):
 
     if args.gdbserver:
         p["gdbserver"] = args.gdbserver
+
+    p["port"] = args.port
 
     return base64.b64encode(pickle.dumps(p)).decode()
 
@@ -440,16 +449,25 @@ def try_to_ssh(args):
     # chack if we have container running with bound PCI device to it
     # sudo docker ps --filter "label=pci" --format "{{.Names}}"
     # sudo docker inspect --format='{{.Config.Hostname}}' mkt_run_nps-server-14-015
-    cont = docker_get_containers(label="pci")
+    cont = docker_get_containers(label="image")
     for c in cont:
         c = c.decode()[1:-1]
+        cimage = docker_output(["inspect", "--format", '"{{.Config.Labels.image}}"', c])
+        cimage = cimage.decode()[1:-1]
+        if args.image != cimage:
+            continue
+
+        cport = docker_output(["inspect", "--format", '"{{.Config.Labels.port}}"', c])
+        cport = cport.decode()[1:-1]
+
         cpci = docker_output(["inspect", "--format", '"{{.Config.Hostname}}"', c])
         if cpci:
             cname = c;
             if have_netdev("br0"):
                 cmd = ["ssh", "%s@%s" % (usr.pw_name, get_host_name(cname))]
             else:
-                cmd = ["ssh", "-p", "4444", "%s@localhost" % (usr.pw_name)]
+                cmd = ["ssh", "-o", "LogLevel=error", "-o", "StrictHostKeyChecking=no",
+                        "-p", "%s" % (cport), "%s@localhost" % (usr.pw_name)]
             subprocess.call(cmd)
             return True
 
@@ -532,13 +550,13 @@ def cmd_run(args):
     """Run a system image container inside KVM"""
 
     args.inside_mkt = is_inside_mkt()
-    if (try_to_ssh(args)):
-        return;
 
     from . import cmd_images
     section = utils.load_config_file()
-
     find_image(args, section)
+    if (try_to_ssh(args)):
+        return;
+
     setup_devices(args)
     do_bind_pci(args)
     set_kernel(args, section)
@@ -547,6 +565,7 @@ def cmd_run(args):
 
     mapdirs = build_dirlist(args, section)
     vm_addr = get_mac(args)
+    args.port = get_free_port()
 
     if not args.run_shell and not args.inside_mkt:
         # Open ports so docker instance will be able
@@ -568,7 +587,7 @@ def cmd_run(args):
         os.path.abspath(inspect.getfile(inspect.currentframe())))
 
     docker_os = section.get('os', cmd_images.default_os)
-    cname = get_container_name(vm_addr)
+    cname = get_container_name(args, vm_addr)
     docker_exec(["run"] + mapdirs.as_docker_bind() + [
         "-v",
        "%s:/plugins:ro,Z" % (src_dir),
@@ -580,7 +599,9 @@ def cmd_run(args):
        "--name=%s" % (cname),
        "--tty",
        "-l",
-       "pci=%s" % (args.pci),
+       "image=%s" % (args.image),
+       "-l",
+       "port=%s" % (args.port),
        "--hostname",
        vm_addr.hostname,
        "-e",
