@@ -282,7 +282,7 @@ mds=off mitigations=off'
 
         subprocess.check_call(["depmod", "-a", ver])
         if args.nested_pci:
-            cmdline += ' intel_iommu=on'
+            cmdline += ' intel_iommu=on vfio_iommu_type1.allow_unsafe_interrupts=1'
 
     qemu_args.update({
         "-kernel":
@@ -314,7 +314,7 @@ def set_kernel_rpm(args):
     cmdline = 'root=/dev/root rw ignore_loglevel rootfstype=9p \
 rootflags=trans=virtio earlyprintk=serial,ttyS0,115200 console=hvc0'
     if args.nested_pci:
-        cmdline += ' intel_iommu=on'
+        cmdline += ' intel_iommu=on vfio_iommu_type1.allow_unsafe_interrupts=1'
 
     qemu_args.update({
         "-kernel":
@@ -599,8 +599,7 @@ if have_netdev("br0"):
 else:
     set_loop_network(args)
 
-if not args.inside_mkt:
-    set_vfio(args)
+set_vfio(args)
 
 cmd = []
 if args.inside_mkt:
