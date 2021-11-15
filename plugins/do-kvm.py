@@ -225,6 +225,8 @@ earlyprintk=serial,ttyS0,115200 console=hvc0 \
 noibrs noibpb nopti nospectre_v2 nospectre_v1 \
 l1tf=off nospec_store_bypass_disable no_stf_barrier \
 mds=off mitigations=off'
+    if args.inside_mkt:
+        cmdline = cmdline + ' clocksource=acpi_pm'
 
     if not args.inside_mkt:
         bzimage = os.path.join(tree, "arch/x86/boot/bzImage")
