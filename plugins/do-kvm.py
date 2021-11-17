@@ -104,7 +104,7 @@ def setup_fs(args):
 
     # Setup plan9 virtfs
     qemu_args["-fsdev"] = {
-        "local,id=host_fs,security_model=passthrough,path=%s" % (mnt)
+        "local,id=host_fs,security_model=none,path=%s" % (mnt)
     }
     qemu_args["-device"].append(
         "virtio-9p-pci,fsdev=host_fs,mount_tag=/dev/root")
@@ -120,7 +120,7 @@ def setup_fs(args):
             cnt = int(v[0].split("bind")[1])
 
         qemu_args["-fsdev"].add(
-            "local,id=host_bind_fs%u,security_model=passthrough,path=%s,multidevs=remap" %
+            "local,id=host_bind_fs%u,security_model=none,path=%s,multidevs=remap" %
             (cnt, dfn))
         qemu_args["-device"].append(
             "virtio-9p-pci,fsdev=host_bind_fs%u,mount_tag=bind%u" % (cnt, cnt))
