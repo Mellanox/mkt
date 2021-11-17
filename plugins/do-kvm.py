@@ -220,7 +220,7 @@ def set_kernel(args):
     tree = args.kernel
     cmdline = 'root=/dev/root rw \
 ignore_loglevel \
-rootfstype=9p rootflags=trans=virtio \
+rootfstype=9p rootflags="cache=loose,trans=virtio" \
 earlyprintk=serial,ttyS0,115200 console=hvc0 \
 noibrs noibpb nopti nospectre_v2 nospectre_v1 \
 l1tf=off nospec_store_bypass_disable no_stf_barrier \
