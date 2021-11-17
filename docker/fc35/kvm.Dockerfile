@@ -29,6 +29,8 @@ RUN \
     git-core \
     glibc-langpack-en \
     infiniband-diags \
+    ipref \
+    iperf3 \
     iproute \
     iputils \
     kmod \
@@ -40,6 +42,7 @@ RUN \
     man \
     nano \
     net-tools \
+    netperf \
     openssh-server \
     opensm \
     pciutils \
