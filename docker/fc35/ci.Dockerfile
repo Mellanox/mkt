@@ -15,6 +15,7 @@ RUN \
     python-ply \
     python-GitPython \
     clang \
+    codespell \
     && dnf clean dbcache packages
 
 RUN rpm -U /opt/rpms/*.rpm
