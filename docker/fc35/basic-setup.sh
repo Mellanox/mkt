@@ -69,4 +69,4 @@ cat <<EOF > /etc/sysctl.d/hugepages.conf
 vm.nr_hugepages=2
 EOF
 
-rpm -U /opt/rpms/*.rpm
+rpm -U --force /opt/rpms/*.rpm
