@@ -5,9 +5,13 @@
 # other_files:
 #  - 0001-build-Don-t-install-files-that-we-are-not-interested.patch
 #  - 0002-Revert-9p-init_in_iov_from_pdu-can-truncate-the-size.patch
+#  - 0003-simx-array-overflow.patch
 
 patch -p1 < /opt/0001-build-Don-t-install-files-that-we-are-not-interested.patch
 patch -p1 < /opt/0002-Revert-9p-init_in_iov_from_pdu-can-truncate-the-size.patch
+patch -p1 < /opt/0003-simx-array-overflow.patch
+sed -ie 's/--enable-werror//g' mlnx_infra/config.status.mlnx
+sed -ie 's/-Werror//g' mellanox/Makefile
 
 cat <<EOF > mlx-simx.spec
 %global debug_package %{nil}

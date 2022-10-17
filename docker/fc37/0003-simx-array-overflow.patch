@@ -1,0 +1,13 @@
+diff --git a/mellanox/mlxsw/mlxsw_so.c b/mellanox/mlxsw/mlxsw_so.c
+index 87b2a9bd11ce50..3e81b32bbf01eb 100755
+--- a/mellanox/mlxsw/mlxsw_so.c
++++ b/mellanox/mlxsw/mlxsw_so.c
+@@ -221,6 +221,8 @@ void mlxsw_run_script(const uint8_t *buf, FILE **output)
+         if (script_name_len == 0 && cmd_len != 0) {
+             script_name_len = cmd_len;
+         }
++        if (script_name_len <= 0)
++            _exit(1);
+ 
+         char *script_name_buf = malloc((script_name_len) * sizeof(char));
+         char *args_buf = malloc((cmd_len - script_name_len + 1) * sizeof(char));
