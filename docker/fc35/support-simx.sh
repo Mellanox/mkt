@@ -4,8 +4,10 @@
 # git_commit: 070998838203c06a760321fae6bd0fe8d7eaaa96
 # other_files:
 #  - 0001-build-Don-t-install-files-that-we-are-not-interested.patch
+#  - 0002-Revert-9p-init_in_iov_from_pdu-can-truncate-the-size.patch
 
-patch -p1 < /opt/0001-*.patch
+patch -p1 < /opt/0001-build-Don-t-install-files-that-we-are-not-interested.patch
+patch -p1 < /opt/0002-Revert-9p-init_in_iov_from_pdu-can-truncate-the-size.patch
 
 cat <<EOF > mlx-simx.spec
 %global debug_package %{nil}

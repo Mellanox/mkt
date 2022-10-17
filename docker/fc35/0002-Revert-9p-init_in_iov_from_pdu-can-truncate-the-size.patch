@@ -1,0 +1,201 @@
+From ef5acea89053c4f6e72f98c9a089a0e4796d75fa Mon Sep 17 00:00:00 2001
+From: Stefano Stabellini <stefano.stabellini@xilinx.com>
+Date: Thu, 21 May 2020 12:26:25 -0700
+Subject: [PATCH] Revert "9p: init_in_iov_from_pdu can truncate the size"
+
+This reverts commit 16724a173049ac29c7b5ade741da93a0f46edff7.
+It causes https://bugs.launchpad.net/bugs/1877688.
+
+Signed-off-by: Stefano Stabellini <stefano.stabellini@xilinx.com>
+Reviewed-by: Christian Schoenebeck <qemu_oss@crudebyte.com>
+Message-Id: <20200521192627.15259-1-sstabellini@kernel.org>
+Signed-off-by: Greg Kurz <groug@kaod.org>
+---
+ hw/9pfs/9p.c               | 33 +++++++++++----------------------
+ hw/9pfs/9p.h               |  2 +-
+ hw/9pfs/virtio-9p-device.c | 11 ++++-------
+ hw/9pfs/xen-9p-backend.c   | 13 +++++--------
+ 4 files changed, 21 insertions(+), 38 deletions(-)
+
+diff --git a/hw/9pfs/9p.c b/hw/9pfs/9p.c
+index 9e046f7acb51cf..63529724ca9cad 100644
+--- a/hw/9pfs/9p.c
++++ b/hw/9pfs/9p.c
+@@ -2102,29 +2102,22 @@ out_nofid:
+  * with qemu_iovec_destroy().
+  */
+ static void v9fs_init_qiov_from_pdu(QEMUIOVector *qiov, V9fsPDU *pdu,
+-                                    size_t skip, size_t *size,
++                                    size_t skip, size_t size,
+                                     bool is_write)
+ {
+     QEMUIOVector elem;
+     struct iovec *iov;
+     unsigned int niov;
+-    size_t alloc_size = *size + skip;
+ 
+     if (is_write) {
+-        pdu->s->transport->init_out_iov_from_pdu(pdu, &iov, &niov, alloc_size);
++        pdu->s->transport->init_out_iov_from_pdu(pdu, &iov, &niov, size + skip);
+     } else {
+-        pdu->s->transport->init_in_iov_from_pdu(pdu, &iov, &niov, &alloc_size);
+-    }
+-
+-    if (alloc_size < skip) {
+-        *size = 0;
+-    } else {
+-        *size = alloc_size - skip;
++        pdu->s->transport->init_in_iov_from_pdu(pdu, &iov, &niov, size + skip);
+     }
+ 
+     qemu_iovec_init_external(&elem, iov, niov);
+     qemu_iovec_init(qiov, niov);
+-    qemu_iovec_concat(qiov, &elem, skip, *size);
++    qemu_iovec_concat(qiov, &elem, skip, size);
+ }
+ 
+ static int v9fs_xattr_read(V9fsState *s, V9fsPDU *pdu, V9fsFidState *fidp,
+@@ -2132,14 +2125,15 @@ static int v9fs_xattr_read(V9fsState *s, V9fsPDU *pdu, V9fsFidState *fidp,
+ {
+     ssize_t err;
+     size_t offset = 7;
+-    size_t read_count;
++    uint64_t read_count;
+     QEMUIOVector qiov_full;
+ 
+     if (fidp->fs.xattr.len < off) {
+         read_count = 0;
+-    } else if (fidp->fs.xattr.len - off < max_count) {
+-        read_count = fidp->fs.xattr.len - off;
+     } else {
++        read_count = fidp->fs.xattr.len - off;
++    }
++    if (read_count > max_count) {
+         read_count = max_count;
+     }
+     err = pdu_marshal(pdu, offset, "d", read_count);
+@@ -2148,7 +2142,7 @@ static int v9fs_xattr_read(V9fsState *s, V9fsPDU *pdu, V9fsFidState *fidp,
+     }
+     offset += err;
+ 
+-    v9fs_init_qiov_from_pdu(&qiov_full, pdu, offset, &read_count, false);
++    v9fs_init_qiov_from_pdu(&qiov_full, pdu, offset, read_count, false);
+     err = v9fs_pack(qiov_full.iov, qiov_full.niov, 0,
+                     ((char *)fidp->fs.xattr.value) + off,
+                     read_count);
+@@ -2277,11 +2271,9 @@ static void coroutine_fn v9fs_read(void *opaque)
+         QEMUIOVector qiov_full;
+         QEMUIOVector qiov;
+         int32_t len;
+-        size_t size = max_count;
+ 
+-        v9fs_init_qiov_from_pdu(&qiov_full, pdu, offset + 4, &size, false);
++        v9fs_init_qiov_from_pdu(&qiov_full, pdu, offset + 4, max_count, false);
+         qemu_iovec_init(&qiov, qiov_full.niov);
+-        max_count = size;
+         do {
+             qemu_iovec_reset(&qiov);
+             qemu_iovec_concat(&qiov, &qiov_full, count, qiov_full.size - count);
+@@ -2532,7 +2524,6 @@ static void coroutine_fn v9fs_write(void *opaque)
+     int32_t len = 0;
+     int32_t total = 0;
+     size_t offset = 7;
+-    size_t size;
+     V9fsFidState *fidp;
+     V9fsPDU *pdu = opaque;
+     V9fsState *s = pdu->s;
+@@ -2545,9 +2536,7 @@ static void coroutine_fn v9fs_write(void *opaque)
+         return;
+     }
+     offset += err;
+-    size = count;
+-    v9fs_init_qiov_from_pdu(&qiov_full, pdu, offset, &size, true);
+-    count = size;
++    v9fs_init_qiov_from_pdu(&qiov_full, pdu, offset, count, true);
+     trace_v9fs_write(pdu->tag, pdu->id, fid, off, count, qiov_full.niov);
+ 
+     fidp = get_fid(pdu, fid);
+diff --git a/hw/9pfs/9p.h b/hw/9pfs/9p.h
+index b8f72a3bd9900e..6fffe44f5ab1ff 100644
+--- a/hw/9pfs/9p.h
++++ b/hw/9pfs/9p.h
+@@ -436,7 +436,7 @@ struct V9fsTransport {
+     ssize_t     (*pdu_vunmarshal)(V9fsPDU *pdu, size_t offset, const char *fmt,
+                                   va_list ap);
+     void        (*init_in_iov_from_pdu)(V9fsPDU *pdu, struct iovec **piov,
+-                                        unsigned int *pniov, size_t *size);
++                                        unsigned int *pniov, size_t size);
+     void        (*init_out_iov_from_pdu)(V9fsPDU *pdu, struct iovec **piov,
+                                          unsigned int *pniov, size_t size);
+     void        (*push_and_notify)(V9fsPDU *pdu);
+diff --git a/hw/9pfs/virtio-9p-device.c b/hw/9pfs/virtio-9p-device.c
+index 536447a3556992..f8212363560bcd 100644
+--- a/hw/9pfs/virtio-9p-device.c
++++ b/hw/9pfs/virtio-9p-device.c
+@@ -147,22 +147,19 @@ static ssize_t virtio_pdu_vunmarshal(V9fsPDU *pdu, size_t offset,
+ }
+ 
+ static void virtio_init_in_iov_from_pdu(V9fsPDU *pdu, struct iovec **piov,
+-                                        unsigned int *pniov, size_t *size)
++                                        unsigned int *pniov, size_t size)
+ {
+     V9fsState *s = pdu->s;
+     V9fsVirtioState *v = container_of(s, V9fsVirtioState, state);
+     VirtQueueElement *elem = v->elems[pdu->idx];
+     size_t buf_size = iov_size(elem->in_sg, elem->in_num);
+ 
+-    if (buf_size < P9_IOHDRSZ) {
++    if (buf_size < size) {
+         VirtIODevice *vdev = VIRTIO_DEVICE(v);
+ 
+         virtio_error(vdev,
+-                     "VirtFS reply type %d needs %zu bytes, buffer has %zu, less than minimum",
+-                     pdu->id + 1, *size, buf_size);
+-    }
+-    if (buf_size < *size) {
+-        *size = buf_size;
++                     "VirtFS reply type %d needs %zu bytes, buffer has %zu",
++                     pdu->id + 1, size, buf_size);
+     }
+ 
+     *piov = elem->in_sg;
+diff --git a/hw/9pfs/xen-9p-backend.c b/hw/9pfs/xen-9p-backend.c
+index 18fe5b7c92fac4..e2af1ef363f626 100644
+--- a/hw/9pfs/xen-9p-backend.c
++++ b/hw/9pfs/xen-9p-backend.c
+@@ -187,7 +187,7 @@ static void xen_9pfs_init_out_iov_from_pdu(V9fsPDU *pdu,
+ static void xen_9pfs_init_in_iov_from_pdu(V9fsPDU *pdu,
+                                           struct iovec **piov,
+                                           unsigned int *pniov,
+-                                          size_t *size)
++                                          size_t size)
+ {
+     Xen9pfsDev *xen_9pfs = container_of(pdu->s, Xen9pfsDev, state);
+     Xen9pfsRing *ring = &xen_9pfs->rings[pdu->tag % xen_9pfs->num_rings];
+@@ -197,19 +197,16 @@ static void xen_9pfs_init_in_iov_from_pdu(V9fsPDU *pdu,
+     g_free(ring->sg);
+ 
+     ring->sg = g_new0(struct iovec, 2);
+-    xen_9pfs_in_sg(ring, ring->sg, &num, pdu->idx, *size);
++    xen_9pfs_in_sg(ring, ring->sg, &num, pdu->idx, size);
+ 
+     buf_size = iov_size(ring->sg, num);
+-    if (buf_size  < P9_IOHDRSZ) {
++    if (buf_size  < size) {
+         xen_pv_printf(&xen_9pfs->xendev, 0, "Xen 9pfs request type %d"
+-                "needs %zu bytes, buffer has %zu, less than minimum\n",
+-                pdu->id, *size, buf_size);
++                "needs %zu bytes, buffer has %zu\n", pdu->id + 1, size,
++                buf_size);
+         xen_be_set_state(&xen_9pfs->xendev, XenbusStateClosing);
+         xen_9pfs_disconnect(&xen_9pfs->xendev);
+     }
+-    if (buf_size  < *size) {
+-        *size = buf_size;
+-    }
+ 
+     *piov = ring->sg;
+     *pniov = num;
+-- 
+2.38.0
+
