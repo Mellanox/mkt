@@ -476,9 +476,10 @@ def try_to_ssh(args):
 def is_inside_mkt():
     modules = "/lib/modules/"
     inside_mkt = False
-    for f in os.listdir(modules):
-        if os.path.exists("%s%s/modules/mkt_module_data.pickle" %(modules, f)):
-            inside_mkt = True
+    if os.path.exists(modules):
+        for f in os.listdir(modules):
+            if os.path.exists("%s%s/modules/mkt_module_data.pickle" %(modules, f)):
+                inside_mkt = True
 
     if inside_mkt and not os.path.exists("/etc/mkt.conf"):
         exit("Please run nested VM with nested_pci set in configuration file")
