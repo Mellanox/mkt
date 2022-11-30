@@ -1,0 +1,41 @@
+From 81079eb47d030af1fdd12150fed283c47b433a34 Mon Sep 17 00:00:00 2001
+Message-Id: <81079eb47d030af1fdd12150fed283c47b433a34.1669885346.git.leonro@nvidia.com>
+From: Leon Romanovsky <leonro@nvidia.com>
+Date: Thu, 1 Dec 2022 11:01:12 +0200
+Subject: [PATCH] build: Don't install files that we are not interested
+
+Attempt to package QEMU on FC37 will generate the following errors.
+These files are not relevant for SimX at all, so simply don't install
+them,
+
+/usr/bin/strip: Unable to recognise the format of the input file
+ `/root/rpmbuild/BUILDROOT/mlx-simx-1-1.fc35.x86_64/opt/simx/share/qemu-kvm/hppa-firmware.img'
+-
+/usr/bin/strip: Unable to recognise the format of the input file
+ `/root/rpmbuild/BUILDROOT/mlx-simx-1-1.fc35.x86_64/opt/simx/share/qemu-kvm/palcode-clipper'
+
+Signed-off-by: Leon Romanovsky <leonro@nvidia.com>
+---
+ pc-bios/meson.build | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/pc-bios/meson.build b/pc-bios/meson.build
+index c86dedf7d..913b96ce0 100644
+--- a/pc-bios/meson.build
++++ b/pc-bios/meson.build
+@@ -72,12 +72,10 @@ blobs = files(
+   's390-netboot.img',
+   'slof.bin',
+   'skiboot.lid',
+-  'palcode-clipper',
+   'u-boot.e500',
+   'u-boot-sam460-20100605.bin',
+   'qemu_vga.ndrv',
+   'edk2-licenses.txt',
+-  'hppa-firmware.img',
+   'opensbi-riscv32-generic-fw_dynamic.bin',
+   'opensbi-riscv64-generic-fw_dynamic.bin',
+   'npcm7xx_bootrom.bin',
+-- 
+2.38.1
+

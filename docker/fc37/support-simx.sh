@@ -16,21 +16,14 @@ License:        Proprietary
 From simx.git
 
 %build
-SIMX_PROJECT=mlx5_with_apu make -j -C mellanox
-#./mlnx_infra/config.status.mlnx --target=x86 --prefix=/opt/simx
-make %{?_smp_mflags}
-make %{?_smp_mflags} -C mellanox/
+SIMX_PROJECT=mlx5 make %{?_smp_mflags} -C mellanox
 
-#%install
-make DESTDIR=%{buildroot} install
-mkdir -p %{buildroot}/etc/qemu-kvm/
-ln -s /etc/qemu/bridge.conf %{buildroot}/etc/qemu-kvm/bridge.conf
+%install
 mkdir -p %{buildroot}/opt/simx/lib/
 cp mellanox/libml*.so %{buildroot}/opt/simx/lib/
 
 %files
 /opt/simx/*
-/etc/qemu-kvm/bridge.conf
 EOF
 
 rpmbuild --build-in-place -bb mlx-simx.spec

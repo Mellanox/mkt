@@ -240,7 +240,8 @@ mds=off mitigations=off'
 
         files = subprocess.check_output([
             "find", tree, "-name", "modules.builtin", "-or", "-name",
-            "modules.order", "-or", "-name", "*.ko"
+            "modules.order", "-or", "-name", "*.ko", "-or", "-name",
+            "modules.builtin.modinfo"
         ]).split()
         files = [I.decode() for I in files]
 
@@ -258,18 +259,21 @@ mds=off mitigations=off'
                         out.write(F.read())
 
         # Symlink modules
-        mdir = os.path.join(mdir, "modules")
-        if not os.path.isdir(mdir):
-            os.makedirs(mdir)
+        mmdir = os.path.join(mdir, "modules")
+        if not os.path.isdir(mmdir):
+            os.makedirs(mmdir)
         fn_info = {}
         for I in files:
-            if I.endswith(".ko"):
+            if I.endswith(".ko") or I.endswith("builtin.modinfo"):
                 bn = os.path.basename(I)
-                os.symlink(I, os.path.join(mdir, bn))
+                if I.endswith("builtin.modinfo"):
+                    os.symlink(I, os.path.join(mdir, bn))
+                else:
+                    os.symlink(I, os.path.join(mmdir, bn))
                 st = os.stat(I)
                 fn_info[bn] = {"size": st[stat.ST_SIZE],
                                "mtime": st[stat.ST_MTIME]}
-        with open(os.path.join(mdir, "mkt_module_data.pickle"), "wb") as out:
+        with open(os.path.join(mmdir, "mkt_module_data.pickle"), "wb") as out:
             pickle.dump(fn_info, out)
 
         if os.path.isdir("/boot"):
