@@ -342,7 +342,7 @@ def set_custom_qemu(tree):
 
 def set_bridge_network(args):
     """If a 'br0' is present then we can setup normal bridge networking"""
-    qemu_args["-netdev"].add("bridge,br=br0,id=net0")
+    qemu_args["-netdev"].add("bridge,br=br0,id=net0,helper=/usr/libexec/qemu-bridge-helper")
     qemu_args["-device"].append("virtio-net,netdev=net0,mac=" +
                                 args.vm_addr.mac)
 
