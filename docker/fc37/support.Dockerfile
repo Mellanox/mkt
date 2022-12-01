@@ -1,4 +1,4 @@
-FROM fedora:35
+FROM fedora:37
 
 RUN dnf install -y \
     bc \
@@ -9,7 +9,6 @@ RUN dnf install -y \
     ctags \
     elfutils-devel \
     elfutils-libelf-devel \
-    findutils \
     flex \
     gcc \
     gcc-c++ \
@@ -30,7 +29,6 @@ RUN dnf install -y \
     libnl3-devel \
     libseccomp-devel \
     libudev-devel \
-    libusb-devel \
     libuuid-devel \
     libxml2-devel \
     llvm-devel \

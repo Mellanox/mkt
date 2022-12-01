@@ -10,6 +10,8 @@ from shutil import copy
 def fork(args):
     """Checkout the linux source tree into the build directory so that everything
     about the build is pristine and isolated within the container."""
+    subprocess.check_call(["git", "config", "--global",
+                           "--add", "safe.directory", args.src])
     head = subprocess.check_output(["git", "rev-parse", args.rev], cwd=args.src).strip()
     obj_dir = subprocess.check_output(["git", "rev-parse", "--git-path", "objects"],
                                       cwd=args.src)
