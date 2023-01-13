@@ -49,7 +49,7 @@ def cmd_build(args):
         mapdirs.add(I)
 
     if args.build_recipe is not None:
-        args.build_recipe = os.path.realpath(args.build_recipe)
+        args.build_recipe = os.path.realpath(os.path.expanduser(args.build_recipe))
         mapdirs.add(os.path.dirname(args.build_recipe))
 
     build.pickle['shell'] = args.run_shell

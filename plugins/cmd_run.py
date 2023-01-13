@@ -333,7 +333,7 @@ def set_custom_qemu(args):
     if args.custom_qemu is None:
         return
 
-    args.custom_qemu = os.path.realpath(args.custom_qemu)
+    args.custom_qemu = os.path.realpath(os.path.expanduser(args.custom_qemu))
     if not os.path.isdir(args.custom_qemu):
         raise ValueError("SimX path %r is not a directory/does not exist"
                 % (args.custom_qemu))
@@ -406,13 +406,13 @@ def set_kernel(args, section):
         )
 
     if args.kernel_rpm is not None:
-        args.kernel_rpm = os.path.realpath(args.kernel_rpm)
+        args.kernel_rpm = os.path.realpath(os.path.expanduser(args.kernel_rpm))
         if not os.path.isfile(args.kernel_rpm):
             raise ValueError(
                 "Kernel RPM %r does not exist" % (args.kernel_rpm))
         args.kernel = None
     else:
-        args.kernel = os.path.realpath(args.kernel)
+        args.kernel = os.path.realpath(os.path.expanduser(args.kernel))
         if not os.path.isdir(args.kernel):
             raise ValueError("Kernel path %r is not a directory/does not exist"
                              % (args.kernel))
