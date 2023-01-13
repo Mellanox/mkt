@@ -586,14 +586,17 @@ def cmd_run(args):
 
     src_dir = os.path.dirname(
         os.path.abspath(inspect.getfile(inspect.currentframe())))
+    runtime_logs_dir = os.path.realpath(
+        os.path.expanduser(utils.config.runtime_logs_dir))
 
     docker_os = section.get('os', cmd_images.default_os)
     cname = get_container_name(args, vm_addr)
+    os.makedirs(runtime_logs_dir, exist_ok=True)
     docker_exec(["run"] + mapdirs.as_docker_bind() + [
         "-v",
        "%s:/plugins:ro,Z" % (src_dir),
        "--mount",
-       "type=bind,source=%s,destination=/logs" % (utils.config.runtime_logs_dir),
+       "type=bind,source=%s,destination=/logs" % (runtime_logs_dir),
        "--rm",
        "--net=host",
        "--privileged",
