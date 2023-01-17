@@ -333,7 +333,7 @@ def set_custom_qemu(args):
     if args.custom_qemu is None:
         return
 
-    args.custom_qemu = os.path.realpath(args.custom_qemu)
+    args.custom_qemu = os.path.realpath(os.path.expanduser(args.custom_qemu))
     if not os.path.isdir(args.custom_qemu):
         raise ValueError("SimX path %r is not a directory/does not exist"
                 % (args.custom_qemu))
@@ -406,13 +406,13 @@ def set_kernel(args, section):
         )
 
     if args.kernel_rpm is not None:
-        args.kernel_rpm = os.path.realpath(args.kernel_rpm)
+        args.kernel_rpm = os.path.realpath(os.path.expanduser(args.kernel_rpm))
         if not os.path.isfile(args.kernel_rpm):
             raise ValueError(
                 "Kernel RPM %r does not exist" % (args.kernel_rpm))
         args.kernel = None
     else:
-        args.kernel = os.path.realpath(args.kernel)
+        args.kernel = os.path.realpath(os.path.expanduser(args.kernel))
         if not os.path.isdir(args.kernel):
             raise ValueError("Kernel path %r is not a directory/does not exist"
                              % (args.kernel))
@@ -586,14 +586,17 @@ def cmd_run(args):
 
     src_dir = os.path.dirname(
         os.path.abspath(inspect.getfile(inspect.currentframe())))
+    runtime_logs_dir = os.path.realpath(
+        os.path.expanduser(utils.config.runtime_logs_dir))
 
     docker_os = section.get('os', cmd_images.default_os)
     cname = get_container_name(args, vm_addr)
+    os.makedirs(runtime_logs_dir, exist_ok=True)
     docker_exec(["run"] + mapdirs.as_docker_bind() + [
         "-v",
        "%s:/plugins:ro,Z" % (src_dir),
        "--mount",
-       "type=bind,source=%s,destination=/logs" % (utils.config.runtime_logs_dir),
+       "type=bind,source=%s,destination=/logs" % (runtime_logs_dir),
        "--rm",
        "--net=host",
        "--privileged",
