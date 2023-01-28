@@ -48,7 +48,7 @@ def build_dirlist(args, section):
 
 def match_modalias(modalias):
     """Detect Mellanox devices that we want to pass through"""
-    # Fom /lib/modules/4.18.rc1/modules.alias
+    # From /lib/modules/4.18.rc1/modules.alias
     matches = [
         "pci:v000015B3d0000A2DCsv*sd*bc*sc*i*",
         "pci:v000015B3d0000A2D6sv*sd*bc*sc*i*",
