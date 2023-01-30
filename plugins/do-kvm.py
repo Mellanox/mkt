@@ -441,7 +441,7 @@ def set_simx_network(simx):
                 set_sriov_vfs(args, idx, mode)
 
             if have_virbr:
-                qemu_args["-netdev"].add("bridge,br=virbr0,id=net%d" %(idx))
+                qemu_args["-netdev"].add("bridge,br=virbr0,id=net%d,helper=/usr/libexec/qemu-bridge-helper" %(idx))
                 devargs += ',netdev=net%d' %(idx)
 
             qemu_args["-device"].append(devargs)
