@@ -90,9 +90,9 @@ def print_filtered_output(args, out):
 def smatch_and_sparse(args, tool):
     if tool == "smatch":
         tool_cmd = ["CHECK=/opt/smatch/bin/smatch -p=kernel --data=/opt/smatch/share/smatch/smatch_data/",
-                "C=1"]
+                "C=2"]
     if tool == "sparse":
-        tool_cmd = ["CHECK=sparse", "C=1", "CF='-fdiagnostic-prefix -D__CHECK_ENDIAN__'"]
+        tool_cmd = ["CHECK=sparse", "C=2", "CF='-fdiagnostic-prefix -D__CHECK_ENDIAN__'"]
 
     base_cmd = ["make", "-j", str(args.num_jobs), "-s"]
     subprocess.call(base_cmd + ["clean"])
