@@ -1,0 +1,42 @@
+From 5f06ca4a8d095295433988a14eea2d95ad17b0cf Mon Sep 17 00:00:00 2001
+Message-ID: <5f06ca4a8d095295433988a14eea2d95ad17b0cf.1698845680.git.leon@kernel.org>
+From: Leon Romanovsky <leon@kernel.org>
+Date: Wed, 1 Nov 2023 14:10:20 +0200
+Subject: [PATCH] simx_configure: Overcome dangling pointer compilation error
+
+In file included from /opt/src/include/qemu/coroutine.h:18,
+                 from /opt/src/include/block/aio.h:20,
+                 from ../util/async.c:28:
+../util/async.c: In function 'aio_bh_poll':
+/opt/src/include/qemu/queue.h:303:22: error: storing the address of local variable 'slice' in 'ctx_24(D)->bh_slice_list.sqh_last' [-Werror=dangling-pointer=]
+  303 |     (head)->sqh_last = &(elm)->field.sqe_next;                          \
+      |     ~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+../util/async.c:148:17: note: 'slice' declared here
+  148 |     BHListSlice slice;
+      |                 ^~~~~
+../util/async.c:146:29: note: 'ctx' declared here
+  146 | int aio_bh_poll(AioContext *ctx)
+      |                 ~~~~~~~~~~~~^~~
+cc1: all warnings being treated as errors
+
+Signed-off-by: Leon Romanovsky <leon@kernel.org>
+---
+ simx_configure | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/simx_configure b/simx_configure
+index 91cf32543..ec93fe908 100755
+--- a/simx_configure
++++ b/simx_configure
+@@ -197,6 +197,8 @@ ${SIMX_QEMU_CONFIGURE} \
+ 		-Wno-nonnull \
+ 		-Wno-stringop-truncation \
+ 		-Wredundant-decls \
++		-Wno-dangling-pointer \
++		-Wno-enum-int-mismatch \
+ 		${SIMX_EXTRA_CFLAGS}" \
+ 	"--extra-ldflags=${SIMX_EXTRA_LDFLAGS}" \
+ 	'--localstatedir=/var' \
+-- 
+2.41.0
+

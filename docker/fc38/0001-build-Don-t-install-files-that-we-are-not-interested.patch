@@ -4,7 +4,7 @@ From: Leon Romanovsky <leonro@nvidia.com>
 Date: Thu, 1 Dec 2022 11:01:12 +0200
 Subject: [PATCH] build: Don't install files that we are not interested
 
-Attempt to package QEMU on FC37 will generate the following errors.
+Attempt to package QEMU on FC38 will generate the following errors.
 These files are not relevant for SimX at all, so simply don't install
 them,
 

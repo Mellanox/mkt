@@ -1,7 +1,4 @@
-FROM harbor.mellanox.com/mkt/build:fc37
-
-COPY --from=local_mkt/support_sparse:fc37 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
-COPY --from=local_mkt/support_smatch:fc37 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
+FROM harbor.mellanox.com/mkt/build:fc38
 
 RUN \
     echo Israel/Jerusalem > /etc/timezone && \
@@ -16,6 +13,6 @@ RUN \
     python-GitPython \
     clang \
     codespell \
+    smatch \
+    sparse \
     && dnf clean dbcache packages
-
-RUN rpm -U /opt/rpms/*.rpm

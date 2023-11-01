@@ -42,8 +42,8 @@ developers working in this area are strongly recommended to place their
 
 The following values are supported for *image_key*:
 
-*fc37*
-:	Build the image to support **mkt run** with Fedora Core 37 as the VM
+*fc38*
+:	Build the image to support **mkt run** with Fedora Core 38 as the VM
     operating system
 
 # OPTIONS
@@ -80,7 +80,7 @@ rebuilding things have have had their inputs change.
 Support packages are described by a shell script with instructions to build
 the OS.  The **mkt** support code fetches the source code from a GIT
 repository and provides it to that shell script inside a docker container
-environment. See *docker/fc37/support-simx.sh* for an example
+environment. See *docker/fc38/support-simx.sh* for an example
 
 ## KVM DOCKER IMAGE
 
