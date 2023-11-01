@@ -1,7 +1,7 @@
 #!/bin/bash
 # ---
-# git_url: http://l-gerrit.mtl.labs.mlnx:8080/simx-qemu
-# git_commit: 4997d5d493704d8e0afd6d09925adaf7938c518e
+# git_url: ssh://git-nbu.nvidia.com:12023/simx/simx-qemu
+# git_commit:  0eb16838d915b191988f2e4bb3985aa84ea9bffa
 # other_files:
 #  - 0001-build-Don-t-install-files-that-we-are-not-interested.patch
 
