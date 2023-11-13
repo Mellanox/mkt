@@ -1,14 +1,11 @@
 FROM fedora:39 as rpms
 
-COPY --from=local_mkt/support_rdma_core:fc39 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
 COPY --from=local_mkt/support_qemu:fc39 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
 COPY --from=local_mkt/support_simx:fc39 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
 
 RUN rm -f \
    /opt/rpms/*debug*.rpm \
-   /opt/rpms/*ibacm*.rpm \
-   /opt/rpms/*devel*.rpm \
-   /opt/rpms/*iwpmd*.rpm
+   /opt/rpms/*devel*.rpm
 
 FROM fedora:39
 
@@ -37,6 +34,7 @@ RUN \
     kmod \
     less \
     libasan \
+    libibverbs-utils \
     libpcap \
     libubsan \
     lsof \
@@ -57,6 +55,7 @@ RUN \
     python3 \
     python3-argcomplete \
     qemu-kvm \
+    rdma-core-devel \
     rsync \
     sensible-utils \
     strace \
