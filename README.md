@@ -45,7 +45,7 @@ Edition.
 
 ## Compiling source code
 
-The **[mkt run](docs/mkt_build.1.md)** command provides compilation solution
+The **[mkt build](docs/mkt_build.1.md)** command provides compilation solution
 to build kernel/iproute2/rdma-core with latest development tool chain.
 
 Recommended and optimized kernel .config is located in **[configs/kconfig-kvm](configs/kconfig-kvm)**
@@ -57,7 +57,7 @@ containing a kernel for testing.
 
 ## Continious integration
 
-The **[mkt run](docs/mkt_ci.1.md)** command will perform continious integration
+The **[mkt ci](docs/mkt_ci.1.md)** command will perform continious integration
 tests over local source code.
 
 # Installation
