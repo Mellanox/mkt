@@ -29,8 +29,8 @@ def build_dirlist(args, section):
     if args.kernel:
         mapdirs.add(args.kernel)
 
-    if args.custom_qemu:
-        mapdirs.add(args.custom_qemu)
+    if args.custom_simx:
+        mapdirs.add(args.custom_simx)
 
     usr = pwd.getpwuid(os.getuid())
     args.dir.append(usr.pw_dir)
@@ -282,8 +282,8 @@ def get_pickle(args, vm_addr):
         except KeyError:
             pass
 
-    if args.custom_qemu:
-        p["custom_qemu"] = args.custom_qemu
+    if args.custom_simx:
+        p["custom_simx"] = args.custom_simx
 
     if args.gdbserver:
         p["gdbserver"] = args.gdbserver
@@ -320,23 +320,23 @@ def set_boot_script(args):
 
     return
 
-def set_custom_qemu(args):
-    args.custom_qemu = None
+def set_custom_simx(args, section):
+    args.custom_simx = None
     if args.image:
         try:
-            if utils.get_images(args.image)['custom_qemu'] != "true":
+            if utils.get_images(args.image)['custom_simx'] != "true":
                 raise KeyError
-            args.custom_qemu = section.get('simx', None)
+            args.custom_simx = section.get('simx', None)
         except KeyError:
             return
 
-    if args.custom_qemu is None:
+    if args.custom_simx is None:
         return
 
-    args.custom_qemu = os.path.realpath(os.path.expanduser(args.custom_qemu))
-    if not os.path.isdir(args.custom_qemu):
+    args.custom_simx = os.path.realpath(os.path.expanduser(args.custom_simx))
+    if not os.path.isdir(args.custom_simx):
         raise ValueError("SimX path %r is not a directory/does not exist"
-                % (args.custom_qemu))
+                % (args.custom_simx))
 
 def setup_devices(args):
     s = set()
@@ -561,7 +561,7 @@ def cmd_run(args):
     setup_devices(args)
     do_bind_pci(args)
     set_kernel(args, section)
-    set_custom_qemu(args)
+    set_custom_simx(args, section)
     set_boot_script(args)
 
     mapdirs = build_dirlist(args, section)

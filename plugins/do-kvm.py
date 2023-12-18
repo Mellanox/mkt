@@ -327,16 +327,8 @@ rootflags=trans=virtio earlyprintk=serial,ttyS0,115200 console=hvc0'
         cmdline
     })
 
-def set_custom_qemu(tree):
-    """Overwrite installed QEMU variant with local version"""
-    subprocess.check_call(['ln', '-f', '-s',
-        tree + '/x86_64-softmmu/qemu-system-x86_64', '/opt/simx/bin/qemu-system-x86_64'])
-    subprocess.check_call(['ln', '-f', '-s',
-        tree + '/scsi/qemu-pr-helper', '/opt/simx/bin/qemu-pr-helper'])
-    subprocess.check_call(['ln', '-f', '-s',
-        tree + '/fsdev/virtfs-proxy-helper', '/opt/simx/bin/virtfs-proxy-helper'])
-    subprocess.check_call(['ln', '-f', '-s',
-        tree + '/qemu-bridge-helper', '/opt/simx/libexec/qemu-bridge-helper'])
+def set_custom_simx(tree):
+    """Overwrite installed SimX variant with local version"""
     subprocess.check_call(['ln', '-f', '-s',
         tree + '/mellanox/libmlx.so', '/opt/simx/lib/libmlx.so'])
 
@@ -537,7 +529,7 @@ def setup_from_pickle(args, pickle_params):
     args.user = p["user"]
     args.group = p["group"]
     args.num_of_vfs = p.get("num_of_vfs", 0)
-    args.custom_qemu = p.get("custom_qemu", None)
+    args.custom_simx = p.get("custom_simx", None)
     args.gdbserver = p.get("gdbserver", None)
     args.num_ports = p.get("num_ports", 1)
     args.test = p.get("test", None)
@@ -595,8 +587,8 @@ if args.kernel_rpm:
 else:
     set_kernel(args)
 
-if args.custom_qemu:
-    set_custom_qemu(args.custom_qemu)
+if args.custom_simx:
+    set_custom_simx(args.custom_simx)
 
 if have_netdev("br0"):
     set_bridge_network(args)

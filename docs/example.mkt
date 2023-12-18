@@ -47,10 +47,10 @@ num_of_vfs = 7
 pci = cx5-eth
 num_ports = 2
 
-[custom-qemu]
+[custom-simx]
 pci = cx4-ib 0000:05:00.0
-# Use precompiled version of QEMU
-custom_qemu = true
+# Use precompiled version of SimX
+custom_simx = true
 
 [nested-vm]
 pci = cx4-ib
