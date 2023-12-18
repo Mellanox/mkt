@@ -31,16 +31,14 @@ def make_rdma_core(args):
 
 def make_simx(args):
     if args.clean:
-        subprocess.check_output(['make', 'distclean'])
+        subprocess.check_output(['make', 'clean', '-C', 'mellanox'])
         return
-    if not os.path.isfile('config.status'):
-        subprocess.check_output(['./mlnx_infra/config.status.mlnx', '--target=x86', '--prefix=/opt/simx'])
 
     cmd = ['make']
     if os.path.isdir('/ccache'):
         cmd += ['CC=ccache gcc']
 
-    subprocess.call(cmd + ['-j%d' %(args.num_jobs)])
+    subprocess.call(cmd + ['-j%d' %(args.num_jobs), '-C', 'mellanox'])
 
 def switch_to_user(args):
     with open("/etc/passwd","a") as F:
