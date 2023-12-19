@@ -38,6 +38,7 @@ def make_simx(args):
     if os.path.isdir('/ccache'):
         cmd += ['CC=ccache gcc']
 
+    os.environ["SIMX_PROJECT"] = "mlx5"
     subprocess.call(cmd + ['-j%d' %(args.num_jobs), '-C', 'mellanox'])
 
 def switch_to_user(args):
