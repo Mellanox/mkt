@@ -224,7 +224,7 @@ rootfstype=9p rootflags="cache=loose,trans=virtio" \
 earlyprintk=serial,ttyS0,115200 console=hvc0 \
 noibrs noibpb nopti nospectre_v2 nospectre_v1 \
 l1tf=off nospec_store_bypass_disable no_stf_barrier \
-mds=off mitigations=off'
+mds=off mitigations=off panic_on_warn=1'
     if args.inside_mkt:
         cmdline = cmdline + ' notsc'
 
@@ -316,7 +316,7 @@ def set_kernel_rpm(args):
         raise ValueError("Could not find vmlinux in the RPM %r" % (src))
 
     cmdline = 'root=/dev/root rw ignore_loglevel rootfstype=9p \
-rootflags=trans=virtio earlyprintk=serial,ttyS0,115200 console=hvc0'
+rootflags=trans=virtio earlyprintk=serial,ttyS0,115200 console=hvc0 panic_on_warn=1'
     if args.nested_pci:
         cmdline += ' intel_iommu=on vfio_iommu_type1.allow_unsafe_interrupts=1'
 
