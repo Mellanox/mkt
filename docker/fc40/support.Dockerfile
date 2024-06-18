@@ -1,4 +1,4 @@
-FROM fedora:39
+FROM fedora:40
 
 RUN dnf install -y \
     bc \
@@ -42,10 +42,11 @@ RUN dnf install -y \
     pixman-devel \
     pkg-config \
     pkgconfig \
-    python \
+    python3.11 \
     python3-Cython \
     python3-devel \
     python3-docutils \
+    python3-distutils-extra \
     rpm-build \
     spice-protocol \
     spice-server-devel \

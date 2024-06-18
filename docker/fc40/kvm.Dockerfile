@@ -1,13 +1,13 @@
-FROM fedora:39 as rpms
+FROM fedora:40 as rpms
 
-COPY --from=local_mkt/support_qemu:fc39 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
-COPY --from=local_mkt/support_simx:fc39 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
+COPY --from=local_mkt/support_qemu:fc40 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
+COPY --from=local_mkt/support_simx:fc40 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
 
 RUN rm -f \
    /opt/rpms/*debug*.rpm \
    /opt/rpms/*devel*.rpm
 
-FROM fedora:39
+FROM fedora:40
 
 # Static files are done before installing to avoid prompting
 ADD ./sudoers /etc/sudoers.d/local

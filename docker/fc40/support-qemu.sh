@@ -1,15 +1,12 @@
 #!/bin/bash
 # ---
-# git_url: ssh://git-nbu.nvidia.com:12023/simx/simx-qemu
-# git_commit:  0eb16838d915b191988f2e4bb3985aa84ea9bffa
+# git_url: //home/leonro/src/simx-qemu
+# git_commit: 30a8d7c6295e4843b68e8a6f3fea3fb57a116bef
 # other_files:
-#  - 0001-build-Don-t-install-files-that-we-are-not-interested.patch
-#  - 0002-simx_configure-Overcome-dangling-pointer-compilation.patch
-#  - 0003-simx-Fix-function-mismatch.patch
+#  - 0001-simx_configure-Enable-user-networking.patch
 
 patch -p1 < /opt/0001-*.patch
-patch -p1 < /opt/0002-*.patch
-patch -p1 < /opt/0003-*.patch
+
 
 cat <<EOF > mlx-qemu.spec
 %global debug_package %{nil}

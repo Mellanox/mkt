@@ -1,7 +1,7 @@
 #!/bin/bash
 # ---
-# git_url: ssh://git-nbu.nvidia.com:12023/simx/simx
-# git_commit: 774a6a135a4738a1abb6f23063c2814c7fa6e7df
+# git_url: /home/leonro/src/simx
+# git_commit: 3c8ce7f00882ad2f37edfb28e78cd81a71d8002f
 # other_files:
 #  - 0001-mlx5-Fix-wrong-format-compilation-errors.patch
 
