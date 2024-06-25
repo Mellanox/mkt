@@ -289,6 +289,7 @@ def get_pickle(args, vm_addr):
         p["gdbserver"] = args.gdbserver
 
     p["port"] = args.port
+    p["nvme_fn"] = args.nvme_fn
 
     return base64.b64encode(pickle.dumps(p)).decode()
 
@@ -486,6 +487,16 @@ def is_inside_mkt():
 
     return inside_mkt
 
+def set_nvme_raw(args):
+    cache_fn = get_cache_fn("")
+    nvme_fn = "%snvme-1g.raw" % (cache_fn)
+    if os.path.exists(nvme_fn):
+        return nvme_fn
+
+    cmd = ["dd", "if=/dev/zero", "of=%s" %(nvme_fn), "bs=1", "count=0", "seek=1G"]
+    subprocess.call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return nvme_fn
+
 def args_run(parser):
     section = utils.load_config_file()
     parser.add_argument(
@@ -573,6 +584,7 @@ def cmd_run(args):
         # to communicate with external network.
         configure_firewall(vm_addr);
 
+    args.nvme_fn = set_nvme_raw(args)
     pickle = get_pickle(args, vm_addr)
 
     if args.run_shell:

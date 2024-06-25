@@ -443,6 +443,10 @@ def set_simx_network(simx):
             f.write('[adapter]\n')
             f.write('num_of_function = %s\n' % (args.num_of_vfs))
 
+def setup_nvme_fn(args):
+    qemu_args["-drive"] = ["file=%s,if=none,id=drv0,format=raw" % (args.nvme_fn)]
+    qemu_args["-device"].append("nvme,drive=drv0,serial=foo")
+
 def set_vfio(args):
     """Pass a VFIO owned PCI device through to the guest"""
     for bdf in args.vfio:
@@ -539,6 +543,7 @@ def setup_from_pickle(args, pickle_params):
             f.write(' '.join(args.nested_pci) + '\n')
     args.inside_mkt = p.get("inside_mkt", False);
     args.port = p.get("port", 4444);
+    args.nvme_fn = p.get("nvme_fn", None)
 
 parser = argparse.ArgumentParser(
     description='Launch kvm using the filesystem from the container')
@@ -571,7 +576,7 @@ qemu_args = {
         # serial port for its output.
         "-fw_cfg": ["etc/sercon-port,string=2"],
         "-smp": "%s" % (multiprocessing.cpu_count()),
-        "-device": ["virtio-rng-pci", "virtio-balloon-pci"]
+        "-device": ["virtio-rng-pci", "virtio-balloon-pci"],
     }
 
 set_console(args)
@@ -605,6 +610,9 @@ cmd += ["/opt/simx/bin/qemu-system-x86_64"]
 if args.simx:
     set_simx_cfg()
     set_simx_network(args.simx)
+
+if args.nvme_fn:
+    setup_nvme_fn(args)
 
 setup_gdbserver(args)
 
