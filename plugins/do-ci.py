@@ -57,9 +57,23 @@ def build_dirlist(args):
             is_include_was_changed = True
 
     args.filter_by_diff = False
-    if not dirlist and is_include_was_changed:
-        # Let's do smart guess and try to check subsystems,
-        # which we are changing most of the time.
+    if is_include_was_changed:
+        no_infiniband = False
+        if not dirlist:
+            # Let's do smart guess and try to check subsystems,
+            # which we are changing most of the time.
+            dirlist.add("drivers/net/ethernet/mellanox/")
+            dirlist.add("net/")
+            dirlist.add("drivers/nvme/")
+            args.filter_by_diff = True
+        else:
+            for d in dirlist:
+                if d.startswith("drivers/infiniband/"):
+                    no_infiniband = True
+                break
+
+        if no_infiniband:
+            dirlist = set()
         dirlist.add("drivers/infiniband/")
         dirlist.add("drivers/net/ethernet/mellanox/")
         dirlist.add("net/")
