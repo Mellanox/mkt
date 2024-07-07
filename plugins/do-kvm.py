@@ -281,7 +281,7 @@ earlyprintk=serial,ttyS0,115200 console=hvc0 panic_on_warn=1'
 
         subprocess.check_call(["depmod", "-a", ver])
         if args.nested_pci:
-            cmdline += ' intel_iommu=on iommu=nopt iommu.forcedac=true vfio_iommu_type1.allow_unsafe_interrupts=1'
+            cmdline += ' intel_iommu=on iommu=nopt iommu.forcedac=1 vfio_iommu_type1.allow_unsafe_interrupts=1'
 
     qemu_args.update({
         "-kernel":
