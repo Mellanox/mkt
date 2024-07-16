@@ -1,0 +1,29 @@
+From 36ec840e231422c3225b2e7c7d615bcc050d3134 Mon Sep 17 00:00:00 2001
+Message-ID: <36ec840e231422c3225b2e7c7d615bcc050d3134.1720721204.git.leon@kernel.org>
+From: Leon Romanovsky <leon@kernel.org>
+Date: Thu, 11 Jul 2024 21:05:55 +0300
+Subject: [PATCH] simx_configure: Enable user networking
+
+Fix "qemu-system-x86_64: -nic user,model=virtio: network backend 'user'
+is not compiled into this binary" error.
+
+Signed-off-by: Leon Romanovsky <leon@kernel.org>
+---
+ simx_configure | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/simx_configure b/simx_configure
+index fcf0d7733c..724d2c631e 100755
+--- a/simx_configure
++++ b/simx_configure
+@@ -237,6 +237,7 @@ ${SIMX_QEMU_CONFIGURE} \
+     '--enable-usb-redir' \
+     '--enable-virtfs' \
+     '--enable-vnc' \
++    '--enable-slirp' \
+     "${SECCOMP_FLAG}" \
+     '--enable-debug' \
+     "--target-list=${TARGET}"
+-- 
+2.45.2
+
