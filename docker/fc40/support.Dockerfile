@@ -47,6 +47,7 @@ RUN dnf install -y \
     python3-devel \
     python3-docutils \
     python3-distutils-extra \
+    python3-sphinx \
     rpm-build \
     spice-protocol \
     spice-server-devel \
@@ -58,4 +59,48 @@ RUN dnf install -y \
     uuid-devel \
     valgrind-devel \
     zlib-devel \
+    ImageMagick \
+    dejavu-sans-fonts \
+    dejavu-sans-mono-fonts \
+    dejavu-serif-fonts \
+    graphviz \
+    google-noto-sans-cjk-fonts \
+    graphviz-gd \
+    latexmk \
+    librsvg2-tools \
+    texlive-amscls \
+    texlive-amsfonts \
+    texlive-amsmath \
+    texlive-anyfontsize \
+    texlive-capt-of \
+    texlive-cmap \
+    texlive-collection-fontsrecommended \
+    texlive-collection-latex \
+    texlive-ctex \
+    texlive-ec \
+    texlive-eqparbox \
+    texlive-euenc \
+    texlive-fancybox \
+    texlive-fancyvrb \
+    texlive-float \
+    texlive-fncychap \
+    texlive-framed \
+    texlive-luatex85 \
+    texlive-mdwtools \
+    texlive-multirow \
+    texlive-needspace \
+    texlive-oberdiek \
+    texlive-parskip \
+    texlive-polyglossia \
+    texlive-psnfss \
+    texlive-tabulary \
+    texlive-threeparttable \
+    texlive-titlesec \
+    texlive-tools \
+    texlive-ucs \
+    texlive-upquote \
+    texlive-wrapfig \
+    texlive-xecjk \
+    texlive-xetex-bin \
+    python3-pyyaml \
     && dnf clean dbcache packages
