@@ -1,13 +1,13 @@
-FROM fedora:40 as rpms
+FROM fedora:41 AS rpms
 
-COPY --from=local_mkt/support_qemu:fc40 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
-COPY --from=local_mkt/support_simx:fc40 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
+COPY --from=local_mkt/support_qemu:fc41 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
+COPY --from=local_mkt/support_simx:fc41 /root/rpmbuild/RPMS/x86_64/*.rpm /opt/rpms/
 
 RUN rm -f \
    /opt/rpms/*debug*.rpm \
    /opt/rpms/*devel*.rpm
 
-FROM fedora:40
+FROM fedora:41
 
 # Static files are done before installing to avoid prompting
 ADD ./sudoers /etc/sudoers.d/local
@@ -51,7 +51,6 @@ RUN \
     'perl(strict)' \
     'perl(warnings)' \
     psmisc \
-    python2 \
     python3 \
     python3-argcomplete \
     qemu-kvm \

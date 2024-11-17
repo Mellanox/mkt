@@ -42,8 +42,8 @@ developers working in this area are strongly recommended to place their
 
 The following values are supported for *image_key*:
 
-*fc40*
-:	Build the image to support **mkt run** with Fedora Core 40 as the VM
+*fc41*
+:	Build the image to support **mkt run** with Fedora Core 41 as the VM
     operating system
 
 # OPTIONS

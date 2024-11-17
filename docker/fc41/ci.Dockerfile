@@ -1,4 +1,4 @@
-FROM harbor.mellanox.com/mkt/build:fc40
+FROM harbor.mellanox.com/mkt/build:fc41
 
 RUN \
     echo Israel/Jerusalem > /etc/timezone && \

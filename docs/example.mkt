@@ -9,9 +9,9 @@ simx = /images/leonro/src/simx/
 logs = /images/leonro/logs/
 # Shared directory for various builder to speed-up process
 ccache = /images/leonro/ccache/
-# Base distro, supported: "fc40"
-# This line can be omitted and default will be "fc40".
-#os = fc40
+# Base distro, supported: "fc41"
+# This line can be omitted and default will be "fc41".
+#os = fc41
 # Default container image to run if execute "mkt run" command
 # without any parameters. It is overwritten by providng image
 # name as an argument to "mkt run"
