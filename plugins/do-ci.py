@@ -84,6 +84,7 @@ def build_dirlist(args):
     args.files = files
 
 def print_filtered_output(args, out):
+    found = False
     # sparse output everything on stderr
     for line in out.stderr.split('\n'):
         l = line.split(":")
@@ -95,13 +96,16 @@ def print_filtered_output(args, out):
         except IndexError:
             if not l:
                 print(line)
+                found = True
             continue
         blame = subprocess.check_output(["git", "blame", l[0], "-L%s,%s" %(l[1], l[1]), "-l", "-s"])
         blame = blame.split()[0]
         if args.rev == blame:
             print(line)
+            found = True
+    return found
 
-def smatch_and_sparse(args, tool):
+def smatch_and_sparse(args, tool, config):
     if tool == "smatch":
         tool_cmd = ["CHECK=smatch -p=kernel --data=/opt/smatch/share/smatch/smatch_data/",
                 "C=2"]
@@ -110,17 +114,18 @@ def smatch_and_sparse(args, tool):
 
     base_cmd = ["make", "-j", str(args.num_jobs), "-s"]
     subprocess.call(base_cmd + ["clean"])
-    subprocess.call(base_cmd + ["allyesconfig"])
+    subprocess.call(base_cmd + [config])
     cmd = base_cmd + tool_cmd + args.dirlist
     if args.show_all:
         subprocess.run(cmd)
         return
 
+    found = False
     out = subprocess.run(cmd, encoding='utf-8', capture_output=True)
     if args.filter_by_diff:
         subprocess.check_call(["git", "reset", "--hard", "-q", args.rev.decode() + "~1"])
         subprocess.call(base_cmd + ["clean"])
-        subprocess.call(base_cmd + ["allyesconfig"])
+        subprocess.call(base_cmd + [config])
 
         pre = subprocess.run(cmd, encoding='utf-8', capture_output=True)
         diff = list(set(out.stderr.split('\n')) - set(pre.stderr.split('\n')))
@@ -128,8 +133,12 @@ def smatch_and_sparse(args, tool):
         subprocess.check_call(["git", "reset", "--hard", "-q", args.rev])
         for line in diff:
             print(line)
+            found = True
     else:
-        print_filtered_output(args, out)
+        found = print_filtered_output(args, out)
+
+    if (found):
+        exit()
 
 def clang(args):
     base_cmd = ["make", "-j", str(args.num_jobs), "-s", "CC=clang"]
@@ -147,44 +156,27 @@ def checkpatch(args):
         cmd += ["--ignore", "GERRIT_CHANGE_ID,FILE_PATH_CHANGES"]
     subprocess.call(cmd);
 
-def warnings(args, arch=None):
+def warnings(args, config, arch=None):
+    found = False
     base_cmd = ["make", "-j", str(args.num_jobs), "-s"]
     # Default arch is x64
     if arch is not None:
         base_cmd = base_cmd + ["ARCH=%s" %(arch)]
 
     subprocess.call(base_cmd + ["clean"])
-    subprocess.call(base_cmd + ["allyesconfig"])
+    subprocess.call(base_cmd + [config])
     cmd = base_cmd + ["W=1"] + args.dirlist
-    yes = subprocess.run(cmd, encoding='utf-8', capture_output=True)
+    out = subprocess.run(cmd, encoding='utf-8', capture_output=True)
 
-    subprocess.call(base_cmd + ["clean"])
-    subprocess.call(base_cmd + ["allnoconfig"])
-    no = subprocess.run(cmd, encoding='utf-8', capture_output=True)
-
-    subprocess.call(base_cmd + ["clean"])
-    subprocess.call(base_cmd + ["allmodconfig"])
-    mod = subprocess.run(cmd, encoding='utf-8', capture_output=True)
-
-    for line in yes.stderr.split('\n'):
+    for line in out.stderr.split('\n'):
         if line.startswith("scripts") or line == '':
             # Fixup to https://lore.kernel.org/lkml/1521810279-6282-3-git-send-email-yamada.masahiro@socionext.com/
             continue
         print(line)
-    for line in no.stderr.split('\n'):
-        if line in yes.stderr.split('\n'):
-            continue
-        if line.startswith("scripts") or line == '':
-            continue
-        print(line)
-    for line in mod.stderr.split('\n'):
-        if line in yes.stderr.split('\n'):
-            continue
-        if line in no.stderr.split('\n'):
-            continue
-        if line.startswith("scripts") or line == '':
-            continue
-        print(line)
+        found = True
+
+    if found:
+        exit()
 
 def setup_from_pickle(args, pickle_params):
     """The script that invokes docker passes in some more detailed parameters
@@ -207,16 +199,19 @@ def kernel_ci(args):
     if args.checkpatch:
         checkpatch(args)
     build_dirlist(args)
-    if args.dirlist:
-        if args.sparse:
-            smatch_and_sparse(args, "sparse")
-        if args.warnings:
-            warnings(args)
-            warnings(args, "i386")
-        if args.smatch:
-            smatch_and_sparse(args, "smatch")
-        if args.clang:
-            clang(args)
+    configs = ["allyesconfig", "allnoconfig", "allmodconfig"]
+    for config in configs:
+        if args.dirlist:
+            if args.sparse:
+                smatch_and_sparse(args, "sparse", config)
+            if args.warnings:
+                warnings(args, config)
+                warnings(args, config, "i386")
+            if args.smatch:
+                smatch_and_sparse(args, "smatch", config)
+
+    if args.clang:
+        clang(args)
 
 def rdma_core_ci(args):
     if args.checkpatch:
