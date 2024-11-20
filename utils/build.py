@@ -60,6 +60,10 @@ class Build(object):
         if self.pickle["src"] != self.pickle["checkpatch_root_dir"]:
             cmd += ["-v", "%s:%s:ro,Z" %(self.pickle["checkpatch_root_dir"], self.pickle["checkpatch_root_dir"])]
 
+        if self.pickle["config"] is not None:
+            mnt_dir = os.path.dirname(os.path.abspath(self.pickle["config"]))
+            cmd += ["-v", "%s:/mnt:ro,Z" %(mnt_dir)]
+
         return cmd + self._run_cmd(supos, "ci")
 
 project_marks = {

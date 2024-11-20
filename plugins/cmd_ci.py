@@ -57,6 +57,11 @@ def args_ci(parser):
         dest="clang",
         help="Skip CLANG checks",
         default=True)
+    parser.add_argument(
+        "--config",
+        nargs=1,
+        default=None,
+        help="config to check")
 
 def cmd_ci(args):
     """Local continuous integration check."""
@@ -73,6 +78,13 @@ def cmd_ci(args):
     build.pickle["warnings"] = args.warnings
     build.pickle["smatch"] = args.smatch
     build.pickle["clang"] = args.clang
+    if args.project != "kernel" and args.config is not None:
+        exit("Config is supported for kernel only")
+
+    if args.config:
+        build.pickle["config"] = str(args.config[0])
+    else:
+        build.pickle["config"] = None
 
     # FIXME: allow git revisions as input to --rev.
     # But for now, let's give an option to provide

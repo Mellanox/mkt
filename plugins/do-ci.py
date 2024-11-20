@@ -35,7 +35,10 @@ def fork(args):
     subprocess.check_call(["git", "--no-pager", "log", "--oneline", "-n1"])
 
     if args.project == "kernel":
-        copy("%s/.config" %(args.src), "/build/%s" %(args.project))
+        if args.config:
+            copy(args.config, "/build/%s/.config" %(args.project))
+        else:
+            copy("%s/.config" %(args.src), "/build/%s" %(args.project))
 
     args.src = "/build/%s" %(args.project)
     args.rev = head
@@ -194,12 +197,18 @@ def setup_from_pickle(args, pickle_params):
     args.warnings = p.get("warnings", True)
     args.smatch = p.get("smatch", True)
     args.clang = p.get("clang", True)
+    args.config = p.get("config", None)
+    if args.config is not None:
+        args.config = "/mnt/%s" %(os.path.basename(args.config))
 
 def kernel_ci(args):
     if args.checkpatch:
         checkpatch(args)
     build_dirlist(args)
-    configs = ["allyesconfig", "allnoconfig", "allmodconfig"]
+    if args.config:
+        configs = ["olddefconfig"]
+    else:
+        configs = ["allyesconfig", "allnoconfig", "allmodconfig"]
     for config in configs:
         if args.dirlist:
             if args.sparse:
