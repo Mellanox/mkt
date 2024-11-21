@@ -115,7 +115,9 @@ def smatch_and_sparse(args, tool, config):
     if tool == "sparse":
         tool_cmd = ["CHECK=sparse", "C=2", "CF='-fdiagnostic-prefix -D__CHECK_ENDIAN__'"]
 
-    base_cmd = ["make", "-j", str(args.num_jobs), "-s"]
+    base_cmd = ["make", "-j", str(args.num_jobs)]
+    if not args.show_all:
+        base_cmd += ["-s"]
     subprocess.call(base_cmd + ["clean"])
     subprocess.call(base_cmd + [config])
     cmd = base_cmd + tool_cmd + args.dirlist
