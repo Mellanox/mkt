@@ -109,7 +109,7 @@ def print_filtered_output(args, out):
             found = True
     return found
 
-def smatch_and_sparse(args, tool, config):
+def smatch_and_sparse(args, tool, config, arch=None):
     if tool == "smatch":
         tool_cmd = ["CHECK=smatch -p=kernel", "C=2"]
     if tool == "sparse":
@@ -119,6 +119,8 @@ def smatch_and_sparse(args, tool, config):
     if not args.show_all:
         base_cmd += ["-s"]
     subprocess.call(base_cmd + ["clean"])
+    if arch is not None:
+        base_cmd = base_cmd + ["ARCH=%s" %(arch)]
     subprocess.call(base_cmd + [config])
     cmd = base_cmd + tool_cmd + args.dirlist
     if args.show_all:
@@ -227,12 +229,12 @@ def kernel_ci(args):
     arch = config_to_arch(args.config)
     for config in configs:
         if args.dirlist:
-            if args.sparse and arch is None:
-                smatch_and_sparse(args, "sparse", config)
+            if args.sparse:
+                smatch_and_sparse(args, "sparse", config, arch)
             if args.warnings:
                 warnings(args, config, arch)
             if args.smatch and arch is None:
-                smatch_and_sparse(args, "smatch", config)
+                smatch_and_sparse(args, "smatch", config, arch)
 
     if args.clang and arch is None:
         clang(args)
