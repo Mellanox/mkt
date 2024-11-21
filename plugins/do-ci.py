@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import re
 import subprocess
 import pickle
 import base64
@@ -162,11 +163,11 @@ def checkpatch(args):
 def warnings(args, config, arch=None):
     found = False
     base_cmd = ["make", "-j", str(args.num_jobs), "-s"]
+    subprocess.call(base_cmd + ["clean"])
     # Default arch is x64
     if arch is not None:
         base_cmd = base_cmd + ["ARCH=%s" %(arch)]
 
-    subprocess.call(base_cmd + ["clean"])
     subprocess.call(base_cmd + [config])
     cmd = base_cmd + ["W=1"] + args.dirlist
     out = subprocess.run(cmd, encoding='utf-8', capture_output=True)
@@ -201,6 +202,18 @@ def setup_from_pickle(args, pickle_params):
     if args.config is not None:
         args.config = "/mnt/%s" %(os.path.basename(args.config))
 
+def config_to_arch(fn):
+    arch = None
+    if fn is None:
+        return arch
+
+    with open(fn, "r") as F:
+        for line in F:
+            if re.search("Linux/", line):
+                arch = line.split("/")[1].split()[0]
+
+    return arch
+
 def kernel_ci(args):
     if args.checkpatch:
         checkpatch(args)
@@ -209,17 +222,18 @@ def kernel_ci(args):
         configs = ["olddefconfig"]
     else:
         configs = ["allyesconfig", "allnoconfig", "allmodconfig"]
+
+    arch = config_to_arch(args.config)
     for config in configs:
         if args.dirlist:
-            if args.sparse:
+            if args.sparse and arch is None:
                 smatch_and_sparse(args, "sparse", config)
             if args.warnings:
-                warnings(args, config)
-                warnings(args, config, "i386")
-            if args.smatch:
+                warnings(args, config, arch)
+            if args.smatch and arch is None:
                 smatch_and_sparse(args, "smatch", config)
 
-    if args.clang:
+    if args.clang and arch is None:
         clang(args)
 
 def rdma_core_ci(args):
