@@ -111,8 +111,7 @@ def print_filtered_output(args, out):
 
 def smatch_and_sparse(args, tool, config):
     if tool == "smatch":
-        tool_cmd = ["CHECK=smatch -p=kernel --data=/opt/smatch/share/smatch/smatch_data/",
-                "C=2"]
+        tool_cmd = ["CHECK=smatch -p=kernel", "C=2"]
     if tool == "sparse":
         tool_cmd = ["CHECK=sparse", "C=2", "CF='-fdiagnostic-prefix -D__CHECK_ENDIAN__'"]
 
