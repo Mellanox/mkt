@@ -14,8 +14,14 @@ def make_kernel(args):
     if os.path.isdir('/ccache'):
         cmd += ['CC=ccache gcc']
 
+    cmd += ['-j%d' %(args.num_jobs), '-s']
     print('Start kernel compilation in silent mode')
-    subprocess.call(cmd + ['-j%d' %(args.num_jobs), '-s'])
+    if not os.path.exists(".config"):
+        subprocess.call(cmd + ['defconfig', 'kvm_guest.config', 'debug.config'])
+        subprocess.call(['scripts/kconfig/merge_config.sh', '-y', '-m', '-Q',
+                         '.config', '/plugins/kernel.config'])
+
+    subprocess.call(cmd)
 
 def make_iproute2(args):
     if args.clean:
