@@ -77,6 +77,19 @@ systemctl disable dnf-makecache.timer
 systemctl disable ldconfig.service
 systemctl mask ldconfig.service
 /sbin/ldconfig -X
+systemctl disable systemd-hibernate-clear.service
+systemctl disable systemd-pcrmachine.service
+systemctl disable systemd-pstore.service
+systemctl disable systemd-repart.service
+systemctl mask systemd-repart.service
+systemctl disable systemd-pcrmachine.service
+systemctl mask systemd-pcrmachine.service
+systemctl disable systemd-tpm2-setup-early.service
+systemctl mask systemd-tpm2-setup-early.service
+systemctl disable systemd-tpm2-setup.service
+systemctl mask systemd-tpm2-setup.service
+systemctl disable systemd-hibernate-clear.service
+systemctl mask systemd-hibernate-clear.service
 
 #sed -i -e 's/tty9/hvc0/g' /lib/systemd/system/debug-shell.service
 #systemctl enable debug-shell.service

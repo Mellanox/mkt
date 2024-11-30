@@ -17,9 +17,10 @@ def make_kernel(args):
     cmd += ['-j%d' %(args.num_jobs), '-s']
     print('Start kernel compilation in silent mode')
     if not os.path.exists(".config"):
-        subprocess.call(cmd + ['defconfig', 'kvm_guest.config', 'debug.config'])
-        subprocess.call(['scripts/kconfig/merge_config.sh', '-y', '-m', '-Q',
+        subprocess.call(cmd + ['defconfig', 'kvm_guest.config', 'nopm.config', 'debug.config'])
+        subprocess.call(['scripts/kconfig/merge_config.sh', '-y', '-m', '-q',
                          '.config', '/plugins/kernel.config'])
+        subprocess.call(cmd + ['olddefconfig'])
 
     subprocess.call(cmd)
 
